@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0b0f12">
+<title>LED Backpack Text Animator</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>⚡ LED Backpack Text Animator</h1>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT PANEL -->
+    <aside id="aboutPanel" class="panel side">
+      <h2>About & Config</h2>
+      <p class="dim">Design animated text GIFs for LED backpacks. Mobile-friendly live preview, on-canvas editing, export GIF.</p>
+
+      <div class="stack">
+        <label class="btn block">
+          Upload Preset (JSON)
+          <input id="uploadPresetInput" type="file" accept="application/json" hidden />
+        </label>
+        <button id="downloadPresetBtn" class="btn block">Download Current Preset (JSON)</button>
+        <button id="exportBundleBtn" class="btn ghost block">Export Bundle (.zip)</button>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <label class="pill">
+          <input type="checkbox" id="helpToggle">
+          Show help overlay
+        </label>
+      </div>
+
+      <hr>
+      <details>
+        <summary>Credits & License</summary>
+        <p>Created by <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>. Built with ChatGPT.</p>
+        <p>MIT License.</p>
+      </details>
+      <hr>
+
+      <label for="ownerKey" class="dim">Owner key (private)</label>
+      <input id="ownerKey" type="password" placeholder="••••••" />
+    </aside>
+
+    <!-- RIGHT / MAIN -->
+    <section class="panel main">
+      <!-- BACKGROUND & RES -->
+      <section class="panel inner">
+        <h2>Background & Resolution</h2>
+
+        <div class="row">
+          <label>Resolution</label>
+          <select id="resolutionSel">
+            <option>96×128</option>
+            <option>64×64</option>
+            <option>Custom</option>
+          </select>
+          <div id="customRes" class="row" style="display:none; gap:8px; margin-left:12px;">
+            <label>W</label><input id="customW" type="number" min="8" max="512" value="96">
+            <label>H</label><input id="customH" type="number" min="8" max="512" value="128">
+          </div>
+        </div>
+
+        <div class="row" style="gap:8px; margin-top:8px; align-items:flex-start;">
+          <span class="pill is-chip selected" data-bgsrc="Preset" id="chipPreset">Preset</span>
+          <span class="pill is-chip" data-bgsrc="Solid" id="chipSolid">Solid</span>
+          <span class="pill is-chip" data-bgsrc="Custom" id="chipCustom">Custom</span>
+
+          <!-- Inline upload appears ONLY when Custom is selected -->
+          <label id="inlineUploadLbl" class="btn ghost" style="display:none; margin-left:8px;">
+            Upload PNG/JPG/GIF
+            <input id="customBgInput" type="file" accept=".png,.jpg,.jpeg,.gif" hidden />
+          </label>
+        </div>
+
+        <div id="bgPresetGrid" class="thumbGrid" style="margin-top:10px;"></div>
+
+        <!-- Solid color intentionally fixed to black (no picker in UI) -->
+        <input id="solidColor" type="color" value="#000000" style="display:none;">
+      </section>
+
+      <!-- PREVIEW -->
+      <section class="panel inner">
+        <h2>Live Preview</h2>
+
+        <div class="row" style="gap:8px; align-items:center;">
+          <button id="playBtn" class="btn icon on" title="Play">▶️</button>
+          <button id="pauseBtn" class="btn icon" title="Pause">⏸</button>
+          <button id="editBtn" class="btn icon" title="Toggle Edit Mode">✏️</button>
+
+          <div class="row" style="gap:4px; margin-left:auto;">
+            <button id="zoomOutBtn" class="btn ghost">−</button>
+            <button id="zoomFitBtn" class="btn ghost">Fit</button>
+            <button id="zoomInBtn" class="btn ghost">+</button>
+          </div>
+        </div>
+
+        <div id="previewWrap">
+          <canvas id="previewCanvas" width="96" height="128"></canvas>
+
+          <div id="helpOverlay" class="help" hidden>
+            <h3>How to use</h3>
+            <ol>
+              <li>Pick a background & resolution.</li>
+              <li>Tap ✏️ to enter <strong>Edit</strong> mode.</li>
+              <li>Tap a word to edit, drag to move, use nudge arrows.</li>
+              <li>Tap ✏️ again to exit edit mode and play.</li>
+            </ol>
+          </div>
+
+          <!-- Inspector -->
+          <div id="inspector" class="inspector" hidden>
+            <div class="ins-head">
+              <span id="insLabel">Word</span>
+              <button id="insDone" class="btn ghost small">Done</button>
+            </div>
+            <div class="ins-body">
+              <input id="insText" type="text" placeholder="TEXT">
+
+              <!-- Color: preset swatches vs Custom -->
+              <div class="row">
+                <label class="dim">Color</label>
+                <select id="insColorPreset">
+                  <option>Blue</option><option>Green</option><option>Yellow</option>
+                  <option>Magenta</option><option>Red</option><option>Orange</option>
+                  <option>White</option><option>Cyan</option><option>Purple</option><option>Pink</option>
+                  <option value="__custom__">Custom…</option>
+                </select>
+                <input id="insColorCustom" type="color" value="#ffffff" style="display:none;">
+              </div>
+
+              <div class="row">
+                <label class="dim">Size</label>
+                <input id="insSize" type="range" min="8" max="200" value="24">
+              </div>
+              <div class="row">
+                <button id="nudgeL" class="btn ghost small">←</button>
+                <button id="nudgeU" class="btn ghost small">↑</button>
+                <button id="nudgeD" class="btn ghost small">↓</button>
+                <button id="nudgeR" class="btn ghost small">→</button>
+                <button id="deleteWordBtn" class="btn danger small" style="margin-left:auto;">🗑 Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="gap:8px; margin-top:10px;">
+          <button id="addLineBtn" class="btn">➕ Add Line</button>
+          <button id="addWordBtn" class="btn ghost">+ Word (selected line)</button>
+        </div>
+      </section>
+
+      <!-- TYPOGRAPHY & ANIMATION & OUTPUT -->
+      <section class="panel inner">
+        <details open>
+          <summary><strong>Typography</strong></summary>
+          <div class="row">
+            <label>Auto size</label>
+            <input id="autoSizeToggle" type="checkbox" checked>
+            <label>Line gap (px)</label>
+            <input id="lineGap" type="number" min="0" max="20" value="2">
+            <label>Word spacing (px)</label>
+            <input id="wordSpace" type="number" min="0" max="20" value="3">
+          </div>
+        </details>
+
+        <details>
+          <summary><strong>Animation</strong></summary>
+
+          <div class="row">
+            <label>Enable Breath</label><input id="animEnableBreath" type="checkbox" checked>
+            <label>Breath Y</label><input id="animBY" type="number" step="0.1" value="4.0">
+            <label>Scale</label><input id="animSC" type="number" step="0.01" value="0.03">
+            <label>Breath Cycles</label><input id="animBC" type="number" step="0.1" value="1.0">
+          </div>
+
+          <div class="row">
+            <label>Enable Wave</label><input id="animEnableWave" type="checkbox" checked>
+            <label>Wave X</label><input id="animWX" type="number" step="0.1" value="0.8">
+            <label>Wave Y</label><input id="animWY" type="number" step="0.1" value="1.4">
+            <label>Wave Cycles</label><input id="animWC" type="number" step="0.1" value="1.0">
+          </div>
+
+          <div class="row">
+            <label>Enable Jitter</label><input id="animEnableJitter" type="checkbox" checked>
+            <label>Jitter</label><input id="animJJ" type="number" step="0.01" value="0.10">
+            <label>Jitter Cycles</label><input id="animJC" type="number" step="0.1" value="2.5">
+          </div>
+        </details>
+
+        <details>
+          <summary><strong>Output</strong></summary>
+          <div class="row">
+            <label>Seconds</label><input id="seconds" type="number" min="1" max="30" value="8">
+            <label>FPS (base)</label><input id="fps" type="number" min="1" max="30" value="15">
+            <label>Auto-match BG FPS (GIF only)</label><input id="autoMatch" type="checkbox" checked>
+          </div>
+          <details id="advGifBlock">
+            <summary>Advanced GIF compression</summary>
+            <div class="row">
+              <label>Palette</label><input id="gifPalette" type="range" min="16" max="256" step="16" value="128">
+              <span id="gifPaletteVal">128</span>
+              <label>Dither</label>
+              <select id="gifDither">
+                <option value="none">None</option>
+                <option value="bayer">Bayer</option>
+                <option value="floydsteinberg" selected>Floyd–Steinberg</option>
+              </select>
+              <label>Per-frame diff</label><input id="gifDiff" type="checkbox" checked>
+            </div>
+          </details>
+          <div class="row" style="margin-top:10px;">
+            <button id="renderBtn" class="btn">Render & Download GIF</button>
+          </div>
+        </details>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/gifenc@1.0.3/dist/gifenc.umd.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
