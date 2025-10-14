@@ -1,241 +1,198 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0b0f12">
-  <link rel="manifest" href="static/manifest.webmanifest">
-  <link rel="apple-touch-icon" href="static/icon-192.png">
-  <title>LED Backpack Text Animator</title>
-  <link rel="stylesheet" href="styles.css">
-  <!-- Client-side GIF encoder -->
-  <script src="https://cdn.jsdelivr.net/npm/gif-encoder-2/browser/gif-encoder-2.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>LED Backpack Text Animator</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header>
-  <h1>⚡ LED Backpack Text Animator</h1>
-  <p class="sub">Create animated text GIFs for LED backpacks — fully client-side. Mobile-optimized.</p>
-</header>
+  <header class="topbar">
+    <h1>⚡ LED Backpack Text Animator</h1>
+  </header>
 
-<main id="app">
-  <aside id="about">
-    <details open>
-      <summary>About & Config Download/Upload</summary>
-      <p>Developed with the assistance of ChatGPT • Follow <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a> — bringing theskylincoln’s LED Backpack idea to life ⚡</p>
-      <div class="owner">
-        <label>Owner Key</label>
-        <input type="password" id="ownerKey" placeholder="••••••">
-        <button id="ownerApply">Apply</button>
-        <div id="ownerActions" class="hidden">
-          <button id="loadOwnerA">Owner A — Wheelie 96×128</button>
-          <button id="loadOwnerB">Owner B — 2 Up 96×128</button>
-        </div>
+  <main class="layout">
+    <aside id="aboutPanel" class="panel side">
+      <h2>About & Config</h2>
+      <p class="dim">Design animated text GIFs for LED backpacks. Mobile-friendly live preview, edit on-canvas, export GIF.</p>
+
+      <div class="stack">
+        <label class="btn block">
+          Upload Preset (JSON)
+          <input id="uploadPresetInput" type="file" accept="application/json" hidden />
+        </label>
+        <button id="downloadPresetBtn" class="btn block">Download Current Preset (JSON)</button>
+        <button id="exportBundleBtn" class="btn ghost block">Export Bundle (.zip)</button>
       </div>
-      <div class="cfg io">
-        <button id="downloadJson">⬇️ Download preset (JSON)</button>
-        <label class="file">
-          Upload preset (JSON)
-          <input type="file" id="uploadJson" accept=".json,application/json">
+
+      <div class="row" style="margin-top:12px">
+        <label class="pill">
+          <input type="checkbox" id="helpToggle">
+          Show help overlay
         </label>
       </div>
-    </details>
-  </aside>
 
-  <section id="controls">
-    <div class="panel">
-      <details open>
-        <summary>Background & Resolution</summary>
+      <hr>
+
+      <details>
+        <summary>Credits & License</summary>
+        <p>Created by <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>. Built with ChatGPT.</p>
+        <p>MIT License.</p>
+      </details>
+
+      <hr>
+      <label for="ownerKey" class="dim">Owner key (private)</label>
+      <input id="ownerKey" type="password" placeholder="••••••" />
+    </aside>
+
+    <section class="panel main">
+      <section class="panel inner">
+        <h2>Background & Resolution</h2>
+
         <div class="row">
           <label>Resolution</label>
-          <select id="resMode">
-            <option value="96x128">96×128</option>
-            <option value="64x64">64×64</option>
-            <option value="Custom">Custom…</option>
+          <select id="resolutionSel">
+            <option>96×128</option>
+            <option>64×64</option>
+            <option>Custom</option>
           </select>
-          <div id="customWH" class="row hidden">
-            <label>W <input type="number" id="W" min="8" max="512" value="96"></label>
-            <label>H <input type="number" id="H" min="8" max="512" value="128"></label>
+          <div id="customRes" class="row" style="display:none; gap:8px; margin-left:12px;">
+            <label>W</label><input id="customW" type="number" min="8" max="512" value="96">
+            <label>H</label><input id="customH" type="number" min="8" max="512" value="128">
           </div>
         </div>
 
-        <div class="row">
-          <label>Background</label>
-          <div class="tabs">
-            <button class="tab active" data-tab="Preset">Preset</button>
-            <button class="tab" data-tab="Solid">Solid Color</button>
-            <button class="tab" data-tab="Custom">Upload</button>
+        <div class="row" style="align-items:flex-start;">
+          <div>
+            <div class="row" style="gap:8px; margin-bottom:8px;">
+              <label class="pill"><input type="radio" name="bgsrc" value="Preset" checked> Preset</label>
+              <label class="pill"><input type="radio" name="bgsrc" value="Solid"> Solid</label>
+              <label class="pill"><input type="radio" name="bgsrc" value="Custom"> Custom</label>
+            </div>
+            <div id="bgPresetGrid" class="thumbGrid"></div>
+            <input id="solidColor" type="color" value="#000000" style="display:none;">
+            <input id="customBgInput" type="file" accept=".png,.jpg,.jpeg,.gif" style="display:none;">
+          </div>
+        </div>
+      </section>
+
+      <section class="panel inner">
+        <h2>Live Preview</h2>
+
+        <div class="row" style="gap:8px; align-items:center;">
+          <button id="playPauseBtn" class="btn">⏸ Pause</button>
+          <label class="pill"><input id="editModeToggle" type="checkbox"> Edit mode</label>
+          <div class="row" style="gap:4px; margin-left:auto;">
+            <button id="zoomOutBtn" class="btn ghost">−</button>
+            <button id="zoomFitBtn" class="btn ghost">Fit</button>
+            <button id="zoomInBtn" class="btn ghost">+</button>
           </div>
         </div>
 
-        <div id="bgPreset" class="thumbs"></div>
-        <div id="bgSolid" class="row hidden">
-          <input type="color" id="solidHex" value="#000000">
-        </div>
-        <div id="bgCustom" class="row hidden">
-          <input type="file" id="customBg" accept="image/*">
-        </div>
-
-        <div class="row">
-          <label><input type="checkbox" id="autoMatch" checked> Auto-match animated background FPS (cap 30)</label>
-        </div>
-      </details>
-
-      <details open>
-        <summary>Editor & Preview</summary>
-        <div class="row between">
-          <div class="row">
-            <label class="switch">Live Preview
-              <input type="checkbox" id="liveToggle" checked>
-            </label>
-            <label class="switch">Performance
-              <select id="perfMode">
-                <option value="smooth">Smooth</option>
-                <option value="battery">Battery Saver</option>
-              </select>
-            </label>
+        <div id="previewWrap">
+          <canvas id="previewCanvas" width="96" height="128"></canvas>
+          <div id="helpOverlay" class="help" hidden>
+            <h3>How to use</h3>
+            <ol>
+              <li>Choose a background & resolution.</li>
+              <li>Toggle <strong>Edit mode</strong> to pause and edit.</li>
+              <li>Tap a word to edit, drag to move, use toolbar to style.</li>
+              <li>Toggle Edit OFF to resume smooth animation.</li>
+            </ol>
           </div>
-          <div class="row">
-            <button id="addLine">➕ Add line</button>
-            <button id="resetAuto">↺ Reset auto layout</button>
-            <button id="clearText">🧹 Clear text</button>
-            <button id="centerAll">🎯 Center all</button>
-          </div>
-        </div>
-
-        <div id="canvasWrap">
-          <canvas id="preview" width="192" height="256"></canvas>
-        </div>
-
-        <div id="inspector" class="hidden">
-          <h4>Selected Word</h4>
-          <div class="row">
-            <label>Text <input type="text" id="wordText"></label>
-          </div>
-          <div class="row">
-            <label>Color
-              <select id="wordColor"></select>
-            </label>
-            <label>Size ×
-              <input type="number" id="wordScale" min="0.3" max="4" step="0.1">
-            </label>
-          </div>
-          <div class="row">
-            <button id="addWord">+ Word</button>
-            <button id="delWord">Delete Word</button>
-            <button id="delLine">Delete Line</button>
-            <button id="centerWord">Center Word</button>
-          </div>
-          <div class="row">
-            <label>Line Align</label>
-            <button id="alignLeftLine">⟸ Left</button>
-            <button id="alignCenterLine">↔ Center</button>
-            <button id="alignRightLine">Right ⟹</button>
-          </div>
-          <div class="row advanced-only">
-            <div class="nudge-pad">
-              <button id="nudgeUp">↑</button>
-              <div class="hbox">
-                <button id="nudgeLeft">←</button>
-                <button id="nudgeDown">↓</button>
-                <button id="nudgeRight">→</button>
+          <div id="inspector" class="inspector" hidden>
+            <div class="ins-head">
+              <span id="insLabel">Word</span>
+              <button id="insDone" class="btn ghost small">Done</button>
+            </div>
+            <div class="ins-body">
+              <input id="insText" type="text" placeholder="TEXT">
+              <div class="row">
+                <label class="dim">Color</label>
+                <input id="insColor" type="color" value="#ffffff">
+              </div>
+              <div class="row">
+                <label class="dim">Size</label>
+                <input id="insSize" type="range" min="8" max="200" value="24">
+              </div>
+              <div class="row">
+                <button id="nudgeL" class="btn ghost small">←</button>
+                <button id="nudgeU" class="btn ghost small">↑</button>
+                <button id="nudgeD" class="btn ghost small">↓</button>
+                <button id="nudgeR" class="btn ghost small">→</button>
+                <button id="deleteWordBtn" class="btn danger small" style="margin-left:auto;">🗑 Delete</button>
               </div>
             </div>
-            </div>
-            <div id="fineCrosshair" class="fine-crosshair advanced-only" title="Drag inside to fine-nudge"></div>
-            <div class="hbox" style="margin-top:6px">
-              <label class="switch"><input type="checkbox" id="lockX"><span class="slider"></span></label>
-              <span style="margin-left:6px;margin-right:12px;">Lock X</span>
-              <label class="switch"><input type="checkbox" id="lockY"><span class="slider"></span></label>
-              <span style="margin-left:6px;">Lock Y</span>
-            </div>
-            <button id="snapBaseline" style="margin-left:12px">Snap to baseline</button>
+          </div>
+        </div>
+
+        <div class="row" style="gap:8px; margin-top:10px;">
+          <button id="addLineBtn" class="btn">➕ Add Line</button>
+          <button id="addWordBtn" class="btn ghost">+ Word (selected line)</button>
+        </div>
+      </section>
+
+      <section class="panel inner">
+        <details>
+          <summary><strong>Typography</strong></summary>
+          <div class="row">
+            <label>Auto size</label>
+            <input id="autoSizeToggle" type="checkbox" checked>
+            <label>Line gap (px)</label>
+            <input id="lineGap" type="number" min="0" max="20" value="2">
+            <label>Word spacing (px)</label>
+            <input id="wordSpace" type="number" min="0" max="20" value="3">
+          </div>
+        </details>
+        <details>
+          <summary><strong>Animation</strong></summary>
+          <div class="row">
+            <label>Enable anim</label><input id="animEnable" type="checkbox" checked>
+            <label>Breath Y</label><input id="animBY" type="number" step="0.1" value="4.0">
+            <label>Scale</label><input id="animSC" type="number" step="0.01" value="0.03">
+            <label>Breath Cycles</label><input id="animBC" type="number" step="0.1" value="1.0">
           </div>
           <div class="row">
-            <label>Spacing Mode
-              <select id="spacingModeLine">
-                <option value="natural">Natural</option>
-                <option value="equal">Equal (justify)</option>
-                <option value="equalNoOuter">Equal (no outer)</option>
-              </select>
-            </label>
-            <button id="applyEqualAll">Equal spacing for all</button>
+            <label>Wave X</label><input id="animWX" type="number" step="0.1" value="0.8">
+            <label>Wave Y</label><input id="animWY" type="number" step="0.1" value="1.4">
+            <label>Wave Cycles</label><input id="animWC" type="number" step="0.1" value="1.0">
           </div>
-        </div>
-      </details>
+          <div class="row">
+            <label>Jitter</label><input id="animJJ" type="number" step="0.01" value="0.10">
+            <label>Jitter Cycles</label><input id="animJC" type="number" step="0.1" value="2.5">
+          </div>
+        </details>
+        <details>
+          <summary><strong>Output</strong></summary>
+          <div class="row">
+            <label>Seconds</label><input id="seconds" type="number" min="1" max="30" value="8">
+            <label>FPS</label><input id="fps" type="number" min="1" max="30" value="15">
+            <label>Auto-match BG FPS</label><input id="autoMatch" type="checkbox" checked>
+          </div>
+          <details id="advGifBlock">
+            <summary>Advanced GIF compression</summary>
+            <div class="row">
+              <label>Palette</label><input id="gifPalette" type="range" min="16" max="256" step="16" value="128">
+              <span id="gifPaletteVal">128</span>
+              <label>Dither</label>
+              <select id="gifDither">
+                <option value="none">None</option>
+                <option value="bayer">Bayer</option>
+                <option value="floydsteinberg" selected>Floyd–Steinberg</option>
+              </select>
+              <label>Per-frame diff</label><input id="gifDiff" type="checkbox" checked>
+            </div>
+          </details>
+          <div class="row" style="margin-top:10px;">
+            <button id="renderBtn" class="btn">Render & Download GIF</button>
+          </div>
+        </details>
+      </section>
+    </section>
+  </main>
 
-      <details>
-        <summary>Typography</summary>
-        <div class="row">
-          <label>Text size
-            <select id="sizeMode">
-              <option value="Auto">Auto</option>
-              <option value="Manual">Manual</option>
-            </select>
-          </label>
-          <label id="manualSizeWrap" class="hidden">Manual size
-            <input type="number" id="manualSize" min="8" max="200" value="24">
-          </label>
-        </div>
-        <div class="row">
-          <label>Line gap (px) <input type="number" id="lineGap" min="0" max="20" value="2"></label>
-          <label>Word spacing (px) <input type="number" id="wordSpacing" min="0" max="20" value="3"></label>
-          <label>Gutter (px) <input type="number" id="gutterPx" min="0" max="20" value="2"></label>
-        </div>
-      </details>
-
-      <details>
-        <summary>Animation</summary>
-        <label><input type="checkbox" id="animEnabled" checked> Enable animation</label>
-        <div class="grid3">
-          <label>Breath Y <input type="number" id="animBY" step="0.1" value="4.0"></label>
-          <label>Scale Ampl <input type="number" id="animSC" step="0.01" value="0.03"></label>
-          <label>Breath Cycles <input type="number" id="animBC" step="0.1" value="1.0"></label>
-          <label>Wave X <input type="number" id="animWX" step="0.1" value="0.8"></label>
-          <label>Wave Y <input type="number" id="animWY" step="0.1" value="1.4"></label>
-          <label>Wave Cycles <input type="number" id="animWC" step="0.1" value="1.0"></label>
-          <label>Jitter Ampl <input type="number" id="animJJ" step="0.01" value="0.10"></label>
-          <label>Jitter Cycles <input type="number" id="animJC" step="0.1" value="2.5"></label>
-        </div>
-      </details>
-
-      <details open>
-        <summary>Output</summary>
-        <div class="grid3">
-          <label>Seconds <input type="number" id="seconds" min="1" max="30" value="8"></label>
-          <label>FPS <input type="number" id="fps" min="1" max="30" value="15"></label>
-          <label>Output Name <input type="text" id="outName" value="led"></label>
-        </div>
-        <div class="row">
-          <button id="renderGif">Render & Download GIF</button>
-          <a id="dlLink" class="hidden" download>⬇️ Download GIF</a>
-        </div>
-      </details>
-    </div>
-  </section>
-</main>
-
-<footer>
-  <small>© 2025 theskylincoln — with assistance from ChatGPT</small>
-</footer>
-
-<script src="app.js"></script>
-
-<div id="helpOverlay" class="help-overlay hidden">
-  <div class="help-card">
-    <h2>How to use</h2>
-    <ul>
-      <li><b>Tap</b> a word to select it. <b>Drag</b> to move.</li>
-      <li><b>Long-press</b> to open the inspector (or use the button).</li>
-      <li><b>+ Word</b> adds a word to the selected line. <b>Add line</b> creates a new centered line.</li>
-      <li>Use the <b>arrow keys</b> to nudge the selected word (hold Shift for 5px).</li>
-      <li>Use <b>Undo ⎌</b> / <b>Redo ⤼</b> for history.</li>
-      <li>Switch to <b>Exact preview</b> to match the final GIF framerate.</li>
-    </ul>
-    <button id="closeHelp">Got it</button>
-  </div>
-</div>
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/gifenc@1.0.3/dist/gifenc.umd.js"></script>
+  <script src="app.js"></script>
 </body>
-
 </html>

@@ -1,39 +1,25 @@
-# LED Backpack Text Animator
+# ⚡ LED Backpack Text Animator
 
-Create **pixel-perfect animated text GIFs** for LED backpacks (96×128 Kemimoto / 64×64 NyanGear) — right in your browser.
+A sleek, mobile-friendly web app for designing **animated LED text GIFs** — perfect for LED backpacks and pixel displays.
 
-- Drag words directly on the canvas
-- Per-word color & per-line alignment
-- Auto/Manual font size, line gap, word spacing
-- **Animated backgrounds (GIF)** with FPS auto-match (capped for battery)
-- **Exact Preview** that matches the final render
-- **Snap guides** + **Magnetic snapping** + **Fine nudge crosshair**
-- Undo/Redo, Owner preset, JSON save/load
+## ✨ Features
+- Live editable preview canvas with Play/Pause
+- Hybrid Inspector (floats on desktop, docks on mobile)
+- Preset & custom backgrounds with resolution gating (A/B for 96×128, C/D for 64×64)
+- Per-word color & positioning, Add Line/Word, Delete word
+- Zoom In/Out + Fit-to-View
+- JSON preset upload/download and ZIP bundle export
+- Dark theme for readability on iPhone
+- Help overlay toggle in About & Config
 
-> Developed with the assistance of ChatGPT — bringing **theskylincoln**’s LED Backpack idea to life ⚡
+## 🚀 GitHub Pages (recommended)
+1. Create a public repo (e.g., `LED_Backpack_Text_Animator`).
+2. Upload everything in this folder.
+3. In **Settings → Pages**: Source = *Deploy from a branch*, Branch = `main`, Folder = `/ (root)`.
+4. Open: `https://<your-username>.github.io/<repo-name>/`
 
-## Quick start
+## 🧪 Local
+Just open `index.html` (or serve using a basic static server).
 
-Open `index.html` in a modern browser (Chrome, Edge, Safari iOS 16+). No server needed.
-
-## Files
-
-- `index.html` – app shell + controls
-- `styles.css` – cyber‑pro theme and layout
-- `app.js` – canvas editor, preview, render
-- `assets/` – preset backgrounds: `Preset_A.png`, `Preset_B.png`, `Preset_C.png`, `Preset_D.png`
-
-## Owner preset
-
-Enter owner key **“Abraham”** in the Owner panel to load the **WILL WHEELIE FOR BOOKTOK GIRLIES** preset (96×128).
-
-## Tips
-
-- Use **Exact Preview** for a 1:1 view of the final GIF timing.
-- Toggle **Show advanced settings** to access gutters, spacing modes, and snap options.
-- On iPhone, enable **Show nudge pad** for pixel nudging; long‑press while dragging to temporarily lock Y.
-
-## License
-
-MIT — free for personal & commercial use. Please credit **theskylincoln** and **ChatGPT** in About.
-
+## 🪪 License
+MIT © 2025 theskylincoln
