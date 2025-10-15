@@ -143,29 +143,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     const url = URL.createObjectURL(f); const img=new Image(); img.onload=()=>{ S.bg={type:'custom', img}; draw(); }; img.src=url;
   });
 
-  
-// --- Animation loop (RAF) ---
-let _rafId = null;
-function tick(){
-  S._phase = (S._phase || 0) + 0.02;
-  draw();
-  if(S.animated) _rafId = requestAnimationFrame(tick);
-}
-function startAnim(){
-  if(!S.animated){ S.animated = true; }
-  if(_rafId == null){ _rafId = requestAnimationFrame(tick); }
-}
-function stopAnim(){
-  S.animated = false;
-  if(_rafId != null){ cancelAnimationFrame(_rafId); _rafId = null; }
-  draw();
-}
-
-// Owner Key flow (no auto-open)
+  // Owner Key flow (no auto-open)
   const OWNER_KEY='abraham';
   let ownerUnlocked=false;
-  function showOwnerModal(){}
-  function hideOwnerModal(){}
+  function showOwnerModal(){ const m=$('ownerModal'); if(m && ownerUnlocked){ m.classList.remove('hidden'); m.setAttribute('aria-hidden','false'); } }
+  function hideOwnerModal(){ const m=$('ownerModal'); if(m){ m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); } }
   function unlockOwner(){
     const val = ($('ownerKeyInput')?.value || '').trim().toLowerCase();
     if(val===OWNER_KEY){ ownerUnlocked=true; $('ownerPresetsInline')?.classList.remove('hidden'); $('ownerKeyInput')?.classList.add('hidden'); $('ownerKeyBtn')?.classList.add('hidden'); }
@@ -173,6 +155,7 @@ function stopAnim(){
   }
   bind('ownerKeyBtn','click', unlockOwner);
   bind('ownerKeyInput','keydown', e=>{ if(e.key==='Enter') unlockOwner(); });
+  bind('openOwnerPresets','click', showOwnerModal);
   bind('ownerClose','click', hideOwnerModal);
   bind('ownerPresetA','click', ()=>{ applyOwnerPreset('A'); hideOwnerModal(); });
   bind('ownerPresetB','click', ()=>{ applyOwnerPreset('B'); hideOwnerModal(); });
@@ -198,12 +181,32 @@ function stopAnim(){
     }catch(e){ console.error('Init error', e); }
   })();
 });
+
+// Animation loop
+let _rafId=null;
+function tick(){ S._phase=(S._phase||0)+0.02; draw(); if(S.animated) _rafId=requestAnimationFrame(tick); }
+function startAnim(){ if(!S.animated){ S.animated=true; } if(_rafId==null){ _rafId=requestAnimationFrame(tick); } }
+function stopAnim(){ S.animated=false; if(_rafId!=null){ cancelAnimationFrame(_rafId); _rafId=null; } draw(); }
+
+bind('renderNow','click', ()=>{ startAnim(); setTimeout(()=>stopAnim(), 1500); });
+
+bind('bgType','change', e=>{
+  const v=e.target.value;
+  if(v==='solid'){ S.bg={type:'solid', color: $('bgSolidColor')?.value || '#000000', img:null}; }
+  draw();
+});
+bind('bgSolidColor','input', e=>{
+  if(S.bg?.type==='solid'){ S.bg.color = e.target.value; draw(); }
+});
+bind('bgCustomUpload','change', e=>{
+  const f=e.target.files?.[0]; if(!f) return;
+  const url=URL.createObjectURL(f); const img=new Image();
+  img.onload=()=>{ S.bg={type:'image', name:f.name, img}; draw(); };
+  img.src=url;
 });
 
-bind('clearAll','click', ()=>{ if(confirm('Clear all words?')){ S.lines=[]; S.active={line:0,word:0}; S.boxes=[]; draw(); }});
-
 bind('downloadJson','click', ()=>{
-  const payload = {version:1, res:S.res, bg:S.bg, lines:S.lines, font:S.font};
+  const payload = {version:1, res:S.res, bg:{type:S.bg?.type||'preset', name:S.bg?.name||S.bg?.type, color:S.bg?.color||'#000000'}, lines:S.lines, font:S.font};
   const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='led_preset.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
 });
@@ -212,164 +215,8 @@ bind('uploadJson','change', async e=>{
   try{
     const txt=await f.text(); const data=JSON.parse(txt);
     if(data.lines) S.lines=data.lines;
-    if(data.bg) S.bg=data.bg;
+    if(data.bg){ S.bg = data.bg.type==='solid' ? {type:'solid', color:data.bg.color||'#000000', img:null} : {...S.bg, ...data.bg}; }
     if(data.res) S.res=data.res;
     draw();
   }catch(err){ alert('Invalid JSON'); }
 });
-
-bind('bgCustomUpload','change', e=>{
-  const f=e.target.files?.[0]; if(!f) return;
-  const url=URL.createObjectURL(f);
-  const img=new Image();
-  img.onload=()=>{ S.bg={type:'image', name:f.name, img}; draw(); };
-  img.src=url;
-});
-
-function autoFitWord(ctx, text, maxWidth, baseSize, family){
-  let size = baseSize;
-  ctx.font = `${size}px ${family}`;
-  let w = ctx.measureText(text).width;
-  if(w<=maxWidth) return size;
-  // shrink until it fits (min 6px)
-  while(size>6 && w>maxWidth){
-    size -= 1;
-    ctx.font = `${size}px ${family}`;
-    w = ctx.measureText(text).width;
-  }
-  return size;
-}
-
-// Canvas interactions: select, drag, inline edit
-let dragState=null;
-const canvas=$('canvas'), sel=$('selection'), editIn=$('canvasEditOverlay');
-let lastBoxes=[];
-
-function hitTest(x,y){
-  // lastBoxes contains {x,y,w,h,line,word}
-  for(let i=lastBoxes.length-1;i>=0;i--){
-    const b=lastBoxes[i];
-    if(x>=b.x && x<=b.x+b.w && y>=b.y && y<=b.y+b.h) return b;
-  }
-  return null;
-}
-
-canvas.addEventListener('mousedown',e=>{
-  const rect=canvas.getBoundingClientRect();
-  const x=(e.clientX-rect.left)/(S.zoom||1);
-  const y=(e.clientY-rect.top)/(S.zoom||1);
-  const b=hitTest(x,y);
-  if(b){
-    S.active.line=b.line; S.active.word=b.word;
-    dragState={dx:x-b.x, dy:y-b.y, target:b};
-    placeSelection(b);
-  } else {
-    dragState=null; hideSelection();
-  }
-});
-canvas.addEventListener('mousemove',e=>{
-  if(!dragState) return;
-  const rect=canvas.getBoundingClientRect();
-  const x=(e.clientX-rect.left)/(S.zoom||1);
-  const y=(e.clientY-rect.top)/(S.zoom||1);
-  const b=dragState.target;
-  const W = S.lines[b.line]?.[b.word];
-  if(W){ W.offset = {x: Math.round(x - dragState.dx), y: Math.round(y - dragState.dy)}; draw(); placeSelection({...b, x:W.offset.x, y:W.offset.y}); }
-});
-window.addEventListener('mouseup',()=>{ dragState=null; });
-
-canvas.addEventListener('dblclick',e=>{
-  const rect=canvas.getBoundingClientRect();
-  const x=(e.clientX-rect.left), y=(e.clientY-rect.top);
-  const b=hitTest(x/(S.zoom||1), y/(S.zoom||1));
-  if(!b) return;
-  const W=S.lines[b.line]?.[b.word]; if(!W) return;
-  // position overlay
-  editIn.classList.remove('hidden');
-  editIn.value = W.text || '';
-  editIn.style.left = `${x}px`; editIn.style.top = `${y}px`;
-  editIn.focus();
-  editIn.onkeydown = ev=>{
-    if(ev.key==='Enter'){ ev.preventDefault(); W.text = editIn.value; editIn.classList.add('hidden'); draw(); }
-    if(ev.key==='Escape'){ editIn.classList.add('hidden'); }
-  };
-});
-
-function hideSelection(){ sel?.classList.add('hidden'); }
-function placeSelection(b){
-  if(!sel) return;
-  sel.classList.remove('hidden');
-  sel.style.left = (b.x*(S.zoom||1))+'px';
-  sel.style.top = (b.y*(S.zoom||1))+'px';
-  sel.style.width = (b.w*(S.zoom||1))+'px';
-  sel.style.height = (b.h*(S.zoom||1))+'px';
-}
-
-bind('wordText','input', e=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.text=e.target.value; draw(); }});
-bind('wordColor','input', e=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.color=e.target.value; draw(); }});
-bind('wordFont','change', e=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.font=e.target.value||S.font.family; draw(); }});
-bind('wordSize','input', e=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.size=parseInt(e.target.value)||S.font.size; draw(); }});
-
-// --- Direct typing on canvas ---
-canvas.setAttribute('tabindex','0');
-canvas.addEventListener('keydown', (e)=>{
-  // Pause animation while editing
-  if(S.animated) stopAnim();
-  const L=S.active.line, Widx=S.active.word;
-  const W=S.lines[L]?.[Widx];
-  if(!W) return;
-  if(e.key.length===1 && !e.ctrlKey && !e.metaKey){
-    e.preventDefault();
-    W.text = (W.text||'') + e.key;
-    draw();
-    return;
-  }
-  if(e.key==='Backspace'){
-    e.preventDefault();
-    W.text = (W.text||'').slice(0,-1);
-    draw();
-    return;
-  }
-  if(e.key==='Enter'){
-    e.preventDefault();
-    // New word on same line at approximate next position
-    const newW = {text:'', color:W.color || '#FFFFFF', font: W.font || S.font.family, size: W.size || S.font.size, offset:{x:(W.offset?.x||0)+ (W.w||10) + (S.font.wgap||3), y: W.offset?.y||0}};
-    S.lines[L].splice(Widx+1,0,newW);
-    S.active.word = Widx+1;
-    draw();
-    return;
-  }
-  if(e.key==='Escape'){
-    e.preventDefault();
-    hideSelection();
-    return;
-  }
-});
-
-// Show a caret at the end of the active word when canvas is focused and not animating
-let _caretBlink=true;
-setInterval(()=>{ _caretBlink=!_caretBlink; if(document.activeElement===canvas && !S.animated) draw(); }, 500);
-
-// Patch draw() to paint caret
-if(typeof draw==='function'){
-  const __origDraw = draw;
-  draw = function(){
-    __origDraw();
-    try{
-      if(document.activeElement===canvas && !S.animated){
-        const L=S.active.line, Widx=S.active.word;
-        const b = (Array.isArray(S.boxes)? S.boxes.find(B=>B.line===L && B.word===Widx): null);
-        if(b && _caretBlink){
-          const ctx = $('canvas').getContext('2d');
-          ctx.save();
-          ctx.fillStyle = '#32d1ff';
-          const x = Math.round(b.x + b.w + 1);
-          const y = Math.round(b.y);
-          const h = Math.max(8, Math.round(b.h));
-          ctx.fillRect(x, y, 1, h);
-          ctx.restore();
-        }
-      }
-    }catch(_e){}
-  }
-}
