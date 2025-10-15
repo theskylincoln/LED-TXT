@@ -36,3 +36,6 @@ canvas{background:var(--panel);image-rendering:pixelated;display:block;max-width
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9998}
 .modal .modalInner{background:#0f1522;border:1px solid rgba(255,255,255,.15);border-radius:12px;max-width:720px;width:96%;padding:16px;color:#e9f3ff}
 .ownerUnlock input{padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:#0d1320;color:#e9f3ff}
+
+.owner-presets{margin-top:.5rem; display:flex; gap:.5rem; align-items:center}
+.owner-presets .muted{opacity:.7}

@@ -174,15 +174,14 @@ function stopAnim(){
   function hideOwnerModal(){ const m=$('ownerModal'); if(m){ m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); } }
   function unlockOwner(){
     const val = ($('ownerKeyInput')?.value || '').trim().toLowerCase();
-    if(val===OWNER_KEY){ ownerUnlocked=true; $('openOwnerPresets')?.classList.remove('hidden'); }
+    if(val===OWNER_KEY){ ownerUnlocked=true; $('ownerKeyInput')?.classList.add('hidden'); $('ownerKeyBtn')?.classList.add('hidden'); $('ownerPresetsInline')?.classList.remove('hidden'); }
     else { alert('Invalid key'); }
   }
   bind('ownerKeyBtn','click', unlockOwner);
   bind('ownerKeyInput','keydown', e=>{ if(e.key==='Enter') unlockOwner(); });
-  bind('openOwnerPresets','click', showOwnerModal);
   bind('ownerClose','click', hideOwnerModal);
-  bind('ownerPresetA','click', ()=>{ applyOwnerPreset('A'); hideOwnerModal(); });
-  bind('ownerPresetB','click', ()=>{ applyOwnerPreset('B'); hideOwnerModal(); });
+  bind('ownerPresetA','click', ()=>{ applyOwnerPreset('A'); });
+  bind('ownerPresetB','click', ()=>{ applyOwnerPreset('B'); });
   function applyOwnerPreset(which){
     S.resMode='96x128'; S.res={w:96,h:128}; dprSetup(); setZoom(2);
     const img=new Image(); const file = which==='A' ? 'assets/Preset_A.png' : 'assets/Preset_B.png';
