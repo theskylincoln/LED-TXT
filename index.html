@@ -10,17 +10,15 @@
   <header class="topbar">
     <h1>LED Backpack Text Animator</h1>
     <div class="toolbar">
-      <div class="mode-group" role="group" aria-label="Preview Mode">
-        <button id="modeLive" class="btn active" title="Static edit view">⚡ Live Preview</button>
-        <button id="modeRender" class="btn" title="Animated output view">🎯 True Render</button>
       </div>
-    </div>
   </header>
 
   <main class="container">
     <section class="bg-panel card">
       <h2>Backgrounds & Resolution</h2>
       <div class="res-row">
+        <span id="resLabel" class="muted"></span>
+        <button id="flipRes" class="btn small" title="Swap width/height">↔️ Flip</button>
         <label for="resMode">Resolution</label>
         <select id="resMode">
           <option value="96x128">96×128</option>
@@ -45,6 +43,11 @@
 
     <section class="preview-panel card">
       <div class="preview-toolbar">
+        <div class="mode-group inline">
+          <button id="modeHideAnim" class="btn" title="Static edit view">🙈 Hide Animation</button>
+          <button id="modeShowAnim" class="btn" title="Animated output view">🌀 Show Animation</button>
+        </div>
+        <div class="zoom">
         <div class="zoom">
           <button id="zoomOut" class="btn">-</button>
           <span id="zoomLabel">200%</span>
@@ -70,6 +73,38 @@
         <button id="inspectorToggle" class="btn small secondary">▸</button>
       </div>
       <div class="inspectorBody">
+        <div class="row">
+          <div>
+            <label>Alignment</label>
+            <div class="btn-group" id="alignGroup">
+              <button id="alignLeft" class="btn secondary">⟸ Left</button>
+              <button id="alignCenter" class="btn secondary">⇔ Center</button>
+              <button id="alignRight" class="btn secondary">⟹ Right</button>
+            </div>
+          </div>
+          <div>
+            <label>Line Gap Before</label>
+            <input type="number" id="lineGapBefore" value="0" min="-64" max="128" />
+          </div>
+          <div>
+            <label>Line Gap After</label>
+            <input type="number" id="lineGapAfter" value="0" min="-64" max="128" />
+          </div>
+          <div>
+            <label>Word Gap Before</label>
+            <input type="number" id="wordGapBefore" value="0" min="-64" max="128" />
+          </div>
+          <div>
+            <label>Word Gap After</label>
+            <input type="number" id="wordGapAfter" value="0" min="-64" max="128" />
+          </div>
+        </div>
+        <details id="advancedAnim"><summary>Advanced Animation & Export</summary>
+          <div class="row">
+            <button id="downloadFrames" class="btn">⬇️ Download PNG Frame (single)</button>
+          </div>
+        </details>
+
         <div class="row">
           <label>Active line</label>
           <input id="activeLine" type="number" min="0" value="0">
@@ -109,7 +144,17 @@
         </details>
       </div>
     </aside>
-  </main>
+  
+  <section class="card" style="margin:12px;">
+    <details id="aboutApp"><summary>About</summary>
+      <p><strong>LED Backpack Text Animator</strong> — a fast editor for pixel LED backpacks. 
+      Type your words, drag to position, snap to guides, and export frames. 
+      Tips: Click a word to edit, drag to move (snaps to center & margins), use ⟸/⇔/⟹ to align per line, and ↔️ Flip to swap orientation. 
+      <em>PS:</em> Power users: there’s a secret key to instantly load a favorite preset.</p>
+    </details>
+  </section>
+
+</main>
 
   <footer class="footer">
     <a href="#" id="downloadPreset" class="btn">⬇️ Download Preset (JSON)</a>
