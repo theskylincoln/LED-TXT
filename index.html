@@ -1,0 +1,168 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>LED Backpack Text Animator</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="wrap">
+    <h1>LED Backpack Text Animator ⚡</h1>
+    <div class="sub">Designed by <strong>theskylincoln</strong> with assistance from ChatGPT</div>
+
+    <div class="section card">
+      <div class="row">
+        <div><span class="badge">Resolution</span>
+          <select id="resSelect">
+            <option value="96x128" selected>96×128</option>
+            <option value="64x64">64×64</option>
+            <option value="custom">Custom…</option>
+          </select>
+        </div>
+        <div id="customRes" style="display:none">
+          <input type="number" id="w" min="8" max="512" value="96" style="width:90px"> ×
+          <input type="number" id="h" min="8" max="512" value="128" style="width:90px">
+        </div>
+
+        <div class="iconToggle" title="Choose preview mode">
+          <div id="modeLive" class="it active" title="⚡ = Live Preview Mode (interactive animation)">⚡</div>
+          <div id="modeExact" class="it" title="🎯 = Render Mode (true output)">🎯</div>
+        </div>
+
+        <div class="row">
+          <span class="badge">Zoom</span>
+          <button class="btnTiny" id="fit">Fit</button>
+          <button class="btnTiny" id="z1">1×</button>
+          <button class="btnTiny" id="z2">2×</button>
+          <button class="btnTiny" id="z35">3.5×</button>
+          <span id="zoomLbl" class="badge">Fit</span>
+        </div>
+
+        <button id="renderBtn" class="btn">Render & Download GIF</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="grid" id="presetGrid"></div>
+      <div class="grid" id="extraTiles">
+        <div class="tile" id="tileSolid">
+          <img class="thumb" src="assets/Preset_A.png" style="filter:grayscale(1) brightness(.35)">
+          <div class="cap">Solid Color</div>
+        </div>
+        <div class="tile" id="tileCustom">
+          <img class="thumb" src="assets/Preset_B.png" style="filter:grayscale(1) brightness(.45)">
+          <div class="cap">Custom Upload</div>
+        </div>
+      </div>
+      <div class="row">
+        <input type="color" id="solidPick" value="#000000" style="width:48px;height:38px">
+        <input type="file" id="bgFile" accept="image/*" style="display:none">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="card">
+        <div class="canvasWrap">
+          <canvas id="canvas" width="96" height="128"></canvas>
+          <div class="guides">
+            <div class="guide h" style="top:50%"></div>
+            <div class="guide v" style="left:50%"></div>
+          </div>
+          <div class="selection" id="selection" style="display:none"></div>
+        </div>
+        <div class="controls">
+          <div class="iconToggle" title="Edit vs Play">
+            <div id="editMode" class="it active" title="Edit mode: drag words on canvas">✏️ Edit</div>
+            <div id="playMode" class="it" title="Play/Pause live preview">▶️ Live</div>
+          </div>
+          <button class="btnTiny" id="snap">Snap-to-grid: Off</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="inspector">
+      <header>
+        <div class="title">Inspector</div>
+        <div class="row">
+          <button class="btnTiny" id="addLine">+ Line</button>
+          <button class="btnTiny" id="addWord">+ Word</button>
+          <button class="btnTiny" id="delWord">🗑 Word</button>
+          <button class="btnTiny" id="delLine">🗑 Line</button>
+        </div>
+      </header>
+
+      <div class="row">
+        <label>Active line
+          <select id="activeLine"></select>
+        </label>
+        <label>Active word
+          <select id="activeWord"></select>
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Text
+          <input type="text" id="wordText" placeholder="WORD">
+        </label>
+        <label>Color
+          <input type="color" id="wordColor" value="#ffffff">
+        </label>
+      </div>
+
+      <div class="row">
+        <label>X <input type="number" id="posX" value="0" style="width:90px"></label>
+        <label>Y <input type="number" id="posY" value="0" style="width:90px"></label>
+        <button class="btnTiny" id="resetPos">Auto</button>
+      </div>
+
+      <details open>
+        <summary>Typography</summary>
+        <div class="row">
+          <label>Font size <input type="number" id="fontSize" value="22" min="6" max="120" style="width:90px"></label>
+          <label>Line gap <input type="number" id="lineGap" value="2" min="0" max="20" style="width:90px"></label>
+          <label>Word spacing <input type="number" id="wordGap" value="3" min="0" max="20" style="width:90px"></label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Advanced Animation</summary>
+        <div class="row">
+          <label>Breath Y <input type="number" id="breathY" step="0.1" value="4.0" style="width:90px"></label>
+          <label>Scale <input type="number" id="scaleAmpl" step="0.01" value="0.03" style="width:90px"></label>
+          <label>Wave X <input type="number" id="waveX" step="0.1" value="0.8" style="width:90px"></label>
+          <label>Wave Y <input type="number" id="waveY" step="0.1" value="1.4" style="width:90px"></label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Timing</summary>
+        <div class="row">
+          <label>Seconds <input type="number" id="seconds" value="8" min="1" max="30" style="width:90px"></label>
+          <label>FPS <input type="number" id="fps" value="15" min="1" max="60" style="width:90px"></label>
+        </div>
+      </details>
+
+      <details>
+        <summary>Preset JSON</summary>
+        <div class="row">
+          <button class="btnTiny" id="downloadJSON">⬇️ Download .json</button>
+          <input type="file" id="uploadJSON" accept="application/json">
+        </div>
+      </details>
+    </div>
+
+    <div class="section card" style="margin-bottom:24px">
+      <strong>About</strong><br>
+      ⚡ = Live Preview Mode (interactive animation).<br>
+      🎯 = Render Mode (true output).<br>
+      “Developed by theskylincoln with assistance from ChatGPT.”
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized@0.2.0/dist/gif.worker.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized@0.2.0/dist/gif.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
