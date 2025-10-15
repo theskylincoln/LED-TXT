@@ -63,6 +63,13 @@
     <!-- Center: Preview & actions -->
     <section class="card center">
       <div class="toolbar">
+  <div class="json-io">
+    <button id="downloadJson" class="btn secondary">⬇️ Download Preset (JSON)</button>
+    <label class="btn secondary">
+      ⬆️ Upload Preset (JSON)
+      <input id="uploadJson" type="file" accept=".json" style="display:none" />
+    </label>
+  </div>
         <div class="left">
           <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
           <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
@@ -72,6 +79,11 @@
           <button id="redoBtn" class="btn secondary">↪️ Redo</button>
         </div>
         <div class="right">
+          <button id="clearAll" class="btn danger">🧹 Clear All</button>
+          <label class="inline">
+            <span>Speed</span>
+            <input id="animSpeed" type="range" min="0" max="3" step="0.1" value="1">
+          </label>
           <button id="zoomOut" class="btn">-</button>
           <span id="zoomLabel">200%</span>
           <button id="zoomIn" class="btn">+</button>
@@ -81,6 +93,7 @@
       <div class="canvasWrap">
         <canvas id="canvas" width="96" height="128" aria-label="LED preview canvas"></canvas>
         <div id="selection" class="selection hidden"></div>
+        <input id="canvasEditOverlay" class="canvas-edit hidden" type="text" aria-label="Edit word inline"/>
       </div>
 
       <div class="actions">
