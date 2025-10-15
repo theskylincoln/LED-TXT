@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LED Backpack Text Animator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>LED Backpack Text Animator</h1>
+  </header>
+
+  <main class="container">
+    <!-- Backgrounds & Resolution -->
+    <section class="card">
+      <h3>Backgrounds & Resolution</h3>
+      <div class="res-row">
+        <label>Resolution</label>
+        <select id="resMode">
+          <option value="96x128">96×128</option>
+          <option value="64x64">64×64</option>
+          <option value="custom">Custom…</option>
+        </select>
+        
+        <div id="customRes" class="hidden">
+          <input id="customW" type="number" min="8" max="512" value="96" />×
+          <input id="customH" type="number" min="8" max="512" value="128" />
+          <button id="applyRes" class="btn small">Apply</button>
+        </div>
+      </div>
+
+      <p class="muted">Pick a preset (A/B), Solid, or Custom upload.</p>
+
+      <div class="bg-grid" id="bgGrid"></div>
+      <div class="bg-inputs">
+        <div id="solidWrap" class="hidden"><label>Solid</label><input type="color" id="solidPicker" value="#000000" /></div>
+        <div id="customWrap" class="hidden"><label>Custom</label><input type="file" id="customFile" accept="image/*,image/gif" /></div>
+      </div>
+    </section>
+
+    <!-- Preview + Controls -->
+    <section class="card">
+      <div class="preview-toolbar">
+        <div class="mode-group inline">
+          <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
+          <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
+        </div>
+        <div class="undo-redo btn-group">
+          <button id="undoBtn" class="btn secondary">↩️ Undo</button>
+          <button id="redoBtn" class="btn secondary">↪️ Redo</button>
+        </div>
+        <div class="zoom">
+          <button id="zoomOut" class="btn">-</button>
+          <span id="zoomLabel">200%</span>
+          <button id="zoomIn" class="btn">+</button>
+        </div>
+      </div>
+
+      <div class="actions top-actions" style="justify-content:center; margin-bottom:6px;">
+        <button id="addLine" class="btn">+ Line</button>
+        <button id="addWord" class="btn">+ Word</button>
+        <button id="deleteWord" class="btn danger">✖ Delete Word</button>
+      </div>
+
+      <div class="canvasWrap">
+        <canvas id="canvas" width="96" height="128" aria-label="LED preview canvas"></canvas>
+        <div id="selection" class="selection hidden"></div>
+      </div>
+    </section>
+
+    <!-- Inspector -->
+    <aside class="card inspector" id="inspector">
+      <div class="inspectorHeader">
+        <h3>Inspector</h3>
+        <button id="inspectorToggle" class="btn secondary small">▾</button>
+      </div>
+      <div class="inspectorBody">
+        <div class="section">
+          <label>Word</label>
+          <input type="text" id="wordText" placeholder="Type word…" />
+          <label style="margin-top:6px">Color</label>
+          <input type="color" id="wordColor" value="#ffffff" />
+        </div>
+
+        <div class="section">
+          <label>Font</label>
+          <div class="row compact">
+            <select id="fontFamily">
+              <option value="monospace">Monospace</option>
+              <option value="'Press Start 2P', monospace">Press Start 2P</option>
+              <option value="'VT323', monospace">VT323</option>
+              <option value="'Courier New', monospace">Courier New</option>
+              <option value="sans-serif">Sans-serif</option>
+              <option value="serif">Serif</option>
+            </select>
+            <input type="number" id="fontSize" min="6" max="64" value="22" />
+          </div>
+        </div>
+
+        <div class="section">
+          <label>Paragraph</label>
+          <div class="row compact">
+            <div>
+              <label>Line Gap</label>
+              <input type="number" id="lineGap" value="2" min="0" max="64" />
+            </div>
+            <div>
+              <label>Word Spacing</label>
+              <input type="number" id="wordGap" value="3" min="0" max="64" />
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <label>Alignment</label>
+          <div class="btn-group" id="alignGroup">
+            <button id="alignLeft" class="btn secondary">⟸ Left</button>
+            <button id="alignCenter" class="btn secondary">⇔ Center</button>
+            <button id="alignRight" class="btn secondary">⟹ Right</button>
+          </div>
+        </div>
+
+        <details id="advancedAnim"><summary>Advanced Animation & Export</summary>
+          <div class="row">
+            <button id="downloadFrames" class="btn">⬇️ Download PNG Frame (single)</button>
+          </div>
+        </details>
+      </div>
+    </aside>
+  </main>
+
+  <section class="card about">
+    <details id="aboutApp"><summary>About</summary>
+      <p><strong>LED Backpack Text Animator</strong> — a fast editor for pixel LED backpacks. Type your words, drag to position, snap to guides, and export frames.</p>
+      <div class="ownerUnlock">
+        <label for="ownerKeyInput">Owner Key</label>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input id="ownerKeyInput" type="password" placeholder="Type key and press Enter" />
+          <button id="ownerKeyBtn" class="btn secondary">Unlock</button>
+          <button id="openOwnerPresets" class="btn hidden">Owner Presets</button>
+        </div>
+        <small class="muted">Unlock once per session to access your presets.</small>
+      </div>
+      <p>Made by <a href="https://instagram.com/TheSkyLincoln" target="_blank">@TheSkyLincoln</a> with help from ChatGPT. Optimized for LED backpacks: Kemimoto (96×128) and Ryangear (64×64).</p>
+    </details>
+  </section>
+
+  <div id="ownerModal" class="modal hidden" aria-hidden="true">
+    <div class="modalInner">
+      <h3>Load Owner Preset</h3>
+      <p>Choose one of your presets:</p>
+      <div class="btn-group">
+        <button id="ownerPresetA" class="btn">Preset A — WILL WHEELIE FOR BOOKTOK GIRLIES</button>
+        <button id="ownerPresetB" class="btn">Preset B — FREE RIDES FOR BOOKTOK GIRLIES</button>
+      </div>
+      <button id="ownerClose" class="btn secondary" style="margin-top:10px">Close</button>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <a href="#" id="downloadPreset" class="btn">⬇️ Download Preset (JSON)</a>
+    <input type="file" id="uploadPreset" accept="application/json" class="hidden">
+    <button id="uploadPresetBtn" class="btn secondary">Upload Preset (JSON)</button>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
