@@ -9,12 +9,72 @@ document.addEventListener('DOMContentLoaded', () => {
             [{text:'BOOKTOK',color:'#FF3CC8'}],
             [{text:'GIRLIES',color:'#FF2828'}] ],
     active:{line:0, word:0},
-    font:{size:22, gap:2, wgap:3},
+    font:{size:22, gap:2, wgap:3, family:'monospace'},
     anim:{by:4.0, sc:0.03, wx:0.8, wy:1.4},
     seconds:8, fps:15, rafId:null
   };
 
   const $ = (id)=>document.getElementById(id);
+  // --- History (Undo/Redo) ---
+  const History = { past:[], future:[], max:100 };
+  function cloneState(){
+    return JSON.parse(JSON.stringify({
+      resMode:S.resMode, res:S.res, bg:{type:S.bg.type, name:S.bg.name||null, color:S.bg.color||null},
+      lines:S.lines, lineMeta:S.lineMeta, active:S.active, font:S.font, anim:S.anim, seconds:S.seconds, fps:S.fps
+    }));
+  }
+  function restoreState(snap){
+    S.resMode=snap.resMode; S.res=snap.res;
+    if(snap.bg?.type==='preset'){
+      const img=new Image();
+      const file = snap.bg.name==='Preset_A' ? 'assets/Preset_A.png' :
+                   snap.bg.name==='Preset_B' ? 'assets/Preset_B.png' :
+                   snap.bg.name==='Preset_C' ? 'assets/Preset_C.png' :
+                   snap.bg.name==='Preset_D' ? 'assets/Preset_D.png' : '';
+      if(file){
+        img.onload=()=>{ S.bg={type:'preset',name:snap.bg.name,img}; draw(); };
+        img.src=file;
+      }else{
+        S.bg={type:'solid',color:'#0d1320',img:null};
+      }
+    }else if(snap.bg?.type==='solid'){
+      S.bg={type:'solid',color:snap.bg.color||'#0d1320',img:null};
+    }else{
+      S.bg={type:'custom', img:S.bg.img||null, name:null, color:null};
+    }
+    S.lines = snap.lines; S.lineMeta = snap.lineMeta||[];
+    S.active = snap.active; S.font = snap.font; S.anim = snap.anim;
+    S.seconds = snap.seconds; S.fps = snap.fps;
+    dprSetup(); setZoom(S.zoom); renderGrid(); draw(); syncInspector();
+  }
+  function pushHistory(){
+    History.past.push(cloneState());
+    if(History.past.length>History.max) History.past.shift();
+    History.future.length=0;
+  }
+  function undo(){
+    if(History.past.length===0) return;
+    const current = cloneState();
+    const prev = History.past.pop();
+    History.future.push(current);
+    restoreState(prev);
+  }
+  function redo(){
+    if(History.future.length===0) return;
+    const current = cloneState();
+    const next = History.future.pop();
+    History.past.push(current);
+    restoreState(next);
+  }
+  $('undoBtn').addEventListener('click', undo);
+  $('redoBtn').addEventListener('click', redo);
+  window.addEventListener('keydown', (e)=>{
+    const mac = navigator.platform.toUpperCase().includes('MAC');
+    const mod = mac ? e.metaKey : e.ctrlKey;
+    if(mod && !e.shiftKey && e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); }
+    if(mod && (e.shiftKey || e.key.toLowerCase()==='y')){ e.preventDefault(); redo(); }
+  });
+
   // --- Owner Key Easter Egg ---
   const OWNER_KEY = 'abraham';
   function loadOwnerPreset(){
@@ -129,8 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sx = rect.width / S.res.w, sy = rect.height / S.res.h;
     const x = (e.clientX - rect.left)/sx, y=(e.clientY - rect.top)/sy;
     const hit = boxAtPoint(x,y);
-    if(hit){
-      S.active.line = hit.line; S.active.word = hit.word; syncInspector();
+    if(hit){ pushHistory();
+      S.active.line = hit.line; S.active.word = hit.word; openInspector(); syncInspector();
       placeSelection(hit.x, hit.y, hit.w, hit.h);
       drag.on = true; drag.idx = S.boxes.findIndex(b=>b===hit);
       drag.offsetX = x - hit.x; drag.offsetY = y - hit.y;
@@ -173,12 +233,49 @@ document.addEventListener('DOMContentLoaded', () => {
     if(nb) placeSelection(nb.x, nb.y, nb.w, nb.h);
   });
   window.addEventListener('mouseup', ()=>{ drag.on=false; $('selection').classList.remove('snap'); });
+  // Single-click to edit (open inline input if click without drag)
+  CANVAS.addEventListener('mouseup', (e)=>{
+    if(drag.on){ return; }
+    const rect = CANVAS.getBoundingClientRect();
+    const sx = rect.width / S.res.w, sy = rect.height / S.res.h;
+    const x = (e.clientX - rect.left)/sx, y=(e.clientY - rect.top)/sy;
+    const hit = boxAtPoint(x,y);
+    if(!hit) return;
+    // avoid spawning if already an input present
+    if(document.querySelector('.canvasWrap input[type="text"].inlineEditor')) return;
+    S.active.line = hit.line; S.active.word = hit.word; openInspector(); syncInspector();
+    const nb = S.boxes.find(bb => bb.line===hit.line && bb.word===hit.word);
+    if(!nb) return;
+    let input = document.createElement('input');
+    input.type='text'; input.className='inlineEditor';
+    input.value = S.lines[hit.line][hit.word].text || '';
+    input.style.position='absolute';
+    input.style.left = (nb.x * sx) + 'px';
+    input.style.top = (nb.y * sy) + 'px';
+    input.style.width = (Math.max(60, nb.w) * sx + 24) + 'px';
+    input.style.height = (S.font.size * sy + 8) + 'px';
+    input.style.transformOrigin='top left';
+    input.style.zIndex = 5;
+    input.style.padding = '2px 4px';
+    input.style.borderRadius = '6px';
+    input.style.border = '1px solid rgba(255,255,255,.4)';
+    input.style.background = '#0d1320';
+    input.style.color = '#e9f3ff';
+    input.style.font = `${S.font.size * sy}px ${S.font.family}`;
+    const wrap = CANVAS.parentElement;
+    wrap.appendChild(input);
+    input.focus(); input.select();
+    const commit = ()=>{ if(!input.parentElement) return; S.lines[hit.line][hit.word].text = input.value; wrap.removeChild(input); draw(); syncInspector(); };
+    input.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter'){ commit(); } if(ev.key==='Escape'){ wrap.removeChild(input); }});
+    input.addEventListener('blur', commit);
+  });
+
 
   // flip button + res label
   function updateResLabel(){
     $('resLabel').textContent = `${S.res.w} × ${S.res.h}`;
   }
-  $('flipRes').addEventListener('click', ()=>{
+  $('flipRes').addEventListener('click', ()=>{ pushHistory();
     const w=S.res.w, h=S.res.h;
     S.res={w:h, h:w}; S.resMode='custom';
     dprSetup(); setZoom(S.zoom); renderGrid(); draw(); updateResLabel();
@@ -231,14 +328,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if(S.bg.img){
       CTX.drawImage(S.bg.img, 0, 0, S.res.w, S.res.h);
     } else {
-      CTX.fillStyle='#000'; CTX.fillRect(0,0,S.res.w,S.res.h);
+      CTX.fillStyle='#0d1320'; CTX.fillRect(0,0,S.res.w,S.res.h);
     }
     // layout + text
     computeLayout();
     for(const box of S.boxes){
       const W = S.lines[box.line][box.word];
       CTX.fillStyle = W.color || '#fff';
-      CTX.font = `${S.font.size}px monospace`;
+      CTX.font = `${S.font.size}px ${S.font.family}`;
       CTX.textBaseline = 'top';
       CTX.fillText(W.text||'', box.x, box.y);
     }
@@ -247,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(nb && !S.animated){ placeSelection(nb.x, nb.y, nb.w, nb.h); } else { clearSelection(); }
   }
     else if(S.bg.img){ CTX.drawImage(S.bg.img,0,0,S.res.w,S.res.h); }
-    else{ CTX.fillStyle='#000'; CTX.fillRect(0,0,S.res.w,S.res.h); }
+    else{ CTX.fillStyle='#0d1320'; CTX.fillRect(0,0,S.res.w,S.res.h); }
 
     CTX.textBaseline='top';
     CTX.font=`bold ${S.font.size}px sans-serif`;
@@ -357,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   
-$('addLine').addEventListener('click',()=>{
+$('addLine').addEventListener('click',()=>{ pushHistory(); 
     if(S.lines.length===0){ S.lines.push([{text:'WORD', color:'#ffffff'}]); S.active.line=0; S.active.word=0; ensureLineMeta(); S.lineMeta[0].align='center'; computeLayout(); draw(); syncInspector(); return; }
 
     S.lines.push([{text:'WORD',color:'#ffffff'}]);
@@ -365,7 +462,7 @@ $('addLine').addEventListener('click',()=>{
     openInspector(); syncInspector(); draw();
   });
   
-$('addWord').addEventListener('click',()=>{
+$('addWord').addEventListener('click',()=>{ pushHistory(); 
     if(S.lines.length===0){ S.lines.push([{text:'WORD', color:'#ffffff'}]); S.active.line=0; S.active.word=0; ensureLineMeta(); S.lineMeta[0].align='center'; computeLayout(); draw(); syncInspector(); return; }
 
     S.lines[S.active.line].push({text:'WORD',color:'#ffffff'});
@@ -374,29 +471,27 @@ $('addWord').addEventListener('click',()=>{
   });
   $('deleteWord').addEventListener('click',()=>{
     const L=S.lines[S.active.line];
-    if(L && L.length){ L.splice(S.active.word,1); S.active.word=Math.max(0,S.active.word-1); draw(); syncInspector(); }
+    if(L && L.length){ pushHistory(); L.splice(S.active.word,1); S.active.word=Math.max(0,S.active.word-1); draw(); syncInspector(); }
   });
 
   const bind=(id,fn)=>$(id).addEventListener('input',fn);
   bind('activeLine', e=>{ S.active.line=Math.max(0,Math.min(S.lines.length-1, parseInt(e.target.value)||0)); syncInspector(); draw(); });
   bind('activeWord', e=>{ const L=S.lines[S.active.line]; S.active.word=Math.max(0,Math.min(L.length-1, parseInt(e.target.value)||0)); syncInspector(); draw(); });
-  bind('wordText', e=>{ const W=S.lines[S.active.line][S.active.word]; if(W){ W.text=e.target.value; draw(); } });
-  bind('wordColor', e=>{ const W=S.lines[S.active.line][S.active.word]; if(W){ W.color=e.target.value; draw(); } });
-  bind('fontSize', e=>{ S.font.size=parseInt(e.target.value)||22; draw(); });
-  bind('lineGap', e=>{ S.font.gap=parseInt(e.target.value)||2; draw(); });
-  bind('wordGap', e=>{ S.font.wgap=parseInt(e.target.value)||3; draw(); });
+  bind('wordText', e=>{ const W=S.lines[S.active.line][S.active.word]; if(W){ pushHistory(); W.text=e.target.value; draw(); } });
+  bind('wordColor', e=>{ const W=S.lines[S.active.line][S.active.word]; if(W){ pushHistory(); W.color=e.target.value; draw(); } });
+  bind('fontSize', e=>{ pushHistory(); S.font.size=parseInt(e.target.value)||22; draw(); });
+  bind('lineGap', e=>{ pushHistory(); S.font.gap=parseInt(e.target.value)||2; draw(); });
+  bind('wordGap', e=>{ pushHistory(); S.font.wgap=parseInt(e.target.value)||3; draw(); });
+  bind('lineGap', e=>{ pushHistory(); S.font.gap=parseInt(e.target.value)||2; draw(); });
+  $('fontFamily').addEventListener('change', e=>{ S.font.family=e.target.value; draw(); });
 
   // Alignment buttons
-  $('alignLeft').addEventListener('click', ()=>{ ensureLineMeta(); S.lineMeta[S.active.line].align='left'; draw(); });
-  $('alignCenter').addEventListener('click', ()=>{ ensureLineMeta(); S.lineMeta[S.active.line].align='center'; draw(); });
-  $('alignRight').addEventListener('click', ()=>{ ensureLineMeta(); S.lineMeta[S.active.line].align='right'; draw(); });
+  $('alignLeft').addEventListener('click', ()=>{ pushHistory(); ensureLineMeta(); S.lineMeta[S.active.line].align='left'; draw(); });
+  $('alignCenter').addEventListener('click', ()=>{ pushHistory(); ensureLineMeta(); S.lineMeta[S.active.line].align='center'; draw(); });
+  $('alignRight').addEventListener('click', ()=>{ pushHistory(); ensureLineMeta(); S.lineMeta[S.active.line].align='right'; draw(); });
 
   // Gap controls
-  $('lineGapBefore').addEventListener('input', e=>{ ensureLineMeta(); S.lineMeta[S.active.line].gapBefore=parseInt(e.target.value)||0; draw(); });
-  $('lineGapAfter').addEventListener('input', e=>{ ensureLineMeta(); S.lineMeta[S.active.line].gapAfter=parseInt(e.target.value)||0; draw(); });
-  $('wordGapBefore').addEventListener('input', e=>{ const W=S.lines[S.active.line][S.active.word]; if(W){ W.gapBefore=parseInt(e.target.value)||0; draw(); }});
-  $('wordGapAfter').addEventListener('input', e=>{ const W=S.lines[S.active.line][S.active.word]; if(W){ W.gapAfter=parseInt(e.target.value)||0; draw(); }});
-
+        
   // Advanced export: single frame PNG
   $('downloadFrames').addEventListener('click', ()=>{
     try{
@@ -463,6 +558,91 @@ $('addWord').addEventListener('click',()=>{
     $('resMode').value='96x128';
     dprSetup(); setZoom(2); renderGrid();
     const img=new Image(); img.onload=()=>{ S.bg={type:'preset',name:'Preset_A',img}; draw(); }; img.src='assets/Preset_A.png';
-    syncInspector(); stopAnim();
+    syncInspector(); openInspector(); stopAnim();
   })();
 });
+
+
+  // --- Enhanced Owner Key: opens chooser modal with two presets ---
+  function applyOwnerPreset(which){
+    S.resMode='96x128'; S.res={w:96,h:128};
+    const img = new Image();
+    const file = which==='A' ? 'assets/Preset_A.png' : 'assets/Preset_B.png';
+    img.onload = ()=>{ S.bg={type:'preset', name: which==='A'?'Preset_A':'Preset_B', img}; draw(); };
+    img.src = file;
+
+    const A = [
+      [{text:'WILL',color:'#00ACFF'}],
+      [{text:'WHEELIE',color:'#00D200'}],
+      [{text:'FOR',color:'#FFD700'}],
+      [{text:'BOOKTOK',color:'#FF3CC8'}],
+      [{text:'GIRLIES',color:'#FF2828'}]
+    ];
+    const B = [
+      [{text:'FREE',color:'#00ACFF'}],
+      [{text:'RIDES',color:'#00D200'}],
+      [{text:'FOR',color:'#FFD700'}],
+      [{text:'BOOKTOK',color:'#FF3CC8'}],
+      [{text:'GIRLIES',color:'#FF2828'}]
+    ];
+    S.lines = which==='A' ? A : B;
+    ensureLineMeta(); for(let i=0;i<S.lines.length;i++){ S.lineMeta[i]={align:'center',gapBefore:0,gapAfter:0}; }
+    S.active={line:0,word:0}; S.font={size:22,gap:2,wgap:3};
+    dprSetup(); setZoom(2); renderGrid(); draw(); syncInspector();
+    toast(`Loaded Abraham preset ${which}`);
+  }
+  function showOwnerModal(){
+    const m=$('ownerModal'); m.classList.remove('hidden'); m.setAttribute('aria-hidden','false');
+  }
+  function hideOwnerModal(){
+    const m=$('ownerModal'); m.classList.add('hidden'); m.setAttribute('aria-hidden','true');
+  }
+  $('ownerPresetA').addEventListener('click', ()=>{ applyOwnerPreset('A'); hideOwnerModal(); });
+  $('ownerPresetB').addEventListener('click', ()=>{ applyOwnerPreset('B'); hideOwnerModal(); });
+  $('ownerClose').addEventListener('click', hideOwnerModal);
+  // Update the easter key to open the modal instead of auto-loading
+  window.removeEventListener && window.removeEventListener('keydown', ()=>{}); // noop guard
+  window.addEventListener('keydown', (e)=>{
+    if(e.key && e.key.length===1){
+      _typedBuffer = (_typedBuffer + e.key.toLowerCase()).slice(-32);
+      if(_typedBuffer.includes(OWNER_KEY)){ showOwnerModal(); }
+    }
+  });
+
+
+  // Inline edit: double-click places an input at word bbox
+  
+
+  // Improved inline edit: place in canvasWrap and scale with canvas
+  function canvasScale(){ const r=CANVAS.getBoundingClientRect(); return {sx:r.width/S.res.w, sy:r.height/S.res.h, rect:r}; }
+  CANVAS.addEventListener('dblclick', (e)=>{
+    const {sx,sy,rect} = canvasScale();
+    const x = (e.clientX - rect.left)/sx, y=(e.clientY - rect.top)/sy;
+    const hit = boxAtPoint(x,y);
+    if(!hit) return;
+    S.active.line = hit.line; S.active.word = hit.word; openInspector(); syncInspector();
+    const nb = S.boxes.find(bb => bb.line===hit.line && bb.word===hit.word);
+    if(!nb) return;
+    let input = document.createElement('input');
+    input.type='text';
+    input.value = S.lines[hit.line][hit.word].text || '';
+    input.style.position='absolute';
+    input.style.left = (nb.x * sx) + 'px';
+    input.style.top = (nb.y * sy) + 'px';
+    input.style.width = (Math.max(60, nb.w) * sx + 24) + 'px';
+    input.style.height = (S.font.size * sy + 8) + 'px';
+    input.style.transformOrigin='top left';
+    input.style.zIndex = 5;
+    input.style.padding = '2px 4px';
+    input.style.borderRadius = '6px';
+    input.style.border = '1px solid rgba(255,255,255,.4)';
+    input.style.background = '#0d1320';
+    input.style.color = '#e9f3ff';
+    input.style.font = `${S.font.size * sy}px ${S.font.family}`;
+    const wrap = CANVAS.parentElement;
+    wrap.appendChild(input);
+    input.focus(); input.select();
+    const commit = ()=>{ pushHistory(); S.lines[hit.line][hit.word].text = input.value; wrap.removeChild(input); draw(); syncInspector(); };
+    input.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter'){ commit(); } if(ev.key==='Escape'){ wrap.removeChild(input); }});
+    input.addEventListener('blur', commit);
+  });

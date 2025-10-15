@@ -43,19 +43,32 @@
 
     <section class="preview-panel card">
       <div class="preview-toolbar">
-        <div class="mode-group inline">
-          <button id="modeHideAnim" class="btn" title="Static edit view">🙈 Hide Animation</button>
-          <button id="modeShowAnim" class="btn" title="Animated output view">🌀 Show Animation</button>
-        </div>
-        <div class="zoom">
-        <div class="zoom">
+  <div class="mode-group inline">
+    <button id="modeHideAnim" class="btn" title="Static edit view">🙈 Hide Animation</button>
+    <button id="modeShowAnim" class="btn" title="Animated output view">🌀 Show Animation</button>
+  </div>
+  <div class="undo-redo btn-group">
+    <button id="undoBtn" class="btn secondary" title="Undo (Ctrl/Cmd+Z)">↩️ Undo</button>
+    <button id="redoBtn" class="btn secondary" title="Redo (Shift+Ctrl/Cmd+Z)">↪️ Redo</button>
+  </div>
+  <div class="zoom">
+        <div class="undo-redo btn-group">
+  <button id="undoBtn" class="btn secondary" title="Undo (Ctrl/Cmd+Z)">↩️ Undo</button>
+  <button id="redoBtn" class="btn secondary" title="Redo (Shift+Ctrl/Cmd+Z)">↪️ Redo</button>
+</div>
+<div class="zoom">
           <button id="zoomOut" class="btn">-</button>
           <span id="zoomLabel">200%</span>
           <button id="zoomIn" class="btn">+</button>
         </div>
       </div>
 
-      <div class="canvasWrap">
+      <div class="actions top-actions" style="justify-content:center; margin-bottom:6px;">
+  <button id="addLine" class="btn">+ Line</button>
+  <button id="addWord" class="btn">+ Word</button>
+  <button id="deleteWord" class="btn danger">✖ Delete Word</button>
+</div>
+<div class="canvasWrap">
         <canvas id="canvas" width="96" height="128" aria-label="LED preview canvas"></canvas>
         <div id="selection" class="selection hidden"></div>
       </div>
@@ -73,84 +86,58 @@
         <button id="inspectorToggle" class="btn small secondary">▸</button>
       </div>
       <div class="inspectorBody">
-        <div class="row">
-          <div>
-            <label>Alignment</label>
-            <div class="btn-group" id="alignGroup">
-              <button id="alignLeft" class="btn secondary">⟸ Left</button>
-              <button id="alignCenter" class="btn secondary">⇔ Center</button>
-              <button id="alignRight" class="btn secondary">⟹ Right</button>
-            </div>
-          </div>
-          <div>
-            <label>Line Gap Before</label>
-            <input type="number" id="lineGapBefore" value="0" min="-64" max="128" />
-          </div>
-          <div>
-            <label>Line Gap After</label>
-            <input type="number" id="lineGapAfter" value="0" min="-64" max="128" />
-          </div>
-          <div>
-            <label>Word Gap Before</label>
-            <input type="number" id="wordGapBefore" value="0" min="-64" max="128" />
-          </div>
-          <div>
-            <label>Word Gap After</label>
-            <input type="number" id="wordGapAfter" value="0" min="-64" max="128" />
-          </div>
-        </div>
-        <details id="advancedAnim"><summary>Advanced Animation & Export</summary>
-          <div class="row">
-            <button id="downloadFrames" class="btn">⬇️ Download PNG Frame (single)</button>
-          </div>
-        </details>
+  <div class="section">
+    <label>Word</label>
+    <input type="text" id="wordText" placeholder="Type word…" />
+    <label style="margin-top:6px">Color</label>
+    <input type="color" id="wordColor" value="#ffffff" />
+  </div>
 
-        <div class="row">
-          <label>Active line</label>
-          <input id="activeLine" type="number" min="0" value="0">
-          <label>Active word</label>
-          <input id="activeWord" type="number" min="0" value="0">
-        </div>
-        <div class="row">
-          <label>Text</label>
-          <input id="wordText" type="text" placeholder="Type word…">
-          <label>Color</label>
-          <input id="wordColor" type="color" value="#ffffff">
-        </div>
+  <div class="section">
+    <label>Font</label>
+    <div class="row compact">
+      <select id="fontFamily"><option value="monospace">Monospace</option><option value="'Press Start 2P', monospace">Press Start 2P</option><option value="'VT323', monospace">VT323</option><option value="'Courier New', monospace">Courier New</option><option value="sans-serif">Sans-serif</option><option value="serif">Serif</option>
+        <option value="monospace">Monospace</option>
+        <option value="sans-serif">Sans-serif</option>
+        <option value="serif">Serif</option>
+      </select>
+      <input type="number" id="fontSize" min="6" max="64" value="22" />
+    </div>
+  </div>
 
-        <details open>
-          <summary>Typography</summary>
-          <div class="row">
-            <label>Font size</label><input id="fontSize" type="number" value="22" min="6" max="200">
-            <label>Line gap</label><input id="lineGap" type="number" value="2" min="0" max="40">
-            <label>Word spacing</label><input id="wordGap" type="number" value="3" min="0" max="60">
-          </div>
-        </details>
-
-        <details>
-          <summary>Advanced Animation</summary>
-          <div class="row">
-            <label>Breath Y</label><input id="breathY" type="number" step="0.1" value="4.0">
-            <label>Scale</label><input id="scaleAmpl" type="number" step="0.01" value="0.03">
-          </div>
-          <div class="row">
-            <label>Wave X</label><input id="waveX" type="number" step="0.1" value="0.8">
-            <label>Wave Y</label><input id="waveY" type="number" step="0.1" value="1.4">
-          </div>
-          <div class="row">
-            <label>Seconds</label><input id="seconds" type="number" value="8" min="1" max="30">
-            <label>FPS</label><input id="fps" type="number" value="15" min="1" max="30">
-          </div>
-        </details>
+  <div class="section">
+    <label>Paragraph</label>
+    <div class="row compact">
+      <div>
+        <label>Line Gap</label>
+        <input type="number" id="lineGap" value="2" min="0" max="64" />
       </div>
+      <div>
+        <label>Word Spacing</label>
+        <input type="number" id="wordGap" value="3" min="0" max="64" />
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <label>Alignment</label>
+    <div class="btn-group" id="alignGroup">
+      <button id="alignLeft" class="btn secondary">⟸ Left</button>
+      <button id="alignCenter" class="btn secondary">⇔ Center</button>
+      <button id="alignRight" class="btn secondary">⟹ Right</button>
+    </div>
+  </div>
+
+  <details id="advancedAnim"><summary>Advanced Animation & Export</summary>
+    <div class="row">
+      <button id="downloadFrames" class="btn">⬇️ Download PNG Frame (single)</button>
+    </div>
+  </details>
+</div>
     </aside>
   
   <section class="card" style="margin:12px;">
-    <details id="aboutApp"><summary>About</summary>
-      <p><strong>LED Backpack Text Animator</strong> — a fast editor for pixel LED backpacks. 
-      Type your words, drag to position, snap to guides, and export frames. 
-      Tips: Click a word to edit, drag to move (snaps to center & margins), use ⟸/⇔/⟹ to align per line, and ↔️ Flip to swap orientation. 
-      <em>PS:</em> Power users: there’s a secret key to instantly load a favorite preset.</p>
+    \1<strong>LED Backpack Text Animator</strong> — a fast editor for pixel LED backpacks. Type your words, drag to position, snap to guides, and export frames. <br><br><em>Owner Key:</em> type <code>Abraham</code> to open a preset chooser with your favorites.<br><br>Made by <a href="https://instagram.com/TheSkyLincoln" target="_blank">@TheSkyLincoln</a> with help from ChatGPT. Optimized for LED backpacks: Kemimoto (96×128) and Ryangear (64×64).\3
     </details>
   </section>
 
@@ -163,5 +150,18 @@
   </footer>
 
   <script src="app.js"></script>
+
+  <div id="ownerModal" class="modal hidden" aria-hidden="true">
+    <div class="modalInner">
+      <h3>Load Owner Preset</h3>
+      <p>Choose one of your presets:</p>
+      <div class="btn-group">
+        <button id="ownerPresetA" class="btn">Preset A — WILL WHEELIE FOR BOOKTOK GIRLIES</button>
+        <button id="ownerPresetB" class="btn">Preset B — FREE RIDES FOR BOOKTOK GIRLIES</button>
+      </div>
+      <button id="ownerClose" class="btn secondary" style="margin-top:10px">Close</button>
+    </div>
+  </div>
+
 </body>
 </html>
