@@ -146,8 +146,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Owner Key flow (no auto-open)
   const OWNER_KEY='abraham';
   let ownerUnlocked=false;
-  function showOwnerModal(){ const m=$('ownerModal'); if(m && ownerUnlocked){ m.classList.remove('hidden'); m.setAttribute('aria-hidden','false'); } }
-  function hideOwnerModal(){ const m=$('ownerModal'); if(m){ m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); } }
+  function showOwnerModal(){}
+  function hideOwnerModal(){}
   function unlockOwner(){
     const val = ($('ownerKeyInput')?.value || '').trim().toLowerCase();
     if(val===OWNER_KEY){ ownerUnlocked=true; $('ownerPresetsInline')?.classList.remove('hidden'); $('ownerKeyInput')?.classList.add('hidden'); $('ownerKeyBtn')?.classList.add('hidden'); }
@@ -155,10 +155,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   bind('ownerKeyBtn','click', unlockOwner);
   bind('ownerKeyInput','keydown', e=>{ if(e.key==='Enter') unlockOwner(); });
-  bind('openOwnerPresets','click', showOwnerModal);
   bind('ownerClose','click', hideOwnerModal);
-  bind('ownerPresetA','click', ()=>{ applyOwnerPreset('A'); hideOwnerModal(); });
-  bind('ownerPresetB','click', ()=>{ applyOwnerPreset('B'); hideOwnerModal(); });
+  bind('ownerPresetA','click', ()=>{ applyOwnerPreset('A'); });
+  bind('ownerPresetB','click', ()=>{ applyOwnerPreset('B'); });
   function applyOwnerPreset(which){
     S.resMode='96x128'; S.res={w:96,h:128}; dprSetup(); setZoom(2);
     const img=new Image(); const file = which==='A' ? 'assets/Preset_A.png' : 'assets/Preset_B.png';
@@ -172,7 +171,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   // INIT (never opens modal)
   (function init(){
     try{
-      hideOwnerModal();
       dprSetup(); setZoom(2); renderGrid();
       const img=new Image();
       img.onload=()=>{ S.bg={type:'preset', name:'Preset_A', img}; draw(); };
@@ -188,15 +186,13 @@ function tick(){ S._phase=(S._phase||0)+0.02; draw(); if(S.animated) _rafId=requ
 function startAnim(){ if(!S.animated){ S.animated=true; } if(_rafId==null){ _rafId=requestAnimationFrame(tick); } }
 function stopAnim(){ S.animated=false; if(_rafId!=null){ cancelAnimationFrame(_rafId); _rafId=null; } draw(); }
 
-bind('renderNow','click', ()=>{ startAnim(); setTimeout(()=>stopAnim(), 1500); });
-
 bind('bgType','change', e=>{
   const v=e.target.value;
   if(v==='solid'){ S.bg={type:'solid', color: $('bgSolidColor')?.value || '#000000', img:null}; }
   draw();
 });
 bind('bgSolidColor','input', e=>{
-  if(S.bg?.type==='solid'){ S.bg.color = e.target.value; draw(); }
+  if(S.bg?.type==='solid'){ S.bg.color=e.target.value; draw(); }
 });
 bind('bgCustomUpload','change', e=>{
   const f=e.target.files?.[0]; if(!f) return;
