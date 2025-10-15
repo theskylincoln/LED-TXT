@@ -63,3 +63,5 @@ canvas{background:var(--panel);image-rendering:pixelated;display:block;max-width
 .bgThumbs{display:flex; flex-wrap:wrap; gap:.5rem}
 .bgTile.add{border:1px dashed #335; display:flex; align-items:center; justify-content:center; width:60px; height:60px; cursor:pointer; color:#89b}
 .bgTile.add:hover{border-color:#32d1ff; color:#e6f0ff}
+
+canvas:focus{outline:none}

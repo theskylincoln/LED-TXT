@@ -164,16 +164,15 @@ function stopAnim(){
 // Owner Key flow (no auto-open)
   const OWNER_KEY='abraham';
   let ownerUnlocked=false;
-  function showOwnerModal(){ const m=$('ownerModal'); if(m && ownerUnlocked){ m.classList.remove('hidden'); m.setAttribute('aria-hidden','false'); } }
-  function hideOwnerModal(){ const m=$('ownerModal'); if(m){ m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); } }
+  function showOwnerModal(){}
+  function hideOwnerModal(){}
   function unlockOwner(){
     const val = ($('ownerKeyInput')?.value || '').trim().toLowerCase();
-    if(val===OWNER_KEY){ ownerUnlocked=true; $('openOwnerPresets')?.classList.remove('hidden'); $('ownerPresetsInline')?.classList.remove('hidden'); $('ownerKeyInput')?.classList.add('hidden'); $('ownerKeyBtn')?.classList.add('hidden'); }
+    if(val===OWNER_KEY){ ownerUnlocked=true; $('ownerPresetsInline')?.classList.remove('hidden'); $('ownerKeyInput')?.classList.add('hidden'); $('ownerKeyBtn')?.classList.add('hidden'); }
     else { alert('Invalid key'); }
   }
   bind('ownerKeyBtn','click', unlockOwner);
   bind('ownerKeyInput','keydown', e=>{ if(e.key==='Enter') unlockOwner(); });
-  bind('openOwnerPresets','click', showOwnerModal);
   bind('ownerClose','click', hideOwnerModal);
   bind('ownerPresetA','click', ()=>{ applyOwnerPreset('A'); hideOwnerModal(); });
   bind('ownerPresetB','click', ()=>{ applyOwnerPreset('B'); hideOwnerModal(); });
@@ -199,7 +198,7 @@ function stopAnim(){
     }catch(e){ console.error('Init error', e); }
   })();
 });
-bind('animSpeed','input', e=>{ S.animSpeed=parseFloat(e.target.value)||1; });
+});
 
 bind('clearAll','click', ()=>{ if(confirm('Clear all words?')){ S.lines=[]; S.active={line:0,word:0}; S.boxes=[]; draw(); }});
 
@@ -310,3 +309,67 @@ bind('wordText','input', e=>{ const W=S.lines[S.active.line]?.[S.active.word]; i
 bind('wordColor','input', e=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.color=e.target.value; draw(); }});
 bind('wordFont','change', e=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.font=e.target.value||S.font.family; draw(); }});
 bind('wordSize','input', e=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.size=parseInt(e.target.value)||S.font.size; draw(); }});
+
+// --- Direct typing on canvas ---
+canvas.setAttribute('tabindex','0');
+canvas.addEventListener('keydown', (e)=>{
+  // Pause animation while editing
+  if(S.animated) stopAnim();
+  const L=S.active.line, Widx=S.active.word;
+  const W=S.lines[L]?.[Widx];
+  if(!W) return;
+  if(e.key.length===1 && !e.ctrlKey && !e.metaKey){
+    e.preventDefault();
+    W.text = (W.text||'') + e.key;
+    draw();
+    return;
+  }
+  if(e.key==='Backspace'){
+    e.preventDefault();
+    W.text = (W.text||'').slice(0,-1);
+    draw();
+    return;
+  }
+  if(e.key==='Enter'){
+    e.preventDefault();
+    // New word on same line at approximate next position
+    const newW = {text:'', color:W.color || '#FFFFFF', font: W.font || S.font.family, size: W.size || S.font.size, offset:{x:(W.offset?.x||0)+ (W.w||10) + (S.font.wgap||3), y: W.offset?.y||0}};
+    S.lines[L].splice(Widx+1,0,newW);
+    S.active.word = Widx+1;
+    draw();
+    return;
+  }
+  if(e.key==='Escape'){
+    e.preventDefault();
+    hideSelection();
+    return;
+  }
+});
+
+// Show a caret at the end of the active word when canvas is focused and not animating
+let _caretBlink=true;
+setInterval(()=>{ _caretBlink=!_caretBlink; if(document.activeElement===canvas && !S.animated) draw(); }, 500);
+
+// Patch draw() to paint caret
+if(typeof draw==='function'){
+  const __origDraw = draw;
+  draw = function(){
+    __origDraw();
+    try{
+      if(document.activeElement===canvas && !S.animated){
+        const L=S.active.line, Widx=S.active.word;
+        const b = (Array.isArray(S.boxes)? S.boxes.find(B=>B.line===L && B.word===Widx): null);
+        if(b && _caretBlink){
+          const ctx = $('canvas').getContext('2d');
+          ctx.save();
+          ctx.fillStyle = '#32d1ff';
+          const x = Math.round(b.x + b.w + 1);
+          const y = Math.round(b.y);
+          const h = Math.max(8, Math.round(b.h));
+          ctx.fillRect(x, y, 1, h);
+          ctx.restore();
+        }
+      }
+    }catch(_e){}
+  }
+}
