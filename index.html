@@ -1,13 +1,14 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>LED Backpack Text Animator</title>
-<link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LED Backpack Text Animator</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
+    <!-- Left: Backgrounds & Resolution -->
     <section class="card left">
       <h3>Backgrounds & Resolution</h3>
       <div class="res-row">
@@ -17,38 +18,28 @@
           <option value="custom">Custom…</option>
         </select>
         <div id="customRes" class="hidden">
-          <input id="customW" type="number" value="96" />×
-          <input id="customH" type="number" value="128" />
+          <input id="customW" type="number" min="8" max="512" value="96" />×
+          <input id="customH" type="number" min="8" max="512" value="128" />
           <button id="applyRes" class="btn small">Apply</button>
         </div>
       </div>
       <div class="bg-grid" id="bgGrid"></div>
       <div class="bg-inputs">
-        <div id="solidWrap" class="hidden"><label>Solid</label><input type="color" id="solidPicker" value="#000000" /></div>
-        <div id="customWrap" class="hidden"><label>Custom</label><input type="file" id="customFile" accept="image/*,image/gif" /></div>
+        
+        
       </div>
-      <details id="aboutApp"><summary>About</summary>
-        <p><strong>LED Backpack Text Animator</strong> — Made by <a href="https://instagram.com/TheSkyLincoln" target="_blank">@TheSkyLincoln</a> with help from ChatGPT. Optimized for Kemimoto (96×128) & Ryangear (64×64).</p>
-        <div class="ownerUnlock">
-          <label for="ownerKeyInput">Owner Key</label>
-          <div class="row">
-            <input id="ownerKeyInput" type="password" placeholder="Type key and press Enter" />
-            <button id="ownerKeyBtn" class="btn secondary">Unlock</button>
-            <button id="openOwnerPresets" class="btn hidden">Owner Presets</button>
-          </div>
-        </div>
-      </details>
+
+      <section class="card about inner">
+        
+      </section>
     </section>
 
+    <!-- Center: Preview & actions -->
     <section class="card center">
       <div class="toolbar">
         <div class="left">
           <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
           <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
-        </div>
-        <div class="mid">
-          <button id="undoBtn" class="btn secondary">↩️ Undo</button>
-          <button id="redoBtn" class="btn secondary">↪️ Redo</button>
         </div>
         <div class="right">
           <button id="zoomOut" class="btn">-</button>
@@ -56,10 +47,12 @@
           <button id="zoomIn" class="btn">+</button>
         </div>
       </div>
+
       <div class="canvasWrap">
-        <canvas id="canvas" width="96" height="128"></canvas>
+        <canvas id="canvas" width="96" height="128" aria-label="LED preview canvas"></canvas>
         <div id="selection" class="selection hidden"></div>
       </div>
+
       <div class="actions">
         <button id="addLine" class="btn">+ Line</button>
         <button id="addWord" class="btn">+ Word</button>
@@ -67,14 +60,16 @@
       </div>
     </section>
 
+    <!-- Right: Inspector -->
     <aside class="card right">
       <h3>Inspector</h3>
       <div class="section">
         <label>Word</label>
         <input type="text" id="wordText" placeholder="Type word…" />
-        <label>Color</label>
+        <label style="margin-top:6px">Color</label>
         <input type="color" id="wordColor" value="#ffffff" />
       </div>
+
       <div class="section">
         <label>Font</label>
         <div class="row">
@@ -86,16 +81,24 @@
             <option value="sans-serif">Sans-serif</option>
             <option value="serif">Serif</option>
           </select>
-          <input type="number" id="fontSize" value="22" />
+          <input type="number" id="fontSize" min="6" max="64" value="22" />
         </div>
       </div>
+
       <div class="section">
         <label>Paragraph</label>
         <div class="row">
-          <div><label>Line Gap</label><input type="number" id="lineGap" value="2" /></div>
-          <div><label>Word Spacing</label><input type="number" id="wordGap" value="3" /></div>
+          <div>
+            <label>Line Gap</label>
+            <input type="number" id="lineGap" value="2" min="0" max="64" />
+          </div>
+          <div>
+            <label>Word Spacing</label>
+            <input type="number" id="wordGap" value="3" min="0" max="64" />
+          </div>
         </div>
       </div>
+
       <div class="section">
         <label>Alignment</label>
         <div class="row">
@@ -107,9 +110,11 @@
     </aside>
   </main>
 
+  <!-- Owner modal (hidden by default; only opens after unlock + click) -->
   <div id="ownerModal" class="modal hidden" aria-hidden="true">
     <div class="modalInner">
       <h3>Load Owner Preset</h3>
+      <p>Choose one of your presets:</p>
       <div class="btn-group">
         <button id="ownerPresetA" class="btn">Preset A — WILL WHEELIE FOR BOOKTOK GIRLIES</button>
         <button id="ownerPresetB" class="btn">Preset B — FREE RIDES FOR BOOKTOK GIRLIES</button>
