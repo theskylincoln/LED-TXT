@@ -38,4 +38,3 @@ canvas{background:var(--panel);image-rendering:pixelated;display:block;max-width
 .ownerUnlock input{padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:#0d1320;color:#e9f3ff}
 
 .owner-presets{margin-top:.5rem; display:flex; gap:.5rem; align-items:center}
-.owner-presets .muted{opacity:.7}

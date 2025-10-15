@@ -1,9 +1,4 @@
 document.addEventListener('DOMContentLoaded',()=>{
-  // Cleanup stray/unused elements if present
-  ['undoBtn','redoBtn','customWrap','solidWrap','aboutApp'].forEach(id=>{
-    const el=$(id); if(el && el.parentElement){ el.parentElement.removeChild(el); }
-  });
-
   const S={
     resMode:'96x128', res:{w:96,h:128}, zoom:2, animated:false,
     bg:{type:'preset', name:'Preset_A', color:'#000000', img:null},
@@ -152,7 +147,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 // --- Animation loop (RAF) ---
 let _rafId = null;
 function tick(){
-  // Example motion: nudge a phase used in draw()
   S._phase = (S._phase || 0) + 0.02;
   draw();
   if(S.animated) _rafId = requestAnimationFrame(tick);
@@ -174,14 +168,15 @@ function stopAnim(){
   function hideOwnerModal(){ const m=$('ownerModal'); if(m){ m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); } }
   function unlockOwner(){
     const val = ($('ownerKeyInput')?.value || '').trim().toLowerCase();
-    if(val===OWNER_KEY){ ownerUnlocked=true; $('ownerKeyInput')?.classList.add('hidden'); $('ownerKeyBtn')?.classList.add('hidden'); $('ownerPresetsInline')?.classList.remove('hidden'); }
+    if(val===OWNER_KEY){ ownerUnlocked=true; $('openOwnerPresets')?.classList.remove('hidden'); $('ownerPresetsInline')?.classList.remove('hidden'); $('ownerKeyInput')?.classList.add('hidden'); $('ownerKeyBtn')?.classList.add('hidden'); }
     else { alert('Invalid key'); }
   }
   bind('ownerKeyBtn','click', unlockOwner);
   bind('ownerKeyInput','keydown', e=>{ if(e.key==='Enter') unlockOwner(); });
+  bind('openOwnerPresets','click', showOwnerModal);
   bind('ownerClose','click', hideOwnerModal);
-  bind('ownerPresetA','click', ()=>{ applyOwnerPreset('A'); });
-  bind('ownerPresetB','click', ()=>{ applyOwnerPreset('B'); });
+  bind('ownerPresetA','click', ()=>{ applyOwnerPreset('A'); hideOwnerModal(); });
+  bind('ownerPresetB','click', ()=>{ applyOwnerPreset('B'); hideOwnerModal(); });
   function applyOwnerPreset(which){
     S.resMode='96x128'; S.res={w:96,h:128}; dprSetup(); setZoom(2);
     const img=new Image(); const file = which==='A' ? 'assets/Preset_A.png' : 'assets/Preset_B.png';
