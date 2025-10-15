@@ -64,3 +64,6 @@ canvas{background:#0d1320;image-rendering:pixelated;display:block;max-width:100%
 #fontFamily{padding:6px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:#0d1320; color:#e9f3ff}
 
 .undo-redo .btn{min-width:90px}
+
+.ownerUnlock input{padding:6px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:#0d1320; color:#e9f3ff}
+.hidden{display:none}

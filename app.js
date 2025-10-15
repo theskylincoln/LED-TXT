@@ -554,12 +554,15 @@ $('addWord').addEventListener('click',()=>{ pushHistory();
     reader.readAsText(f);
   });
 
+  
   (function init(){
+    S.resMode='96x128'; S.res={w:96,h:128};
     $('resMode').value='96x128';
     dprSetup(); setZoom(2); renderGrid();
     const img=new Image(); img.onload=()=>{ S.bg={type:'preset',name:'Preset_A',img}; draw(); }; img.src='assets/Preset_A.png';
     syncInspector(); openInspector(); stopAnim();
   })();
+
 });
 
 
@@ -646,3 +649,19 @@ $('addWord').addEventListener('click',()=>{ pushHistory();
     input.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter'){ commit(); } if(ev.key==='Escape'){ wrap.removeChild(input); }});
     input.addEventListener('blur', commit);
   });
+
+  // --- Owner Key via input, persistent for session ---
+  let ownerUnlocked = false;
+  function showOwnerModal(){ const m=$('ownerModal'); m.classList.remove('hidden'); m.setAttribute('aria-hidden','false'); }
+  function hideOwnerModal(){ const m=$('ownerModal'); m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); }
+  function unlockOwner(){
+    const val = $('ownerKeyInput')?.value?.trim().toLowerCase();
+    if(val === OWNER_KEY){ ownerUnlocked = true; $('openOwnerPresets').classList.remove('hidden'); toast('Owner presets unlocked'); }
+    else { toast('Invalid key'); }
+  }
+  $('ownerKeyBtn').addEventListener('click', unlockOwner);
+  $('ownerKeyInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ unlockOwner(); }});
+  $('openOwnerPresets').addEventListener('click', showOwnerModal);
+  $('ownerClose').addEventListener('click', hideOwnerModal);
+  $('ownerPresetA').addEventListener('click', ()=>{ applyOwnerPreset('A'); hideOwnerModal(); });
+  $('ownerPresetB').addEventListener('click', ()=>{ applyOwnerPreset('B'); hideOwnerModal(); });
