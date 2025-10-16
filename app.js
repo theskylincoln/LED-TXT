@@ -1,3 +1,4 @@
+const S={res:{w:128,h:96}, lines:[[{text:'Hello',size:22,color:'#FFFFFF',font:'Monospace',offset:{x:2,y:2}}]], font:{family:'Monospace', size:22, gap:2, wgap:3}, bg:{type:'solid', color:'#000'}, active:{line:0, word:0}, fxIntensity:.6};
 window.S = window.S || {};
 function $(id){ return document.getElementById(id); }
 function bind(id, ev, fn){ const el=$(id); if(el) el.addEventListener(ev, fn); }
@@ -328,11 +329,7 @@ function draw(){
   }
   blockH=Math.max(0,blockH-(S.font.gap||2));
 
-  let y=pad;
-  if(S.valign==='middle'){ y=Math.max(pad, Math.floor((c.height-blockH)/2)); }
-  else if(S.valign==='bottom'){ y=Math.max(pad, c.height-pad-blockH); }
-
-  for(let li=0; li<S.lines.length; li++){
+  let y = pad; for(let li=0; li<S.lines.length; li++){
     const line=S.lines[li]; const d=dims[li];
     let x=pad;
     if(S.align==='center'){ x=Math.max(pad, Math.floor((c.width-d.w)/2)); }
@@ -367,3 +364,18 @@ function draw(){
     y+=d.h+(S.font.gap||2);
   }
 }
+
+const PALETTE=['#00B2FF','#29FF60','#FFF200','#FF4DD2','#FF5757','#FFFFFF','#000000'];
+function renderSwatches(){
+  const wrap=document.querySelector('.swatches'); if(!wrap) return;
+  wrap.innerHTML=''; PALETTE.forEach(col=>{ const b=document.createElement('button'); b.className='swatch'; b.style.background=col; b.title=col; b.addEventListener('click',()=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.color=col; draw(); }}); wrap.appendChild(b); });
+}
+document.addEventListener('DOMContentLoaded', renderSwatches);
+
+function handleResolution(v){
+  const map={'96x128':{w:128,h:96},'64x64':{w:64,h:64},'128x96':{w:96,h:128}};
+  const R=map[v]||{w:128,h:96}; S.res={w:R.w,h:R.h}; const c=document.getElementById('canvas'); if(c){ c.width=R.w; c.height=R.h; } draw();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const rs=document.getElementById('resolutionSelect'); if(rs){ rs.addEventListener('change', e=> handleResolution(e.target.value)); handleResolution(rs.value); }
+});
