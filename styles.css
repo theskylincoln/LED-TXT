@@ -33,3 +33,5 @@ h1,h3{margin:.2rem 0 .6rem 0}
   #presetsCard{grid-column:2}
   #aboutApp{grid-column:1}
 }
+.preview.dragging{cursor:grabbing}
+.preview.can-drag{cursor:grab}

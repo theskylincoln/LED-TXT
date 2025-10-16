@@ -59,6 +59,26 @@
 
     <section class="card" id="inspector">
       <h3>Inspector</h3>
+      <div class="row">
+        <label class="select"><span>Horizontal Align</span>
+          <select id="alignmentSelect">
+            <option value="left" selected>Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+            <option value="manual">Manual (drag)</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label class="select"><span>Vertical Align</span>
+          <select id="valignSelect">
+            <option value="top" selected>Top</option>
+            <option value="middle">Middle</option>
+            <option value="bottom">Bottom</option>
+          </select>
+        </label>
+      </div>
+
       <label>Word <input id="wordInput" placeholder="Type word..."></label>
       <div class="colorRow">
         <label>Color <input id="wordColor" type="color" value="#FFFFFF"></label>
