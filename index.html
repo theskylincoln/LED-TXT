@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LED Backpack Animator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>LED Backpack Animator</h1>
+    <span class="badge">v1.1.1</span>
+  </header>
+  <main class="stack">
+    <section class="card" id="bgCard">
+      <h3>Backgrounds &amp; Resolution</h3>
+      <div class="bgThumbs">
+        <button class="bgTile" data-bg="presetA" title="Preset A"><img src="assets/Preset_A.png" alt="Preset A"></button>
+        <button class="bgTile" data-bg="presetB" title="Preset B"><img src="assets/Preset_B.png" alt="Preset B"></button>
+        <label class="bgTile add" title="Custom image">
+          <input id="bgCustomUpload" type="file" accept="image/*" style="display:none">
+          <span>＋ Custom</span>
+        </label>
+      </div>
+      <div class="row">
+        <label class="select"><span>Background</span>
+          <select id="bgType"><option value="preset" selected>Preset/Image</option><option value="solid">Solid Color</option></select>
+        </label>
+        <label class="select"><span>Resolution</span>
+          <select id="resolutionSelect"><option value="96x128" selected>96×128</option><option value="64x64">64×64</option><option value="128x96">128×96</option></select>
+        </label>
+      </div>
+      <div id="bgSolidWrap" class="bg-solid hidden"><label>Solid Color <input id="bgSolidColor" type="color" value="#000000"></label></div>
+    </section>
+
+    <section class="card" id="previewCard">
+      <div class="toolbar">
+        <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
+        <button id="modeHideAnim" class="btn secondary">🙈 Hide Animation</button>
+        <button id="renderBtn" class="btn">🎬 Render</button>
+        <div class="zoomWrap"><button id="zoomOut" class="btn">−</button><span id="zoomLbl">100%</span><button id="zoomIn" class="btn">＋</button></div>
+      </div>
+      <h3>Preview</h3>
+      <div class="preview">
+        <canvas id="canvas" width="128" height="96"></canvas>
+        <div id="selection" class="selection hidden"></div>
+      </div>
+    </section>
+
+    <section class="card" id="inspector">
+      <h3>Inspector</h3>
+      <label>Word <input id="wordInput" placeholder="Type word..."></label>
+      <div class="colorRow">
+        <label>Color <input id="wordColor" type="color" value="#FFFFFF"></label>
+        <div id="colorSwatches" class="swatches">
+          <button class="swatch" data-color="#00ACFF" title="Cyan"></button>
+          <button class="swatch" data-color="#00D200" title="Green"></button>
+          <button class="swatch" data-color="#FFD700" title="Gold"></button>
+          <button class="swatch" data-color="#FF3CC8" title="Pink"></button>
+          <button class="swatch" data-color="#FF2828" title="Red"></button>
+          <button class="swatch" data-color="#FFFFFF" title="White"></button>
+          <button class="swatch" data-color="#000000" title="Black"></button>
+        </div>
+      </div>
+      <div class="row">
+        <label class="select"><span>Font</span>
+          <select id="fontFamily"><option value="Monospace" selected>Monospace</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option></select>
+        </label>
+        <label>Size <input id="fontSize" type="number" min="6" max="72" value="22"></label>
+      </div>
+      <div class="row">
+        <label>Line Gap <input id="lineGap" type="number" min="0" max="10" value="2"></label>
+        <label>Word Spacing <input id="wordGap" type="number" min="0" max="10" value="3"></label>
+      </div>
+      <div class="row">
+        <button id="addLine" class="btn">+ Line</button>
+        <button id="addWord" class="btn">+ Word</button>
+        <button id="deleteWord" class="btn danger">× Delete Word</button>
+      </div>
+    </section>
+
+    <section class="card" id="animPanel">
+      <h3>Animation</h3>
+      <div class="row">
+        <label><input type="checkbox" id="fx-scroll"> Scroll</label>
+        <label><input type="checkbox" id="fx-jitter"> Jitter</label>
+        <label><input type="checkbox" id="fx-bounce"> Bounce</label>
+        <label><input type="checkbox" id="fx-wave"> Wave</label>
+        <label><input type="checkbox" id="fx-typewriter"> Typewriter</label>
+        <label><input type="checkbox" id="fx-pulse"> Pulse</label>
+        <label><input type="checkbox" id="fx-glitch"> Glitch</label>
+        <label><input type="checkbox" id="fx-bubble"> Bubble</label>
+        <label><input type="checkbox" id="fx-flicker"> Flicker</label>
+      </div>
+      <div class="row">
+        <label>Effect Intensity <input id="fxIntensity" type="range" min="0" max="100" value="60"></label>
+        <span id="fxIntensityVal" class="muted">60%</span>
+      </div>
+      <details id="fxAdv">
+        <summary>Advanced</summary>
+        <div class="adv">
+          <div class="row fxRow fx-scroll hidden"><label>Scroll speed</label><input type="range" id="fxScroll" min="1" max="200" value="20"><span id="fxScrollVal" class="muted">20</span></div>
+          <div class="row fxRow fx-jitter hidden"><label>Jitter amount</label><input type="range" id="fxJitter" min="0" max="10" step="0.1" value="2.0"><span id="fxJitterVal" class="muted">2.0</span></div>
+          <div class="row fxRow fx-bounce hidden"><label>Bounce amount</label><input type="range" id="fxBounce" min="0" max="10" step="0.1" value="2.0"><span id="fxBounceVal" class="muted">2.0</span></div>
+          <div class="row fxRow fx-wave hidden"><label>Wave amount</label><input type="range" id="fxWave" min="0" max="10" step="0.1" value="2.0"><span id="fxWaveVal" class="muted">2.0</span></div>
+          <div class="row fxRow fx-pulse hidden"><label>Pulse scale</label><input type="range" id="fxPulse" min="0" max="0.5" step="0.01" value="0.08"><span id="fxPulseVal" class="muted">0.08</span></div>
+          <div class="row fxRow fx-bubble hidden"><label>Bubble amount</label><input type="range" id="fxBubble" min="0" max="0.5" step="0.01" value="0.12"><span id="fxBubbleVal" class="muted">0.12</span></div>
+          <div class="row fxRow fx-glitch hidden"><label>Glitch amount</label><input type="range" id="fxGlitch" min="0" max="8" step="0.1" value="3.0"><span id="fxGlitchVal" class="muted">3.0</span></div>
+          <div class="row fxRow fx-glitch hidden"><label>Glitch frequency</label><input type="range" id="fxGlitchF" min="1" max="60" step="1" value="18"><span id="fxGlitchFVal" class="muted">18</span></div>
+          <div class="row fxRow fx-flicker hidden"><label>Flicker amount</label><input type="range" id="fxFlicker" min="0" max="1" step="0.01" value="0.3"><span id="fxFlickerVal" class="muted">0.3</span></div>
+          <div class="row fxRow fx-typewriter hidden"><label>Typewriter CPS</label><input type="range" id="fxTypeCPS" min="1" max="40" step="1" value="12"><span id="fxTypeCPSVal" class="muted">12</span></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card" id="presetsCard">
+      <h3>Presets</h3>
+      <div class="json-io">
+        <button id="downloadJson" class="btn secondary">⬇️ Download Preset (JSON)</button>
+        <label class="btn secondary">⬆️ Upload Preset (JSON)
+          <input id="uploadJson" type="file" accept=".json" style="display:none">
+        </label>
+      </div>
+    </section>
+
+    <section class="card" id="aboutApp">
+      <h3>About</h3>
+      <p>LED Backpack Text Animator — optimized for Kemimoto (96×128) and Ryangear (64×64).</p>
+      <div class="ownerGate">
+        <label>Owner Key</label>
+        <input id="ownerKeyInput" placeholder="Type key and press Enter">
+        <button id="ownerKeyBtn" class="btn">Unlock</button>
+        <div id="ownerPresetsInline" class="owner-presets hidden" style="margin-top:.5rem">
+          <span class="muted">Owner presets:</span>
+          <button id="ownerPresetA" class="btn">Preset A</button>
+          <button id="ownerPresetB" class="btn">Preset B</button>
+          <small class="muted">Unlock once per session to access your presets.</small>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="styles.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
