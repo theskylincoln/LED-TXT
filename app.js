@@ -482,3 +482,36 @@ bind('quickPresetBookTok','click', ()=>{
   if(typeof fitAll==='function') try{ fitAll(); }catch(_){}
   draw();
 });
+
+// Dynamic visibility of Advanced FX controls
+const fxMap = {
+  scroll:['fxScroll'],
+  jitter:['fxJitter'],
+  bounce:['fxBounce'],
+  wave:['fxWave'],
+  pulse:['fxPulse'],
+  bubble:['fxBubble'],
+  glitch:['fxGlitch','fxGlitchF'],
+  flicker:['fxFlicker'],
+  typewriter:['fxTypeCPS']
+};
+function updateFxVisibility(){
+  let anyChecked=false;
+  for(const key in fxMap){
+    const box=$('fx-'+key);
+    const on=box && box.checked;
+    for(const id of fxMap[key]){
+      const row=document.getElementById(id)?.closest('.row');
+      if(row) row.style.display=on?'grid':'none';
+    }
+    if(on) anyChecked=true;
+  }
+  // auto-expand Advanced section
+  const adv=document.getElementById('fxAdv');
+  if(adv && adv.tagName==='DETAILS'){ adv.open = anyChecked; }
+}
+Object.keys(fxMap).forEach(k=>{
+  const box=$('fx-'+k);
+  if(box){ box.addEventListener('change', updateFxVisibility); }
+});
+updateFxVisibility();
