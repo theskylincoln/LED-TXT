@@ -104,3 +104,104 @@ document.addEventListener('DOMContentLoaded', ()=>{
   bind('ownerKeyBtn','click', e=>{ e.preventDefault(); unlockOwner(); });
   $('ownerKeyInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); unlockOwner(); }});
 });
+
+
+// === Reactive updates & background color swatches ===
+function updateInspector(){
+  const L = S.active.line, W = S.active.word;
+  const word = (S.lines[L]||[])[W];
+  if(word){
+    const wi = $('wordInput'); if(wi && wi.value !== word.text) wi.value = word.text||'';
+    const wc = $('wordColor'); if(wc && wc.value.toLowerCase() !== (word.color||'#ffffff').toLowerCase()) wc.value = word.color||'#FFFFFF';
+    const ff = $('fontFamily'); if(ff && ff.value !== (word.font||S.font.family)) ff.value = word.font||S.font.family;
+    const fs = $('fontSize'); if(fs && parseInt(fs.value)!==(word.size||22)) fs.value = word.size||22;
+  }else{
+    const wi=$('wordInput'); if(wi) wi.value='';
+  }
+}
+
+function forceDraw(){ try{ draw(); }catch(e){ console.warn('draw failed', e); } }
+
+// Word input reactive
+['input','keyup','change','blur'].forEach(ev=>{
+  $('wordInput')?.addEventListener(ev, (e)=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.text=e.target.value; forceDraw(); } });
+  $('wordColor')?.addEventListener(ev, (e)=>{ const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.color=e.target.value; forceDraw(); } });
+});
+
+// Click canvas to select nearest word (basic hit test)
+(function enableCanvasSelect(){
+  const c=$('canvas'); if(!c) return;
+  c.addEventListener('click', (e)=>{
+    const rect=c.getBoundingClientRect();
+    const x=Math.floor((e.clientX-rect.left) * (c.width/rect.width));
+    const y=Math.floor((e.clientY-rect.top) * (c.height/rect.height));
+    const ctx=c.getContext('2d');
+    let best=Infinity, idx=0;
+    const L=S.lines[S.active.line]||[];
+    let cx=2, cy=2;
+    for(let i=0;i<L.length;i++){
+      const W=L[i];
+      ctx.font=(W.size||22)+'px '+(W.font||S.font.family);
+      const ox=(W.offset?.x ?? cx), oy=(W.offset?.y ?? cy);
+      const w=ctx.measureText(W.text||'').width, h=(W.size||22);
+      const centerX=ox+w/2, centerY=oy+h/2;
+      const d=(centerX-x)**2 + (centerY-y)**2;
+      if(d<best){ best=d; idx=i; }
+      cx = ox + w + (S.font.wgap||3);
+    }
+    S.active.word=idx;
+    updateInspector();
+    forceDraw();
+  });
+})();
+
+// Delete word button: always redraw and reseat selection
+(function fixDelete(){
+  const btn=$('deleteWord'); if(!btn) return;
+  btn.addEventListener('click', ()=>{
+    const L = S.active.line;
+    if(!S.lines[L]) return;
+    if(S.lines[L].length>0){
+      S.lines[L].splice(S.active.word, 1);
+      S.active.word = Math.max(0, S.active.word-1);
+    }
+    if(S.lines[L].length===0){
+      // ensure at least one empty word exists for editing
+      S.lines[L].push({text:'', color:'#FFFFFF', size:S.font.size, font:S.font.family, offset:{x:2,y:2}});
+      S.active.word=0;
+    }
+    updateInspector();
+    forceDraw();
+  });
+})();
+
+// Background color swatches
+(function bgSwatches(){
+  const wrap = $('bgColorSwatches'); if(!wrap) return;
+  wrap.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.swatch'); if(!btn) return;
+    const col = btn.getAttribute('data-bgcolor'); if(!col) return;
+    const inp = $('bgSolidColor'); if(inp) inp.value = col;
+    S.bg = {type:'solid', color: col, img:null};
+    // ensure bgType reflects solid and solid panel visible
+    const sel=$('bgType'); if(sel) sel.value='solid';
+    $('bgSolidWrap')?.classList.remove('hidden');
+    forceDraw();
+  });
+})();
+
+// Swatch clicks for word still apply & sync input
+(function wordSwatches(){
+  const sw=$('colorSwatches'); if(!sw) return;
+  sw.addEventListener('click', (ev)=>{
+    const btn=ev.target.closest('.swatch'); if(!btn) return;
+    const col=btn.getAttribute('data-color'); if(!col) return;
+    const W=S.lines[S.active.line]?.[S.active.word]; if(!W) return;
+    W.color=col; const inp=$('wordColor'); if(inp) inp.value=col;
+    forceDraw();
+  });
+})();
+
+// Ensure inspector shows current selection on load
+updateInspector();
+

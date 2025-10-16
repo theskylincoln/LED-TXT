@@ -30,7 +30,17 @@
           <select id="resolutionSelect"><option value="96x128" selected>96×128</option><option value="64x64">64×64</option><option value="128x96">128×96</option></select>
         </label>
       </div>
-      <div id="bgSolidWrap" class="bg-solid hidden"><label>Solid Color <input id="bgSolidColor" type="color" value="#000000"></label></div>
+      <div id="bgSolidWrap" class="bg-solid hidden">
+  <label>Solid Color <input id="bgSolidColor" type="color" value="#000000"></label>
+  <div id="bgColorSwatches" class="swatches" style="margin-top:.35rem">
+    <button class="swatch" data-bgcolor="#000000" title="Black"></button>
+    <button class="swatch" data-bgcolor="#111827" title="Deep Navy"></button>
+    <button class="swatch" data-bgcolor="#0D9488" title="Teal"></button>
+    <button class="swatch" data-bgcolor="#1E293B" title="Slate"></button>
+    <button class="swatch" data-bgcolor="#111111" title="Near Black"></button>
+    <button class="swatch" data-bgcolor="#FFFFFF" title="White"></button>
+  </div>
+</div>
     </section>
 
     <section class="card" id="previewCard">
