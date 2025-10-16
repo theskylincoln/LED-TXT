@@ -58,7 +58,25 @@
           </div>
         </details>
       </section>
+
+<section class="card" id="previewCard">
+  <h3>Preview</h3>
+  <div class="preview">
+    <canvas id="canvas" width="128" height="96"></canvas>
+    <div id="selection" class="selection hidden"></div>
+  </div>
+</section>
+
     </section>
+
+<section class="card" id="previewCard">
+  <h3>Preview</h3>
+  <div class="preview">
+    <canvas id="canvas" width="128" height="96"></canvas>
+    <div id="selection" class="selection hidden"></div>
+  </div>
+</section>
+
 
     <!-- Center: Preview & actions -->
     <section class="card center">
@@ -93,6 +111,15 @@
         <button id="deleteWord" class="btn danger">✖ Delete Word</button>
       </div>
     </section>
+
+<section class="card" id="previewCard">
+  <h3>Preview</h3>
+  <div class="preview">
+    <canvas id="canvas" width="128" height="96"></canvas>
+    <div id="selection" class="selection hidden"></div>
+  </div>
+</section>
+
 
     <!-- Right: Inspector -->
     <aside class="card right">
@@ -189,7 +216,45 @@
   </div>
   </details>
 </aside>
-  </main>
+  
+<section class="card" id="bgCard">
+  <h3>Backgrounds & Resolution</h3>
+  <div class="bgThumbs">
+    <button class="bgTile" data-bg="presetA" title="Preset A"><img src="assets/Preset_A.png" alt="Preset A"></button>
+    <button class="bgTile" data-bg="presetB" title="Preset B"><img src="assets/Preset_B.png" alt="Preset B"></button>
+    <label class="bgTile add" title="Custom image">
+      <input id="bgCustomUpload" type="file" accept="image/*" style="display:none">
+      <span>＋ Custom</span>
+    </label>
+  </div>
+  <div class="bgControls">
+    <select id="bgType">
+      <option value="preset">Preset/Image</option>
+      <option value="solid">Solid Color</option>
+    </select>
+    <select id="resolutionSelect">
+      <option value="96x128" selected>96×128</option>
+      <option value="64x64">64×64</option>
+      <option value="128x96">128×96</option>
+    </select>
+  </div>
+  <div id="bgSolidWrap" class="bg-solid" style="display:none;margin-top:.5rem">
+    <label>Solid Color <input id="bgSolidColor" type="color" value="#000000"></label>
+  </div>
+</section>
+
+
+<section class="card" id="presetsCard">
+  <h3>Presets</h3>
+  <div class="json-io">
+    <button id="downloadJson" class="btn secondary">⬇️ Download Preset (JSON)</button>
+    <label class="btn secondary">⬆️ Upload Preset (JSON)
+      <input id="uploadJson" type="file" accept=".json" style="display:none" />
+    </label>
+  </div>
+</section>
+
+</main>
 
   <!-- Owner modal (hidden by default; only opens after unlock + click) -->
     </div>
