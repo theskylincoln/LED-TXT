@@ -7,21 +7,10 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="build-badge" title="LED Backpack Animator v1.0.0">v1.0.0</div>
   <main class="container">
-    <!-- Left: Backgrounds & Resolution</h3>
-<div class="bgThumbs">
-  <label class="bgTile add">
-    <input id="bgCustomUpload" type="file" accept="image/*" style="display:none">
-    <span>＋ Custom</span>
-  </label></div><h3 -->
+    <!-- Left: Backgrounds & Resolution -->
     <section class="card left">
       <h3>Backgrounds & Resolution</h3>
-<div class="bgThumbs">
-  <label class="bgTile add">
-    <input id="bgCustomUpload" type="file" accept="image/*" style="display:none">
-    <span>＋ Custom</span>
-  </label></div><h3</h3>
       <div class="res-row">
         <select id="resMode">
           <option value="96x128" selected>96×128</option>
@@ -60,7 +49,7 @@
               <button id="ownerKeyBtn" class="btn secondary">Unlock</button>
               
             </div>
-            <div id="ownerPresetsInline" class="owner-presets hidden hidden">
+            <div id="ownerPresetsInline" class="owner-presets hidden">
               <span class="muted">Owner presets:</span>
               <button id="ownerPresetA" class="btn">Preset A</button>
               <button id="ownerPresetB" class="btn">Preset B</button>
@@ -68,26 +57,18 @@
             <small class="muted">Unlock once per session to access your presets.</small>
           </div>
         </details>
-        <div class="bg-solid" style="margin-top:.5rem">
-    <label>Solid Color <input id="bgSolidColor" type="color" value="#000000"></label>
-  </div>
-</section>
-      <div class="bg-solid" style="margin-top:.5rem">
-    <label>Solid Color <input id="bgSolidColor" type="color" value="#000000"></label>
-  </div>
-</section>
+      </section>
+    </section>
 
     <!-- Center: Preview & actions -->
     <section class="card center">
       <div class="toolbar">
-  <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
-  <button id="modeHideAnim" class="btn secondary">🙈 Hide Animation</button>
         <div class="left">
-          
-          
+          <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
+          <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
           <button id="renderNow" class="btn secondary">🎬 Render</button>
-          
-          
+          <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
+          <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
         </div>
         <div class="mid">
           
@@ -111,10 +92,7 @@
         <button id="addWord" class="btn">+ Word</button>
         <button id="deleteWord" class="btn danger">✖ Delete Word</button>
       </div>
-      <div class="bg-solid" style="margin-top:.5rem">
-    <label>Solid Color <input id="bgSolidColor" type="color" value="#000000"></label>
-  </div>
-</section>
+    </section>
 
     <!-- Right: Inspector -->
     <aside class="card right">
@@ -189,7 +167,10 @@
           <option value="glitch">Glitch</option>
         </select>
       </div>
-      
+      <div class="row small">
+        <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
+        <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
+      </div>
       <details id="fxAdv">
       <summary>Advanced</summary>
       <div class="anim-adv">
