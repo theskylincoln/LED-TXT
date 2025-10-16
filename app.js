@@ -465,3 +465,20 @@ _bindFxSlider('fxGlitch','glitch',1);
 _bindFxSlider('fxGlitchF','glitchF',1);
 _bindFxSlider('fxFlicker','flicker',1);
 _bindFxSlider('fxTypeCPS','typeCPS',1);
+
+// Ensure owner presets inline are hidden on load unless unlocked
+(function ownerPresetsInlineInit(){
+  const el = $('ownerPresetsInline'); if(el) el.classList.add('hidden');
+})();
+
+bind('quickPresetBookTok','click', ()=>{
+  S.lines = [[
+    {text:'Will', color:'#FFFFFF', size:28, font:S.font.family},
+    {text:'Wheelie', color:'#00ACFF', size:32, font:S.font.family},
+    {text:'for', color:'#FFD700', size:24, font:S.font.family},
+    {text:'BookTok', color:'#FF3CC8', size:30, font:S.font.family},
+    {text:'Girlies', color:'#00D200', size:30, font:S.font.family}
+  ]];
+  if(typeof fitAll==='function') try{ fitAll(); }catch(_){}
+  draw();
+});
