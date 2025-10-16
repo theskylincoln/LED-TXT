@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+<div class="build-badge" title="LED Backpack Animator v1.0.0">v1.0.0</div>
   <main class="container">
     <!-- Left: Backgrounds & Resolution -->
     <section class="card left">
@@ -66,8 +67,12 @@
         <div class="left">
           <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
           <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
+          <button id="renderNow" class="btn secondary">🎬 Render</button>
+          <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
+          <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
         </div>
         <div class="mid">
+          
           <button id="undoBtn" class="btn secondary">↩️ Undo</button>
           <button id="redoBtn" class="btn secondary">↪️ Redo</button>
         </div>
@@ -98,6 +103,14 @@
         <input type="text" id="wordText" placeholder="Type word…" />
         <label style="margin-top:6px">Color</label>
         <input type="color" id="wordColor" value="#ffffff" />
+<div id="colorSwatches" class="swatches">
+  <button class="swatch" data-color="#00ACFF" title="Cyan"></button>
+  <button class="swatch" data-color="#00D200" title="Green"></button>
+  <button class="swatch" data-color="#FFD700" title="Gold"></button>
+  <button class="swatch" data-color="#FF3CC8" title="Pink"></button>
+  <button class="swatch" data-color="#FF2828" title="Red"></button>
+  <button class="swatch" data-color="#FFFFFF" title="White"></button>
+</div>
       </div>
 
       <div class="section">
@@ -138,15 +151,51 @@
         </div>
       </div>
     </aside>
+<aside class="card right" id="animPanel">
+  <details open>
+    <summary>Animation</summary>
+    <div class="anim-controls">
+      <div class="row">
+        <label>Style</label>
+        <select id="animStyle">
+          <option value="none">None</option>
+          <option value="scroll">Scroll</option>
+          <option value="jitter">Jitter</option>
+          <option value="bounce">Bounce</option>
+          <option value="wave">Wave</option>
+          <option value="typewriter">Typewriter</option>
+          <option value="pulse">Pulse</option>
+          <option value="glitch">Glitch</option>
+        </select>
+      </div>
+      <div class="row small">
+        <button id="modeHideAnim" class="btn">🙈 Hide Animation</button>
+        <button id="modeShowAnim" class="btn">🌀 Show Animation</button>
+      </div>
+      <details id="fxAdv">
+      <summary>Advanced</summary>
+      <div class="anim-adv">
+        <div class="row"><label for="fxScroll">Scroll speed</label><input type="range" id="fxScroll" min="1" max="200" value="20"><span class="muted" id="fxScrollVal">20</span></div>
+        <div class="row"><label for="fxJitter">Jitter amount</label><input type="range" id="fxJitter" min="0" max="10" step="0.1" value="2.0"><span class="muted" id="fxJitterVal">2.0</span></div>
+        <div class="row"><label for="fxBounce">Bounce amount</label><input type="range" id="fxBounce" min="0" max="10" step="0.1" value="2.0"><span class="muted" id="fxBounceVal">2.0</span></div>
+        <div class="row"><label for="fxWave">Wave amount</label><input type="range" id="fxWave" min="0" max="10" step="0.1" value="2.0"><span class="muted" id="fxWaveVal">2.0</span></div>
+        <div class="row"><label for="fxPulse">Pulse scale</label><input type="range" id="fxPulse" min="0" max="0.5" step="0.01" value="0.08"><span class="muted" id="fxPulseVal">0.08</span></div>
+        <div class="row"><label for="fxBubble">Bubble amount</label><input type="range" id="fxBubble" min="0" max="0.5" step="0.01" value="0.12"><span class="muted" id="fxBubbleVal">0.12</span></div>
+        <div class="row"><label for="fxGlitch">Glitch amount</label><input type="range" id="fxGlitch" min="0" max="8" step="0.1" value="3.0"><span class="muted" id="fxGlitchVal">3.0</span></div>
+        <div class="row"><label for="fxGlitchF">Glitch frequency</label><input type="range" id="fxGlitchF" min="1" max="60" step="1" value="18"><span class="muted" id="fxGlitchFVal">18</span></div>
+        <div class="row"><label for="fxFlicker">Flicker amount</label><input type="range" id="fxFlicker" min="0" max="1" step="0.01" value="0.3"><span class="muted" id="fxFlickerVal">0.3</span></div>
+        <div class="row"><label for="fxTypeCPS">Typewriter CPS</label><input type="range" id="fxTypeCPS" min="1" max="40" step="1" value="12"><span class="muted" id="fxTypeCPSVal">12</span></div>
+      </div>
+    </details>
+  </div>
+  </details>
+</aside>
   </main>
 
   <!-- Owner modal (hidden by default; only opens after unlock + click) -->
-  <button id="ownerClose" class="btn secondary" style="margin-top:10px">Close</button>
     </div>
   </div>
 
   <script src="app.js"></script>
 </body>
 </html>
-
-<div class="bg-solid card"><label>Solid Color <input id="bgSolidColor" type="color" value="#000000"/></label></div>

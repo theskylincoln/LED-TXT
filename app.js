@@ -54,7 +54,59 @@ document.addEventListener('DOMContentLoaded',()=>{
     else if(S.bg.img){ CTX.drawImage(S.bg.img,0,0,S.res.w,S.res.h); }
     else { CTX.fillStyle='#0d1320'; CTX.fillRect(0,0,S.res.w,S.res.h); }
     computeLayout();
-    for(const b of S.boxes){ const W=S.lines[b.line][b.word]; CTX.fillStyle=W.color||'#fff'; CTX.font=`${S.font.size}px ${S.font.family}`; CTX.textBaseline='top'; CTX.fillText(W.text||'', b.x, b.y); }
+    
+    
+    
+    for(const b of S.boxes){
+      const W=S.lines[b.line][b.word];
+      const text=W.text||'';
+      const size=W.size||S.font.size, fam=W.font||S.font.family;
+      let ax=0, ay=0, scale=1, alpha=1;
+      const t=S._phase||0; const k=(S.fxIntensity!=null? S.fxIntensity:0.6);
+      // combine effects
+      if(S.animated && S.animEffects){
+        if(S.animEffects.has('scroll')){ const sp = (S.fxParams?.scroll||20)*(0.2+1.8*k); ay += -((t*sp) % (S.res.h+1)); }
+        if(S.animEffects.has('jitter')){ const A=(S.fxParams?.jitter||2.0)*(0.2+0.8*k); ax += Math.sin((b.x+b.y+t*40))*A; ay += Math.cos((b.x-b.y+t*33))*A; }
+        if(S.animEffects.has('bounce')){ const A=(S.fxParams?.bounce||2.0)*(0.2+0.8*k); ay += Math.sin(t*2 + b.line*0.8)*A; }
+        if(S.animEffects.has('wave')){   const A=(S.fxParams?.wave||2.0)*(0.2+0.8*k); ax += Math.sin(t*3 + (b.x*0.08))*A; }
+        if(S.animEffects.has('pulse')){  const A = (S.fxParams?.pulse||0.08)*(0.2+0.8*k); scale *= 1 + A*Math.sin(t*4 + b.word*0.7); }
+        if(S.animEffects.has('bubble')){ const A = (S.fxParams?.bubble||0.12)*(0.2+0.8*k); scale *= 1 + A*Math.sin(t*2 + b.word*0.9); ay += (0.5+2.5*k)*Math.sin(t*2 + b.word); }
+        if(S.animEffects.has('glitch')){ const A = (S.fxParams?.glitch||3.0)*(0.2+0.8*k); const F = (S.fxParams?.glitchF||18); if(((t*F)|0)%10===0){ ax += (Math.random()-0.5)*A; ay += (Math.random()-0.5)*(A*0.7); } }
+        if(S.animEffects.has('flicker')){ const A = (S.fxParams?.flicker||0.3)*(0.5+0.5*k); alpha *= (1-A) + A*Math.abs(Math.sin(t*10 + (b.word*0.5))); }
+      }
+      CTX.save();
+      CTX.globalAlpha = alpha;
+      CTX.fillStyle = W.color||'#fff';
+      CTX.textBaseline='top';
+      const drawText = (str)=>{
+        if(scale!==1){
+          CTX.save();
+          CTX.font = `${Math.round(size*scale)}px ${fam}`;
+          CTX.fillText(str, b.x+ax, b.y+ay);
+          CTX.restore();
+        } else {
+          CTX.font = `${size}px ${fam}`;
+          CTX.fillText(str, b.x+ax, b.y+ay);
+        }
+      };
+      if(S.animated && S.animEffects && S.animEffects.has('typewriter')){
+        const cps = 12; // chars/sec
+        const shown = Math.max(0, Math.min(text.length, Math.floor((t*cps) - (b.line*2)) ));
+        const partial = text.slice(0, shown);
+        drawText(partial);
+        // caret
+        if(shown < text.length){
+          const w = CTX.measureText(partial).width;
+          CTX.fillRect((b.x+ax)+w+1, (b.y+ay), 1, Math.max(8, Math.round(size*1.1)));
+        }
+      } else {
+        drawText(text);
+      }
+      CTX.restore();
+    }
+    
+    }
+    
     const nb=S.boxes.find(bb=> bb.line===S.active.line && bb.word===S.active.word);
     if(nb && !S.animated && S.showSel){ placeSelection(nb); } else { clearSelection(); }
   }
@@ -146,8 +198,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Owner Key flow (no auto-open)
   const OWNER_KEY='abraham';
   let ownerUnlocked=false;
-  function showOwnerModal(){}
-  function hideOwnerModal(){}
+  function showOwnerModal(){ const m=$('ownerModal'); if(m && ownerUnlocked){ m.classList.remove('hidden'); m.setAttribute('aria-hidden','false'); } }
+  function hideOwnerModal(){ const m=$('ownerModal'); if(m){ m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); } }
   function unlockOwner(){
     const val = ($('ownerKeyInput')?.value || '').trim().toLowerCase();
     if(val===OWNER_KEY){ ownerUnlocked=true; $('ownerPresetsInline')?.classList.remove('hidden'); $('ownerKeyInput')?.classList.add('hidden'); $('ownerKeyBtn')?.classList.add('hidden'); }
@@ -186,6 +238,9 @@ function tick(){ S._phase=(S._phase||0)+0.02; draw(); if(S.animated) _rafId=requ
 function startAnim(){ if(!S.animated){ S.animated=true; } if(_rafId==null){ _rafId=requestAnimationFrame(tick); } }
 function stopAnim(){ S.animated=false; if(_rafId!=null){ cancelAnimationFrame(_rafId); _rafId=null; } draw(); }
 
+bind('renderNow','click', ()=>{ startAnim(); setTimeout(()=>stopAnim(), 1200); });
+
+
 bind('bgType','change', e=>{
   const v=e.target.value;
   if(v==='solid'){ S.bg={type:'solid', color: $('bgSolidColor')?.value || '#000000', img:null}; }
@@ -200,6 +255,7 @@ bind('bgCustomUpload','change', e=>{
   img.onload=()=>{ S.bg={type:'image', name:f.name, img}; draw(); };
   img.src=url;
 });
+
 
 bind('downloadJson','click', ()=>{
   const payload = {version:1, res:S.res, bg:{type:S.bg?.type||'preset', name:S.bg?.name||S.bg?.type, color:S.bg?.color||'#000000'}, lines:S.lines, font:S.font};
@@ -216,3 +272,196 @@ bind('uploadJson','change', async e=>{
     draw();
   }catch(err){ alert('Invalid JSON'); }
 });
+
+
+const sw = $('colorSwatches');
+if(sw){
+  sw.addEventListener('click', e=>{
+    const btn = e.target.closest('.swatch'); if(!btn) return;
+    const color = btn.getAttribute('data-color'); if(!color) return;
+    const W=S.lines[S.active.line]?.[S.active.word]; if(W){ W.color=color; }
+    const inp=$('wordColor'); if(inp) inp.value=color;
+    draw();
+  });
+}
+
+
+// Drag-to-move on canvas
+const canvas=$('canvas'), selection=$('selection');
+let dragging=null;
+function hitTest(x,y){
+  if(!Array.isArray(S.boxes)) return null;
+  for(let i=S.boxes.length-1;i>=0;i--){
+    const b=S.boxes[i];
+    if(x>=b.x && x<=b.x+b.w && y>=b.y && y<=b.y+b.h) return b;
+  }
+  return null;
+}
+canvas.addEventListener('mousedown', e=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=(e.clientX-rect.left)/(S.zoom||1), y=(e.clientY-rect.top)/(S.zoom||1);
+  const b=hitTest(x,y);
+  if(b){
+    S.active.line=b.line; S.active.word=b.word;
+    dragging={ox:x-b.x, oy:y-b.y, b};
+    if(selection){ selection.classList.remove('hidden'); selection.style.left=(b.x*(S.zoom||1))+'px'; selection.style.top=(b.y*(S.zoom||1))+'px'; selection.style.width=(b.w*(S.zoom||1))+'px'; selection.style.height=(b.h*(S.zoom||1))+'px'; }
+  } else {
+    dragging=null; if(selection) selection.classList.add('hidden');
+  }
+});
+canvas.addEventListener('mousemove', e=>{
+  if(!dragging) return;
+  const rect=canvas.getBoundingClientRect();
+  const x=(e.clientX-rect.left)/(S.zoom||1), y=(e.clientY-rect.top)/(S.zoom||1);
+  const W=S.lines[dragging.b.line]?.[dragging.b.word];
+  if(W){
+    W.offset = {x:Math.round(x-dragging.ox), y:Math.round(y-dragging.oy)};
+    draw();
+  }
+});
+window.addEventListener('mouseup', ()=> dragging=null);
+
+
+function textWidth(ctx, text){ return ctx.measureText(text).width; }
+function fitLine(ctx, lineWords, maxWidth, baseSize, family){
+  // Reduce sizes until total width fits (with word gaps)
+  const sizes = lineWords.map(w=> w.size || baseSize);
+  const texts = lineWords.map(w=> w.text || '');
+  let total = ()=> texts.reduce((acc, t, i)=>{
+    ctx.font = `${sizes[i]}px ${lineWords[i].font || family}`;
+    return acc + textWidth(ctx,t) + (i? (S.font?.wgap||3):0);
+  },0);
+  let safe=0;
+  while(total() > maxWidth && safe<100){
+    for(let i=0;i<sizes.length;i++){ if(sizes[i]>6) sizes[i]-=1; }
+    safe++;
+  }
+  for(let i=0;i<lineWords.length;i++){ lineWords[i].size = sizes[i]; }
+}
+function fitAll(){
+  const c=$('canvas'); if(!c) return; const ctx=c.getContext('2d');
+  const maxW = c.width;
+  for(let li=0; li<S.lines.length; li++){
+    const line = S.lines[li];
+    fitLine(ctx, line, maxW, S.font.size, S.font.family);
+  }
+}
+
+
+// Refit after structure changes
+['addLine','addWord','deleteWord','fontSize','fontFamily','lineGap','wordGap'].forEach(id=>{
+  bind(id, 'change', ()=>{ fitAll(); draw(); });
+  bind(id, 'click',  ()=>{ fitAll(); draw(); });
+});
+
+
+// Post-draw: rebuild S.boxes if missing using rough metrics
+if(typeof draw==='function'){
+  const _origDraw = draw;
+  draw = function(){
+    _origDraw();
+    try{
+      const c=$('canvas'), ctx=c.getContext('2d');
+      const boxes=[];
+      let y=0;
+      for(let li=0; li<S.lines.length; li++){
+        const line=S.lines[li]; let x=0; const gap=S.font?.wgap||3; const lgap=S.font?.gap||2;
+        for(let wi=0; wi<line.length; wi++){
+          const W=line[wi];
+          const size = W.size || S.font.size;
+          const fam  = W.font || S.font.family;
+          ctx.font = `${size}px ${fam}`;
+          const w = Math.ceil(ctx.measureText(W.text||'').width);
+          const h = Math.ceil(size*1.2);
+          const bx = (W.offset?.x!=null)? W.offset.x : x;
+          const by = (W.offset?.y!=null)? W.offset.y : y;
+          boxes.push({x:bx,y:by,w:w,h:h,line:li,word:wi});
+          x += w + gap;
+        }
+        y += (S.font?.size||22) + lgap;
+      }
+      S.boxes = boxes;
+    }catch(_e){}
+  }
+}
+
+
+S.animStyle='none';
+bind('animStyle','change', e=>{ S.animStyle=e.target.value; draw(); });
+
+S.animEffects = new Set();
+function setFx(name, on){
+  if(on) S.animEffects.add(name); else S.animEffects.delete(name);
+  draw();
+}
+const fxIds = ['scroll','jitter','bounce','wave','typewriter','pulse','glitch','bubble','flicker'];
+fxIds.forEach(n=>{
+  const el = document.getElementById('fx-'+n);
+  if(el){ el.addEventListener('change', e=> setFx(n, e.target.checked)); }
+});
+// Presets
+function applyFxPreset(name){
+  const presets = {
+    subtle:     ['wave','flicker'],
+    energetic:  ['bounce','jitter','pulse'],
+    retro:      ['typewriter'],
+    scroller:   ['scroll'],
+    calm:       ['wave']
+  };
+  const list = presets[name] || [];
+  S.animEffects = new Set(list);
+  fxIds.forEach(n=>{ const el=document.getElementById('fx-'+n); if(el) el.checked = S.animEffects.has(n); });
+  draw();
+}
+['subtle','energetic','retro','scroller','calm'].forEach(p=>{
+  const el = document.getElementById('fxPreset-'+p);
+  if(el){ el.addEventListener('click', e=>{ e.preventDefault(); applyFxPreset(p); }); }
+});
+
+S.fxIntensity = 0.6; // 0..1
+const fxIntEl = document.getElementById('fxIntensity');
+const fxIntVal = document.getElementById('fxIntensityVal');
+if(fxIntEl){
+  fxIntEl.addEventListener('input', e=>{
+    const v = Math.max(0, Math.min(100, parseInt(e.target.value)||0));
+    S.fxIntensity = v/100;
+    if(fxIntVal) fxIntVal.textContent = v+'%';
+    draw();
+  });
+  // sync visual to state on load
+  fxIntEl.value = Math.round(S.fxIntensity*100);
+  if(fxIntVal) fxIntVal.textContent = Math.round(S.fxIntensity*100)+'%';
+}
+
+// Advanced per-effect parameters
+S.fxParams = {
+  scroll: 20,
+  jitter: 2.0,
+  bounce: 2.0,
+  wave:   2.0,
+  pulse:  0.08,
+  bubble: 0.12,
+  glitch: 3.0,
+  glitchF:18,
+  flicker:0.3,
+  typeCPS:12
+};
+function _bindFxSlider(id, key, mul=1){
+  const el=document.getElementById(id), v=document.getElementById(id+'Val');
+  if(!el) return;
+  const sync=()=>{ if(v) v.textContent = el.value; };
+  el.addEventListener('input', ()=>{ S.fxParams[key]=parseFloat(el.value)*mul; sync(); draw(); });
+  el.value = S.fxParams[key]/mul;
+  sync();
+}
+['fxScroll','fxJitter','fxBounce','fxWave','fxPulse','fxBubble','fxGlitch','fxGlitchF','fxFlicker','fxTypeCPS'].forEach(()=>{}); // placeholder to keep order
+_bindFxSlider('fxScroll','scroll',1);
+_bindFxSlider('fxJitter','jitter',1);
+_bindFxSlider('fxBounce','bounce',1);
+_bindFxSlider('fxWave','wave',1);
+_bindFxSlider('fxPulse','pulse',1);
+_bindFxSlider('fxBubble','bubble',1);
+_bindFxSlider('fxGlitch','glitch',1);
+_bindFxSlider('fxGlitchF','glitchF',1);
+_bindFxSlider('fxFlicker','flicker',1);
+_bindFxSlider('fxTypeCPS','typeCPS',1);
