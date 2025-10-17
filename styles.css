@@ -25,3 +25,5 @@ details summary{cursor:pointer}
 .hidden{display:none}
 .swatches{display:flex;gap:.4rem}
 .swatches button{width:26px;height:26px;border-radius:8px;border:1px solid #2b3b54}
+.float{position:absolute;z-index:15;transform:translate(-50%,-120%);}
+.sel-outline{outline:2px solid #ff4dff; outline-offset:-2px; border-radius:2px}

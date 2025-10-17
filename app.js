@@ -1,49 +1,73 @@
 const $=id=>document.getElementById(id);
+const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let BASE_ZOOM = IS_MOBILE ? 100 : 25;  // desktop base 25%
+let zoomPct = 100; // user label
+
+function applyZoomLabel(){
+  $('zoomPct').textContent = zoomPct + '%';
+  const c = $('canvas');
+  const cssWidthPct = BASE_ZOOM * (zoomPct/100);
+  c.style.width = cssWidthPct + '%';
+  c.style.height = 'auto';
+  positionFloatDelete();
+}
 
 function updateFxUI(){
-  const pr=document.getElementById('rowPulse');
-  const fr=document.getElementById('rowFlick');
-  pr.style.display=$('fx-pulse').checked?'':'none';
-  fr.style.display=$('fx-flicker').checked?'':'none';
+  $('rowPulse').style.display=$('fx-pulse').checked?'':'none';
+  $('rowFlick').style.display=$('fx-flicker').checked?'':'none';
 }
 
 const S = {
   res:{w:96,h:128},
-  bg:{type:'preset', preset:1, color:'#000000'},
+  bg:{type:'preset', preset:1, color:'#000000', image:null},
   lines:[[{text:'Hello', color:'#ffffff', size:22, font:'Monospace', offset:{x:4,y:4}}]],
   font:{family:'Monospace', size:22, gap:2, wgap:3},
-  alignH:'left',
+  alignH:'center',
   active:{line:0, word:0},
   anim:{show:false},
   layout:[],
   _phase:0,
 };
 
-const SWATCHES = ['#00d1ff','#2ecc71','#1abc9c','#ffee55','#ff66cc','#ff4d4d','#ffffff','#e9eef8','#000000'];
+const TEXT_SWATCHES = ['#00d1ff','#2ecc71','#1abc9c','#ffee55','#ff66cc','#ff4d4d','#ffffff','#e9eef8','#000000'];
+const BG_SWATCHES = ['#000000','#111111','#1b1b1b','#202a44','#4b0056','#120b35','#1c2030','#101820','#0d0d0d'];
 
 function init(){
-  // build color swatches
+  // text swatches
   const host=$('swatches');
-  SWATCHES.forEach(c=>{
+  TEXT_SWATCHES.forEach(c=>{
     const b=document.createElement('button'); b.style.background=c; b.title=c;
     b.addEventListener('click',()=>{ const W=currentWord(); if(W){W.color=c; draw();}});
     host.appendChild(b);
+  });
+  // bg swatches
+  const bgs=$('bgSwatches');
+  BG_SWATCHES.forEach(c=>{
+    const b=document.createElement('button'); b.style.background=c; b.title=c;
+    b.addEventListener('click',()=>{ S.bg={type:'solid', color:c}; $('solidBg').value=c; draw();});
+    bgs.appendChild(b);
   });
 
   // bg tiles
   document.querySelectorAll('.bg-tile').forEach(btn=>btn.addEventListener('click', ()=>{
     const kind=btn.dataset.bg;
-    if(kind==='preset1'){ S.bg={type:'preset', preset:1}; }
-    else if(kind==='preset2'){ S.bg={type:'preset', preset:2}; }
-    else if(kind==='solid'){ S.bg={type:'solid', color:$('solidBg').value}; }
+    if(kind==='preset1'){ S.bg={type:'preset', preset:1, image:null}; }
+    else if(kind==='preset2'){ S.bg={type:'preset', preset:2, image:null}; }
+    else if(kind==='solid'){ S.bg={type:'solid', color:$('solidBg').value, image:null}; }
     draw();
   }));
   $('solidBg').addEventListener('input',()=>{ if(S.bg.type==='solid'){ S.bg.color=$('solidBg').value; draw(); }});
+  $('bgFile').addEventListener('change', (e)=>{
+    const f=e.target.files && e.target.files[0]; if(!f) return;
+    const img=new Image(); img.onload=()=>{ S.bg={type:'image', image:img}; draw(); };
+    img.src = URL.createObjectURL(f);
+  });
 
   // resolution
   $('resPick').addEventListener('change', e=> handleResolution(e.target.value));
 
   // inspector
+  $('alignH').value='center'; S.alignH='center';
   $('alignH').addEventListener('change',e=>{S.alignH=e.target.value; draw();});
   $('wordInput').addEventListener('input',e=>{ const W=currentWord(); if(W){W.text=e.target.value; draw();}});
   $('fontSize').addEventListener('input',e=>{ const W=currentWord(); if(W){W.size=parseInt(e.target.value)||22; draw();}});
@@ -65,13 +89,16 @@ function init(){
     $('wordInput').value='Word';
     draw();
   });
-  $('delWord').addEventListener('click', ()=>{
+  $('delWord').addEventListener('click', deleteActive);
+  $('floatDelete').addEventListener('click', deleteActive);
+
+  function deleteActive(){
     ensureActiveLine();
     const L=S.lines[S.active.line]; if(!L.length) return;
     L.splice(S.active.word,1);
     if(L.length===0){ S.lines.splice(S.active.line,1); S.active.line=Math.max(0,S.active.line-1); ensureActiveLine(); }
-    S.active.word=0; draw();
-  });
+    S.active.word=0; hideFloatDelete(); draw();
+  }
 
   // effects
   $('fx-pulse').addEventListener('change',()=>{updateFxUI(); draw();});
@@ -89,6 +116,7 @@ function init(){
 
   enableCanvasIME();
   handleResolution('96x128');
+  applyZoomLabel();
   updateFxUI();
   syncInspector();
   tick();
@@ -100,16 +128,14 @@ function currentWord(){ ensureActiveLine(); return S.lines[S.active.line][S.acti
 function handleResolution(v){
   const map={'96x128':{w:96,h:128}, '64x64':{w:64,h:64}};
   S.res = map[v] || {w:96,h:128};
-  const c=$('canvas'); c.width=S.res.w; c.height=S.res.h; c.style.width='100%'; c.style.height='auto';
-  $('zoomPct').textContent='100%';
+  const c=$('canvas'); c.width=S.res.w; c.height=S.res.h;
+  zoomPct=100; applyZoomLabel();
   draw(); requestAnimationFrame(draw);
 }
 
 function setZoom(mult){
-  const c=$('canvas'); const cur=parseFloat($('zoomPct').textContent)||100;
-  const next=Math.max(25, Math.min(400, Math.round(cur*mult)));
-  $('zoomPct').textContent=next+'%';
-  c.style.width=next+'%'; c.style.height='auto';
+  zoomPct = Math.max(25, Math.min(400, Math.round(zoomPct*mult)));
+  applyZoomLabel();
 }
 
 function tick(ts){ S._phase=((ts||0)/1000)||0; if(S.anim.show) draw(); requestAnimationFrame(tick); }
@@ -125,6 +151,8 @@ function draw(){
     if(S.bg.preset===1){ g.addColorStop(0,'#0b0d16'); g.addColorStop(1,'#16213f'); }
     else { g.addColorStop(0,'#121212'); g.addColorStop(1,'#2d0030'); }
     ctx.fillStyle=g; ctx.fillRect(0,0,c.width,c.height);
+  } else if(S.bg.type==='image' && S.bg.image){
+    ctx.drawImage(S.bg.image, 0,0, c.width,c.height);
   } else { ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height); }
 
   // layout
@@ -151,6 +179,7 @@ function draw(){
   blockH=Math.max(0,blockH-(S.font.gap||2));
   let y=Math.max(pad, Math.floor((c.height-blockH)/2));
 
+  let activeHit=null;
   for(let li=0; li<S.lines.length; li++){
     const line=S.lines[li], d=lineDims[li]; let x=pad;
     if(S.alignH==='center') x=Math.max(pad, Math.floor((c.width-d.lw*d.scale)/2));
@@ -168,12 +197,37 @@ function draw(){
       else{ ctx.fillText(text,ox,oy); }
       ctx.restore();
 
-      S.layout.push({line:li,word:wi,x:ox,y:oy,w:Math.max(6,Math.ceil(w)),h:Math.max(6,Math.ceil(size))});
+      const hit={line:li,word:wi,x:ox,y:oy,w:Math.max(6,Math.ceil(w)),h:Math.max(6,Math.ceil(size))};
+      S.layout.push(hit);
+      if(li===S.active.line && wi===S.active.word){ activeHit=hit; }
+
       x += w + (S.font.wgap||3)*d.scale;
     }
     y += d.lh*d.scale + (S.font.gap||2);
   }
+
+  if(activeHit){
+    ctx.save();
+    ctx.strokeStyle='#ff4dff'; ctx.lineWidth=1; ctx.strokeRect(activeHit.x-1,activeHit.y-1,activeHit.w+2,activeHit.h+2);
+    ctx.restore();
+    positionFloatDelete(activeHit);
+  } else {
+    hideFloatDelete();
+  }
 }
+
+function positionFloatDelete(hit){
+  const btn=$('floatDelete'); const c=$('canvas');
+  if(!hit){ btn.classList.add('hidden'); return; }
+  const rect=c.getBoundingClientRect();
+  const sx=rect.width/c.width, sy=rect.height/c.height;
+  const px=rect.left + (hit.x + hit.w) * sx;
+  const py=rect.top + hit.y * sy;
+  btn.style.left=px+'px'; btn.style.top=py+'px';
+  btn.classList.remove('hidden');
+}
+
+function hideFloatDelete(){ $('floatDelete').classList.add('hidden'); }
 
 function syncInspector(){
   const W=currentWord(); if(!W) return;
@@ -182,34 +236,56 @@ function syncInspector(){
 }
 
 function openIMEAt(px,py){
-  const ime=$('canvasIME'); const wrap=document.querySelector('.preview-canvas-wrap');
+  const ime=$('canvasIME');
   ime.style.left=px+'px'; ime.style.top=py+'px';
   ime.value=currentWord()?.text||''; ime.classList.remove('hidden'); ime.focus();
 }
 
 function enableCanvasIME(){
   const c=$('canvas'), ime=$('canvasIME');
-  let lastTap=0, dragging=false, dragDX=0, dragDY=0;
+  let dragging=false, dragDX=0, dragDY=0;
+  let lpTimer=null;
+
+  const LONG_MS=450;
 
   function pos(e){
-    const r=c.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX);
-    const cy=(e.touches?e.touches[0].clientY:e.clientY);
-    const mx=(cx-r.left)*(c.width/r.width), my=(cy-r.top)*(c.height/r.height);
-    return {rect:r, cx, cy, mx, my};
+    const r=c.getBoundingClientRect(); const px=(e.touches? e.touches[0].clientX:e.clientX)-r.left;
+    const py=(e.touches? e.touches[0].clientY:e.clientY)-r.top;
+    const mx=px*(c.width/r.width), my=py*(c.height/r.height);
+    return {rect:r, px, py, mx, my};
   }
   function hit(mx,my){
     for(let i=S.layout.length-1;i>=0;i--){ const h=S.layout[i]; if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h) return h; }
     return null;
   }
 
+  // Touch: single tap selects; long-press edits (with haptic when supported)
+  c.addEventListener('touchstart',(e)=>{
+    const p=pos(e); const h=hit(p.mx,p.my);
+    if(!h){ hideFloatDelete(); return; }
+    S.active={line:h.line,word:h.word}; syncInspector(); draw();
+
+    if(lpTimer) clearTimeout(lpTimer);
+    lpTimer=setTimeout(()=>{
+      if(navigator.vibrate) navigator.vibrate(20);
+      openIMEAt(p.px,p.py);
+    }, LONG_MS);
+  }, {passive:false});
+
+  c.addEventListener('touchmove',()=>{ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } }, {passive:false});
+  c.addEventListener('touchend',()=>{ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } }, {passive:false});
+  c.addEventListener('touchcancel',()=>{ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } }, {passive:false});
+
+  // Mouse: click selects; double-click edits
   c.addEventListener('click',(e)=>{
     const p=pos(e); const h=hit(p.mx,p.my);
-    const now=Date.now(), dbl=(now-lastTap)<350; lastTap=now;
-    if(h){ S.active={line:h.line,word:h.word}; syncInspector(); draw();
-      if(dbl){ const rx=p.cx-p.rect.left, ry=p.cy-p.rect.top; openIMEAt(rx,ry); }
-    }
+    if(h){ S.active={line:h.line,word:h.word}; syncInspector(); draw(); } else { hideFloatDelete(); }
+  });
+  c.addEventListener('dblclick',(e)=>{
+    const p=pos(e); const h=hit(p.mx,p.my); if(h){ openIMEAt(p.px,p.py); }
   });
 
+  // Drag for manual align
   function startDrag(e){
     if(S.alignH!=='manual') return;
     const p=pos(e); const h=hit(p.mx,p.my);
@@ -231,12 +307,13 @@ function enableCanvasIME(){
   document.addEventListener('touchmove',moveDrag,{passive:false});
   document.addEventListener('touchend',endDrag);
 
+  // IME
   ime.addEventListener('input',()=>{ const W=currentWord(); if(W){ W.text=ime.value; $('wordInput').value=W.text; draw(); } });
   ime.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); ime.classList.add('hidden'); } });
   ime.addEventListener('blur',()=> ime.classList.add('hidden'));
 }
 
-// stub render: download PNG of current canvas
+// Render stub (PNG snapshot). GIF export will be added later.
 window.addEventListener('load', ()=>{
   $('btnRender').addEventListener('click', ()=>{
     const a=document.createElement('a'); a.download=($('fileName').value||'led_backpack')+'.png';

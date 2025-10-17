@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator v1.2.4</title>
+  <title>LED Backpack Animator v1.2.6</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <header><h1>LED Backpack Animator <small>v1.2.4</small></h1></header>
+  <header><h1>LED Backpack Animator <small>v1.2.6</small></h1></header>
 
   <section class="panel">
     <h2>Backgrounds &amp; Resolution</h2>
@@ -26,7 +26,10 @@
         <option value="96x128">96×128</option>
         <option value="64x64">64×64</option>
       </select>
-      <input type="color" id="solidBg" value="#000000" title="Solid color" />
+      <label>Solid
+        <input type="color" id="solidBg" value="#000000" title="Solid color" />
+      </label>
+      <div id="bgSwatches" class="swatches"></div>
     </div>
   </section>
 
@@ -57,6 +60,7 @@
     <div class="preview-canvas-wrap">
       <canvas id="canvas"></canvas>
       <input id="canvasIME" class="hidden ime" placeholder="edit..." />
+      <button id="floatDelete" class="float danger hidden">× Delete</button>
     </div>
   </section>
 
@@ -66,7 +70,7 @@
       <label>Horizontal Align
         <select id="alignH">
           <option value="left">Left</option>
-          <option value="center">Center</option>
+          <option value="center" selected>Center</option>
           <option value="right">Right</option>
           <option value="manual">Manual (drag)</option>
         </select>
