@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>LED Backpack Animator v1.4.7</title>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div class="bg-row">
+    <select id="resolution">
+      <option value="96x128">96×128</option>
+      <option value="64x64">64×64</option>
+    </select>
+    <div class="thumb" data-type="preset" data-name="Preset_A"><img src="assets/Preset_A.png"><span>A</span></div>
+    <div class="thumb" data-type="preset" data-name="Preset_B"><img src="assets/Preset_B.png"><span>B</span></div>
+    <div class="thumb" data-type="preset" data-name="Preset_C"><img src="assets/Preset_C.png"><span>C</span></div>
+    <div class="thumb" data-type="preset" data-name="Preset_D"><img src="assets/Preset_D.png"><span>D</span></div>
+    <div class="thumb" data-type="solid"><img src="assets/Solid.png"><span>Solid</span></div>
+    <label class="thumb upload">
+      <input type="file" id="bgUpload" accept="image/*" hidden/>
+      <img src="assets/Upload.png"><span>Upload</span>
+    </label>
+  </div>
+  <div class="toolbar">
+    <button id="btnPreview">Preview Animation</button>
+    <button id="btnEdit">Edit Mode</button>
+    <button id="btnUndo">Undo</button>
+    <button id="btnRedo">Redo</button>
+    <button id="btnClear">Clear All Text</button>
+    <div class="zoom">
+      <button id="zoomOut">−</button>
+      <span id="zoomPct">100%</span>
+      <button id="zoomIn">+</button>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="canvasWrap">
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+    <div id="deletePill" class="deletePill">✕ Delete</div>
+  </div>
+</main>
+
+<footer class="inspector" id="inspector">
+  <div class="accordion">
+    <details class="sec" id="secFont">
+      <summary>Font</summary>
+      <div class="row">
+        <label>Family</label>
+        <select id="fontFamily">
+          <option value="monospace">Monospace</option>
+          <option value="sans-serif">Sans</option>
+          <option value="serif">Serif</option>
+        </select>
+        <label>Size</label>
+        <input type="number" id="fontSize" min="6" max="96" value="22"/>
+        <label><input type="checkbox" id="autoSize" checked/> Auto-size (per line)</label>
+      </div>
+    </details>
+
+    <details class="sec" id="secColor">
+      <summary>Color</summary>
+      <div class="swatches" id="swatches">
+        <button class="sw" data-color="#35c5ff" style="--c:#35c5ff"></button>
+        <button class="sw" data-color="#38e35c" style="--c:#38e35c"></button>
+        <button class="sw" data-color="#ffd426" style="--c:#ffd426"></button>
+        <button class="sw" data-color="#ff5bbf" style="--c:#ff5bbf"></button>
+        <button class="sw" data-color="#ff4d4d" style="--c:#ff4d4d"></button>
+        <button class="sw" data-color="#ffffff" style="--c:#ffffff"></button>
+        <button class="sw" data-color="#000000" style="--c:#000000"></button>
+      </div>
+      <div class="row">
+        <input type="color" id="colorPicker" value="#ffffff"/>
+        <button id="addSwatch">Add Swatch</button>
+        <small>Tip: right‑click a custom swatch to delete</small>
+      </div>
+    </details>
+
+    <details class="sec" id="secSpacing">
+      <summary>Spacing</summary>
+      <div class="row">
+        <label>Line Gap</label>
+        <input type="number" id="lineGap" min="0" max="16" value="2"/>
+        <label>Word Spacing</label>
+        <input type="number" id="wordSpacing" min="0" max="16" value="3"/>
+      </div>
+    </details>
+
+    <details class="sec" id="secAlign">
+      <summary>Alignment</summary>
+      <div class="row">
+        <div class="alignBtns">
+          <button data-align="left">Left</button>
+          <button data-align="center" class="active">Center</button>
+          <button data-align="right">Right</button>
+          <button data-align="manual">Manual (drag)</button>
+          <button id="btnReset">Reset</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="sec" id="secAnim">
+      <summary>Animation</summary>
+      <div class="row animRow">
+        <label><input type="checkbox" id="anPulse"> Pulse</label>
+        <input type="range" id="pulseAmt" min="0" max="100" value="60"/>
+      </div>
+      <div class="row animRow">
+        <label><input type="checkbox" id="anFlicker"> Flicker</label>
+        <input type="range" id="flickerAmt" min="0" max="100" value="40"/>
+      </div>
+    </details>
+
+    <div class="row">
+      <button id="btnAddLine">+ Add Line</button>
+      <button id="btnAddWord" class="ghost">+ Add Word</button>
+    </div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
