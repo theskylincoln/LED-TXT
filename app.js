@@ -1,10 +1,11 @@
-// Core canvas/state logic for v1.4.1
+
+// v1.4.2 behavior adjustments
 const canvas = document.getElementById('preview');
 const ctx = canvas.getContext('2d');
 const dpi = () => window.devicePixelRatio || 1;
 
 let zoom = 1;
-let editMode = true; // true = edit mode; false = show animation
+let editMode = true; // true = Edit Mode (no animation), false = Preview Animation
 let model = [
   [{ text:'Hello', color:'#ffffff', size:22, align:'center', manual:false, x:0, y:40, fx:{pulse:false,pulseAmt:60,flicker:false,flickerAmt:40} }]
 ];
@@ -64,20 +65,24 @@ function buildBgThumbs(){
   bgHost.appendChild(custom);
 }
 
-// Inspector bar
+// Inspector bar (always visible, collapsed by default; disabled until selection)
 const inspBar = document.getElementById('inspectorBar');
 function setInspectorEnabled(enabled){
   if(enabled) inspBar.classList.remove('disabled');
   else inspBar.classList.add('disabled');
 }
+['slotFont','slotColor','slotSpacing','slotAlign','slotAnim'].forEach(id=>{
+  const d = document.getElementById(id);
+  d.open = false; // start collapsed
+});
 
-// Empty state (Add word if no words)
+// Empty state
 const emptyState = document.getElementById('emptyState');
 const btnAddWord = document.getElementById('btnAddWord');
 function refreshEmptyState(){
   const hasWords = model.some(line => line.length>0);
-  if(!hasWords){ emptyState.classList.remove('hidden'); setInspectorEnabled(false); }
-  else { emptyState.classList.add('hidden'); setInspectorEnabled(true); }
+  emptyState.classList.toggle('hidden', hasWords);
+  setInspectorEnabled(hasWords && hasSelection());
 }
 btnAddWord.addEventListener('click', ()=>{
   if(model.length===0) model=[[]];
@@ -87,8 +92,8 @@ btnAddWord.addEventListener('click', ()=>{
 });
 
 // Toolbar
-document.getElementById('btnShow').addEventListener('click',()=>{ editMode=false; draw(); });
-document.getElementById('btnEdit').addEventListener('click',()=>{ editMode=true; draw(); });
+document.getElementById('btnPreview').addEventListener('click',()=>{ editMode=false; clearSelection(); draw(); });
+document.getElementById('btnEdit').addEventListener('click',()=>{ editMode=true; clearSelection(); draw(); });
 document.getElementById('btnRender').addEventListener('click',()=>{
   canvas.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='led_frame.png'; a.click(); URL.revokeObjectURL(a.href); });
 });
@@ -103,56 +108,22 @@ const zl = document.getElementById('zoomLabel');
 document.getElementById('btnZoomIn').addEventListener('click',()=>{ zoom=Math.min(4,zoom+0.1); zl.textContent=Math.round(zoom*100)+'%'; setResolution(resSel.value); });
 document.getElementById('btnZoomOut').addEventListener('click',()=>{ zoom=Math.max(0.25,zoom-0.1); zl.textContent=Math.round(zoom*100)+'%'; setResolution(resSel.value); });
 
-// Inspector controls
-const fontSize = document.getElementById('fontSize');
-const autoSize = document.getElementById('autoSize');
-const lineGapCtl = document.getElementById('lineGap');
-const wordSpacingCtl = document.getElementById('wordSpacing');
-const fxPulse = document.getElementById('fxPulse');
-const fxFlicker = document.getElementById('fxFlicker');
-const fxPulseAmt = document.getElementById('fxPulseAmt');
-const fxFlickerAmt = document.getElementById('fxFlickerAmt');
-const wordSwatches = document.getElementById('wordSwatches');
-const wordPicker = document.getElementById('wordColorPicker');
-const addWordSwatch = document.getElementById('addWordSwatch');
-const DEFAULT_SWATCHES = ['#23A8FF','#32D74B','#FFD60A','#FF7AB6','#FF453A','#FFFFFF','#000000'];
-let customSwatches = JSON.parse(localStorage.getItem('LED.customWordSwatches')||'[]');
-function allSwatches(){ return [...DEFAULT_SWATCHES, ...customSwatches]; }
-function renderWordSwatches(){
-  wordSwatches.innerHTML='';
-  allSwatches().forEach(hex=>{
-    const d=document.createElement('button');
-    d.className='sw'; d.style.background=hex; d.title=hex; d.type='button';
-    d.addEventListener('click',()=>{ if(hasSelection()){ wordAt(selected).color=hex; draw(); pushHistory(); }});
-    wordSwatches.appendChild(d);
-  });
-}
-addWordSwatch.addEventListener('click',()=>{
-  const hex=(wordPicker.value||'').toUpperCase(); if(!hex) return;
-  if(!customSwatches.includes(hex)){ if(customSwatches.length>=5) customSwatches.shift(); customSwatches.push(hex); localStorage.setItem('LED.customWordSwatches', JSON.stringify(customSwatches)); renderWordSwatches(); }
-});
-renderWordSwatches();
-
-// Alignment buttons
-document.querySelectorAll('.btn.align').forEach(btn=> btn.addEventListener('click',()=>{
-  if(!hasSelection()) return;
-  const a=btn.dataset.align; const w=wordAt(selected);
-  w.align = a==='manual'?'manual':a; w.manual=(a==='manual'); draw();
-}));
-
-document.getElementById('btnAddLine').addEventListener('click',()=>{
-  model.push([{ text:'New', color:'#ffffff', size:22, align:'center', manual:false, x:0, y: lineY(model.length), fx:{pulse:false,pulseAmt:60,flicker:false,flickerAmt:40} }]);
-  selected={line:model.length-1, word:0};
-  pushHistory(); draw(); refreshEmptyState();
-});
-
-// Selection & inline edit (single-click to edit now)
-const overlay = document.getElementById('uiOverlay');
+// Selection, background click to deselect, and inline edit
 const deleteBtn = document.getElementById('btnDeleteWord');
-
-function clearSelection(){ selected={line:-1,word:-1}; setInspectorEnabled(false); deleteBtn.classList.add('hidden'); }
+function clearSelection(){ selected={line:-1,word:-1}; positionDelete(); setInspectorEnabled(false); }
 function hasSelection(){ return selected.line>=0 && selected.word>=0; }
 function wordAt(sel){ return model[sel.line][sel.word]; }
+function wordSpacing(){ return parseInt(document.getElementById('wordSpacing').value,10)||3; }
+function lineGap(){ return parseInt(document.getElementById('lineGap').value,10)||2; }
+function lineY(li){ const size = model[li]?.[0]?.size || 22; return size + li*(size+lineGap()); }
+function textWidth(w){ ctx.font=`${w.size}px monospace`; return Math.ceil(ctx.measureText(w.text).width); }
+function layoutStartX(li){
+  const words = model[li]; const mode = words[0]?.align || 'center';
+  if(mode==='left') return 2;
+  if(mode==='right'){ let total=0; words.forEach((w,i)=> total += textWidth(w) + (i>0?wordSpacing():0)); return canvas.width/dpi() - total - 2; }
+  let total=0; words.forEach((w,i)=> total += textWidth(w) + (i>0?wordSpacing():0)); return Math.floor((canvas.width/dpi() - total)/2);
+}
+function sumPrev(li, wi){ let s=0; for(let i=0;i<wi;i++) s += textWidth(model[li][i]) + wordSpacing(); return s; }
 function boundsOf(sel){
   const w=wordAt(sel); const tw=textWidth(w);
   const x = w.manual ? w.x : layoutStartX(sel.line) + sumPrev(sel.line, sel.word);
@@ -161,30 +132,45 @@ function boundsOf(sel){
 }
 
 canvas.addEventListener('click', (e)=>{
-  const p=toCanvasPoint(e);
-  const hit=hitTest(p.x,p.y);
+  const r=canvas.getBoundingClientRect();
+  const x=(e.clientX-r.left)/(3*zoom)*dpi();
+  const y=(e.clientY-r.top)/(3*zoom)*dpi();
+  const hit = hitTest(x,y);
   if(hit){
-    selected=hit;
-    if(!editMode){ editMode=true; } // selecting a word while animating switches to edit mode
-    // Start inline edit immediately on click
-    openInlineEditorAtSelection();
-    positionDelete();
+    // Selecting a word always switches to Edit Mode and enables inspector
+    editMode = true;
+    selected = hit;
     setInspectorEnabled(true);
+    openInlineEditorAtSelection();
     draw();
   }else{
-    clearSelection(); draw();
+    clearSelection();
+    draw();
   }
 });
 
+function hitTest(x,y){
+  for(let li=0; li<model.length; li++){
+    const line=model[li];
+    let xPos = layoutStartX(li);
+    for(let wi=0; wi<line.length; wi++){
+      const w=line[wi]; const tw=textWidth(w);
+      const bx=(w.manual?w.x:xPos), by=(w.manual?w.y:lineY(li));
+      if(x>=bx-2 && x<=bx+tw+2 && y>=by-w.size && y<=by+4) return {line:li,word:wi};
+      xPos += tw + wordSpacing();
+    }
+  }
+  return null;
+}
+
 function positionDelete(){
-  if(!hasSelection()) return;
+  if(!hasSelection()){ deleteBtn.classList.add('hidden'); return; }
   const b=boundsOf(selected); const rect=canvas.getBoundingClientRect();
-  // top-right of word
+  // Pin delete at top-right of the selected word
   deleteBtn.style.left = (rect.left + (b.x + b.w + 8)*3*zoom/dpi())+'px';
   deleteBtn.style.top  = (rect.top  + (b.y - 20)*3*zoom/dpi())+'px';
   deleteBtn.classList.remove('hidden');
 }
-
 deleteBtn.addEventListener('click', ()=>{
   if(!hasSelection()) return;
   const line=model[selected.line];
@@ -193,7 +179,7 @@ deleteBtn.addEventListener('click', ()=>{
   clearSelection(); pushHistory(); draw(); refreshEmptyState();
 });
 
-// Inline editor (single-click starts editing)
+// Inline editor (opens immediately on word click)
 function openInlineEditorAtSelection(){
   if(!hasSelection()) return;
   const w=wordAt(selected);
@@ -210,11 +196,11 @@ function openInlineEditorAtSelection(){
     const parts = edit.value.split(' ');
     w.text = parts[0];
     if(parts.length>1){
-      // insert remaining words after current
       const rest = parts.slice(1).map(t=>({ text:t, color:w.color, size:w.size, align:w.align, manual:w.manual, x:w.x, y:w.y, fx:Object.assign({},w.fx) }));
       model[selected.line].splice(selected.word+1, 0, ...rest);
     }
     if(document.getElementById('autoSize').checked){ fitLine(selected.line); }
+    positionDelete();
     draw();
   });
   function done(){ edit.remove(); pushHistory(); }
@@ -222,30 +208,10 @@ function openInlineEditorAtSelection(){
   edit.addEventListener('blur', done);
 }
 
-// Layout helpers
-function toCanvasPoint(e){
-  const r=canvas.getBoundingClientRect();
-  return { x:(e.clientX-r.left)/(3*zoom)*dpi(), y:(e.clientY-r.top)/(3*zoom)*dpi() };
-}
-function wordSpacing(){ return parseInt(document.getElementById('wordSpacing').value,10)||3; }
-function lineGap(){ return parseInt(document.getElementById('lineGap').value,10)||2; }
-function lineY(li){ const size = model[li]?.[0]?.size || 22; return size + li*(size+lineGap()); }
-function textWidth(w){ ctx.font=`${w.size}px monospace`; return Math.ceil(ctx.measureText(w.text).width); }
-function layoutStartX(li){
-  const words = model[li]; const mode = words[0]?.align || 'center';
-  if(mode==='left') return 2;
-  if(mode==='right'){ let total=0; words.forEach((w,i)=> total += textWidth(w) + (i>0?wordSpacing():0)); return canvas.width/dpi() - total - 2; }
-  // center
-  let total=0; words.forEach((w,i)=> total += textWidth(w) + (i>0?wordSpacing():0)); return Math.floor((canvas.width/dpi() - total)/2);
-}
-function sumPrev(li, wi){
-  let s=0; for(let i=0;i<wi;i++) s += textWidth(model[li][i]) + wordSpacing(); return s;
-}
-
 // Autosize per line
 function fitLine(li){
   const words = model[li]; if(!words?.length) return;
-  const max = canvas.width/dpi() - 4; // pad
+  const max = canvas.width/dpi() - 4;
   let size = words[0].size||22;
   for(let tries=0; tries<40; tries++){
     let total=0;
@@ -255,7 +221,7 @@ function fitLine(li){
   words.forEach(w=> w.size=size);
 }
 
-// Inspector inputs wire-up
+// Inspector inputs
 document.getElementById('fontSize').addEventListener('input',()=>{ if(hasSelection()){ wordAt(selected).size=parseInt(fontSize.value,10)||22; draw(); }});
 document.getElementById('autoSize').addEventListener('change',()=>{ if(hasSelection()) fitLine(selected.line); draw(); });
 document.getElementById('lineGap').addEventListener('input',()=> draw());
@@ -268,26 +234,25 @@ document.getElementById('fxFlickerAmt').addEventListener('input',()=>{ if(hasSel
 
 // Draw
 function draw(ts){
-  // bg
+  // background
   if(bg.type==='solid'){ ctx.fillStyle = bg.color; ctx.fillRect(0,0,canvas.width,canvas.height); }
   else if(bg.type==='preset'){
-    // load correct preset asset per id and paint as image
     const img = new Image();
     img.onload = ()=>{ ctx.drawImage(img, 0,0, canvas.width, canvas.height); drawWords(ts); };
     img.src = `assets/Preset_${bg.preset}.png`;
-    return; // drawWords will be called in onload
+    return;
   } else if(bg.type==='image' && bg.img){ ctx.drawImage(bg.img,0,0,canvas.width,canvas.height); }
   drawWords(ts);
 }
 
 function drawWords(ts){
+  refreshEmptyState();
   for(let li=0; li<model.length; li++){
     const line=model[li];
-    if(document.getElementById('autoSize').checked) fitLine(li);
+    if(document.getElementById('autoSize').checked && line.length) fitLine(li);
     let x = layoutStartX(li);
     for(let wi=0; wi<line.length; wi++){
       const w=line[wi];
-      // anim only when Show Animation mode
       let scale=1, alpha=1;
       if(!editMode){
         if(w.fx.pulse){ scale = 1 + (w.fx.pulseAmt/100)*0.2*Math.sin((ts||0)/300 + wi + li*0.7); }
@@ -310,7 +275,7 @@ function drawWords(ts){
         ctx.strokeStyle='#ff57f0'; ctx.lineWidth=1; ctx.strokeRect(drawX-1, drawY-1, Math.ceil(tw)+2, w.size+2);
         positionDelete();
       }
-      x += textWidth(w) + (parseInt(document.getElementById('wordSpacing').value,10)||3);
+      x += textWidth(w) + wordSpacing();
     }
   }
   if(!editMode) requestAnimationFrame(draw);

@@ -1,13 +1,14 @@
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator — v1.4.1</title>
+  <title>LED Backpack Animator — v1.4.2</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <header class="app-title">LED Backpack Animator <span class="ver">v1.4.1</span></header>
+  <header class="app-title">LED Backpack Animator <span class="ver">v1.4.2</span></header>
 
   <!-- BACKGROUND & RESOLUTION AT TOP -->
   <section class="card">
@@ -26,7 +27,7 @@
     <section class="card">
       <h2>Preview</h2>
       <div class="toolbar">
-        <button id="btnShow" class="btn">Show Animation</button>
+        <button id="btnPreview" class="btn">Preview Animation</button>
         <button id="btnEdit" class="btn">Edit Mode</button>
         <button id="btnRender" class="btn">Render</button>
         <button id="btnClearText" class="btn danger">Clear All Text</button>
@@ -45,9 +46,9 @@
         </div>
       </div>
 
-      <!-- PINNED INSPECTOR BAR BELOW PREVIEW -->
+      <!-- Inspector BAR (pinned, collapsed sections) -->
       <div id="inspectorBar" class="inspector-bar disabled">
-        <details class="slot" id="slotFont" open>
+        <details class="slot" id="slotFont">
           <summary>Font</summary>
           <div class="slot-body">
             <label>Size <input id="fontSize" type="number" min="6" max="64" value="22"/></label>
@@ -84,18 +85,22 @@
 
         <details class="slot" id="slotAnim">
           <summary>Animation</summary>
-          <div class="slot-body">
-            <label class="inline"><input type="checkbox" id="fxPulse"/> Pulse</label>
-            <input type="range" id="fxPulseAmt" min="0" max="100" value="60" />
-            <label class="inline"><input type="checkbox" id="fxFlicker"/> Flicker</label>
-            <input type="range" id="fxFlickerAmt" min="0" max="100" value="35" />
+          <div class="slot-body column">
+            <div class="anim-line">
+              <label class="inline"><input type="checkbox" id="fxPulse"/> Pulse</label>
+              <input type="range" id="fxPulseAmt" min="0" max="100" value="60" />
+            </div>
+            <div class="anim-line">
+              <label class="inline"><input type="checkbox" id="fxFlicker"/> Flicker</label>
+              <input type="range" id="fxFlickerAmt" min="0" max="100" value="35" />
+            </div>
           </div>
         </details>
 
         <button id="btnAddLine" class="btn small">+ Line</button>
       </div>
 
-      <!-- Add word fallback when there are no words -->
+      <!-- Empty-state Add Word -->
       <div id="emptyState" class="empty hidden">
         <p>No words yet.</p>
         <button id="btnAddWord" class="btn">+ Add Word</button>
@@ -103,7 +108,7 @@
     </section>
   </main>
 
-  <footer class="foot"><small>Single‑click a word to edit in place. Space splits into a new word. Animations show in “Show Animation”. Selecting a word switches back to “Edit Mode”.</small></footer>
+  <footer class="foot"><small>Click background to deselect. Click a word to enter Edit Mode and edit inline; space splits it into a new word. Use “Preview Animation” to play current effects.</small></footer>
 
   <script src="app.js"></script>
 </body>

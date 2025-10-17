@@ -1,3 +1,4 @@
+
 *{box-sizing:border-box}
 body{margin:0;background:#0d1523;color:#e7eefc;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
 .app-title{font-size:24px;font-weight:800;padding:16px 18px}
@@ -23,12 +24,14 @@ h2{margin:0 0 10px}
 .thumb .name{font-size:.9rem;opacity:.8}
 .foot{padding:8px 16px;opacity:.7}
 
-/* Inspector bar (pinned) */
+/* Inspector bar */
 .inspector-bar{margin-top:12px;background:#0f1728;border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
 .inspector-bar.disabled{opacity:.45;pointer-events:none}
 .slot{border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px;min-width:220px}
 .slot summary{cursor:pointer}
 .slot-body{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.slot-body.column{flex-direction:column;align-items:stretch}
+.anim-line{display:flex;gap:10px;align-items:center}
 .inline{display:flex;gap:6px;align-items:center}
 .swatches{display:flex;gap:6px;flex-wrap:wrap}
 .swatches .sw{width:24px;height:24px;border-radius:6px;border:1px solid #2f3e61;cursor:pointer}
