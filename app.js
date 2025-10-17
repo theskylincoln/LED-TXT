@@ -1,349 +1,352 @@
 
-// v1.4.3 background layout + background fit fix
-const canvas = document.getElementById('preview');
+/* Core state */
+const canvas = document.getElementById('ledCanvas');
 const ctx = canvas.getContext('2d');
-const dpi = () => window.devicePixelRatio || 1;
+const overlay = document.getElementById('word-overlay');
+const inspector = document.getElementById('inspector');
 
-let zoom = 1;
-let editMode = true; // true = Edit Mode (no animation), false = Preview Animation
-let model = [
-  [{ text:'Hello', color:'#ffffff', size:22, align:'center', manual:false, x:0, y:40, fx:{pulse:false,pulseAmt:60,flicker:false,flickerAmt:40} }]
-];
-let selected = { line:0, word:0 };
-
-const bg = { type:'preset', preset:'A', color:'#000000', img:null };
-
-// History
-let history=[], redo=[];
-const snapshot=()=> JSON.stringify({model,bg});
-function pushHistory(){ history.push(snapshot()); if(history.length>80) history.shift(); redo.length=0; }
-function undo(){ if(!history.length) return; redo.push(snapshot()); const s=JSON.parse(history.pop()); model=s.model; Object.assign(bg,s.bg); draw(); }
-function redoFn(){ if(!redo.length) return; history.push(snapshot()); const s=JSON.parse(redo.pop()); model=s.model; Object.assign(bg,s.bg); draw(); }
-
-// Resolution & backgrounds
-const resSel = document.getElementById('resolution');
+const resSelect = document.getElementById('resSelect');
 const bgGrid = document.getElementById('bgGrid');
+const bgUpload = document.getElementById('bgUpload');
+
+const btnPreview = document.getElementById('btnPreview');
+const btnEdit = document.getElementById('btnEdit');
+const btnUndo = document.getElementById('btnUndo');
+const btnRedo = document.getElementById('btnRedo');
+const btnClear = document.getElementById('btnClear');
+const zIn = document.getElementById('zIn');
+const zOut = document.getElementById('zOut');
+const zLabel = document.getElementById('zLabel');
+
+// inspector controls
+const fontSelect = document.getElementById('fontSelect');
+const fontSize = document.getElementById('fontSize');
+const autoSize = document.getElementById('autoSize');
+const swatchesEl = document.getElementById('swatches');
+const colorPicker = document.getElementById('colorPicker');
+const addSwatch = document.getElementById('addSwatch');
+const lineGap = document.getElementById('lineGap');
+const wordSpacing = document.getElementById('wordSpacing');
+const alignMode = document.getElementById('alignMode');
+const resetAlign = document.getElementById('resetAlign');
+const addLine = document.getElementById('addLine');
+const addWord = document.getElementById('addWord');
+const animDet = document.getElementById('animDet');
+
+/* Model */
+let ledW = 96, ledH = 128;
+let zoom = 1.0;
+let bgMode = { kind:'preset', id:'A', color:'#000000', img:null };
+let words = []; // {id,text,x,y,color,size,font,anim:{pulse:0-1,flicker:0-1}}
+let selectedId = null;
+let playing = false;
+
+const history = [];
+const future = [];
+
+function pushHistory(){
+  history.push(JSON.stringify({words,bgMode,ledW,ledH}));
+  future.length = 0;
+}
+function undo(){
+  if(!history.length) return;
+  future.push(JSON.stringify({words,bgMode,ledW,ledH}));
+  const st = JSON.parse(history.pop());
+  words = st.words; bgMode = st.bgMode; ledW=st.ledW; ledH=st.ledH;
+  syncAll();
+}
+function redo(){
+  if(!future.length) return;
+  history.push(JSON.stringify({words,bgMode,ledW,ledH}));
+  const st = JSON.parse(future.pop());
+  words = st.words; bgMode = st.bgMode; ledW=st.ledW; ledH=st.ledH;
+  syncAll();
+}
+
+btnUndo.onclick = undo;
+btnRedo.onclick = redo;
 
 function setResolution(val){
   const [w,h] = val.split('x').map(n=>parseInt(n,10));
-  const scale = dpi();
-  canvas.width = w*scale; canvas.height = h*scale;
-  ctx.setTransform(scale,0,0,scale,0,0);
-  canvas.style.width = (w*zoom*3)+'px';
-  canvas.style.height = (h*zoom*3)+'px';
-  buildBgGrid();
-  draw();
+  ledW = w; ledH = h;
+  layoutCanvas();
+  drawAll();
+  renderOverlay();
 }
-
-function bgThumb(html, onClick, extraClass=''){
-  const b=document.createElement('button');
-  b.className='thumb '+extraClass;
-  b.type='button';
-  b.innerHTML=html;
-  b.addEventListener('click', onClick);
-  return b;
-}
-
-function buildBgGrid(){
-  bgGrid.innerHTML='';
-  const res = resSel.value;
-  const list = res==='96x128'
-    ? [{id:'A', file:'assets/Preset_A.png', name:'Preset A'},
-       {id:'B', file:'assets/Preset_B.png', name:'Preset B'}]
-    : [{id:'C', file:'assets/Preset_C.png', name:'Preset C'},
-       {id:'D', file:'assets/Preset_D.png', name:'Preset D'}];
-  // Row 1: Preset A/C next to B/D
-  list.forEach(p=>{
-    const btn = bgThumb(`<img src="${p.file}" alt="${p.name}"><div class="label">${p.name}</div>`, ()=>{ bg.type='preset'; bg.preset=p.id; draw(); });
-    bgGrid.appendChild(btn);
-  });
-  // Row 2: Solid + Custom
-  const solid = bgThumb(`<div style="width:100%;height:100%;background:#000"></div><div class="label">Solid Color</div>`, ()=>{ bg.type='solid'; bg.color='#000000'; draw(); }, 'solid');
-  const custom = document.createElement('label'); custom.className='thumb custom';
-  custom.innerHTML = `<input id="bgUpload" type="file" accept="image/*" hidden>
-                      <div class="label">Custom Upload</div>`;
-  custom.querySelector('#bgUpload').addEventListener('change', (e)=>{
-    const f=e.target.files[0]; if(!f) return;
-    const img=new Image(); img.onload=()=>{ bg.type='image'; bg.img=img; draw(); };
-    img.src = URL.createObjectURL(f);
-  });
-  bgGrid.appendChild(solid);
-  bgGrid.appendChild(custom);
-}
-
-// Inspector bar
-const inspBar = document.getElementById('inspectorBar');
-function setInspectorEnabled(enabled){
-  inspBar.classList.toggle('disabled', !enabled);
-}
-['slotFont','slotColor','slotSpacing','slotAlign','slotAnim'].forEach(id=>{
-  document.getElementById(id).open = false; // start collapsed
-});
-
-// Empty state
-const emptyState = document.getElementById('emptyState');
-const btnAddWord = document.getElementById('btnAddWord');
-function refreshEmptyState(){
-  const hasWords = model.some(line => line.length>0);
-  emptyState.classList.toggle('hidden', hasWords);
-  setInspectorEnabled(hasWords && hasSelection());
-}
-btnAddWord.addEventListener('click', ()=>{
-  if(model.length===0) model=[[]];
-  model[0].push({ text:'New', color:'#ffffff', size:22, align:'center', manual:false, x:0, y:40, fx:{pulse:false,pulseAmt:60,flicker:false,flickerAmt:40}});
-  selected={line:0,word:model[0].length-1};
-  pushHistory(); draw(); refreshEmptyState();
-});
-
-// Toolbar
-document.getElementById('btnPreview').addEventListener('click',()=>{ editMode=false; clearSelection(); draw(); });
-document.getElementById('btnEdit').addEventListener('click',()=>{ editMode=true; clearSelection(); draw(); });
-document.getElementById('btnRender').addEventListener('click',()=>{
-  canvas.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='led_frame.png'; a.click(); URL.revokeObjectURL(a.href); });
-});
-document.getElementById('btnClearText').addEventListener('click',()=>{
-  model = [[]];
-  selected={line:-1,word:-1};
-  pushHistory(); draw(); refreshEmptyState();
-});
-document.getElementById('btnUndo').addEventListener('click', ()=>undo());
-document.getElementById('btnRedo').addEventListener('click', ()=>redoFn());
-const zl = document.getElementById('zoomLabel');
-document.getElementById('btnZoomIn').addEventListener('click',()=>{ zoom=Math.min(4,zoom+0.1); zl.textContent=Math.round(zoom*100)+'%'; setResolution(resSel.value); });
-document.getElementById('btnZoomOut').addEventListener('click',()=>{ zoom=Math.max(0.25,zoom-0.1); zl.textContent=Math.round(zoom*100)+'%'; setResolution(resSel.value); });
-
-// Inspector controls
-const fontSize = document.getElementById('fontSize');
-const autoSize = document.getElementById('autoSize');
-const lineGapCtl = document.getElementById('lineGap');
-const wordSpacingCtl = document.getElementById('wordSpacing');
-const fxPulse = document.getElementById('fxPulse');
-const fxFlicker = document.getElementById('fxFlicker');
-const fxPulseAmt = document.getElementById('fxPulseAmt');
-const fxFlickerAmt = document.getElementById('fxFlickerAmt');
-const wordSwatches = document.getElementById('wordSwatches');
-const wordPicker = document.getElementById('wordColorPicker');
-const addWordSwatch = document.getElementById('addWordSwatch');
-const DEFAULT_SWATCHES = ['#23A8FF','#32D74B','#FFD60A','#FF7AB6','#FF453A','#FFFFFF','#000000'];
-let customSwatches = JSON.parse(localStorage.getItem('LED.customWordSwatches')||'[]');
-function allSwatches(){ return [...DEFAULT_SWATCHES, ...customSwatches]; }
-function renderWordSwatches(){
-  wordSwatches.innerHTML='';
-  allSwatches().forEach(hex=>{
-    const d=document.createElement('button');
-    d.className='sw'; d.style.background=hex; d.title=hex; d.type='button';
-    d.addEventListener('click',()=>{ if(hasSelection()){ wordAt(selected).color=hex; draw(); pushHistory(); }});
-    wordSwatches.appendChild(d);
-  });
-}
-addWordSwatch.addEventListener('click',()=>{
-  const hex=(wordPicker.value||'').toUpperCase(); if(!hex) return;
-  if(!customSwatches.includes(hex)){ if(customSwatches.length>=5) customSwatches.shift(); customSwatches.push(hex); localStorage.setItem('LED.customWordSwatches', JSON.stringify(customSwatches)); renderWordSwatches(); }
-});
-renderWordSwatches();
-
-// Alignment buttons
-document.querySelectorAll('.btn.align').forEach(btn=> btn.addEventListener('click',()=>{
-  if(!hasSelection()) return;
-  const a=btn.dataset.align; const w=wordAt(selected);
-  w.align = a==='manual'?'manual':a; w.manual=(a==='manual'); draw();
-}));
-
-document.getElementById('btnAddLine').addEventListener('click',()=>{
-  model.push([{ text:'New', color:'#ffffff', size:22, align:'center', manual:false, x:0, y: lineY(model.length), fx:{pulse:false,pulseAmt:60,flicker:false,flickerAmt:40} }]);
-  selected={line:model.length-1, word:0};
-  pushHistory(); draw(); refreshEmptyState();
-});
-
-// Selection + inline edit
-const deleteBtn = document.getElementById('btnDeleteWord');
-function clearSelection(){ selected={line:-1,word:-1}; positionDelete(); setInspectorEnabled(false); }
-function hasSelection(){ return selected.line>=0 && selected.word>=0; }
-function wordAt(sel){ return model[sel.line][sel.word]; }
-function toCanvasPoint(e){
-  const r=canvas.getBoundingClientRect();
-  return { x:(e.clientX-r.left)/(3*zoom)*dpi(), y:(e.clientY-r.top)/(3*zoom)*dpi() };
-}
-function wordSpacing(){ return parseInt(document.getElementById('wordSpacing').value,10)||3; }
-function lineGap(){ return parseInt(document.getElementById('lineGap').value,10)||2; }
-function lineY(li){ const size = model[li]?.[0]?.size || 22; return size + li*(size+lineGap()); }
-function textWidth(w){ ctx.font=`${w.size}px monospace`; return Math.ceil(ctx.measureText(w.text).width); }
-function layoutStartX(li){
-  const words = model[li]; const mode = words[0]?.align || 'center';
-  if(mode==='left') return 2;
-  if(mode==='right'){ let total=0; words.forEach((w,i)=> total += textWidth(w) + (i>0?wordSpacing():0)); return canvas.width/dpi() - total - 2; }
-  let total=0; words.forEach((w,i)=> total += textWidth(w) + (i>0?wordSpacing():0)); return Math.floor((canvas.width/dpi() - total)/2);
-}
-function sumPrev(li, wi){ let s=0; for(let i=0;i<wi;i++) s += textWidth(model[li][i]) + wordSpacing(); return s; }
-function boundsOf(sel){
-  const w=wordAt(sel); const tw=textWidth(w);
-  const x = w.manual ? w.x : layoutStartX(sel.line) + sumPrev(sel.line, sel.word);
-  const y = w.manual ? w.y : lineY(sel.line);
-  return {x,y,w:tw,h:w.size};
-}
-function positionDelete(){
-  if(!hasSelection()){ deleteBtn.classList.add('hidden'); return; }
-  const b=boundsOf(selected); const rect=canvas.getBoundingClientRect();
-  deleteBtn.style.left = (rect.left + (b.x + b.w + 8)*3*zoom/dpi())+'px';
-  deleteBtn.style.top  = (rect.top  + (b.y - 20)*3*zoom/dpi())+'px';
-  deleteBtn.classList.remove('hidden');
-}
-
-canvas.addEventListener('click', (e)=>{
-  const p=toCanvasPoint(e);
-  const hit=hitTest(p.x,p.y);
-  if(hit){
-    editMode = true;
-    selected=hit;
-    setInspectorEnabled(true);
-    openInlineEditorAtSelection();
-    draw();
-  }else{
-    clearSelection(); draw();
-  }
-});
-
-function hitTest(x,y){
-  for(let li=0; li<model.length; li++){
-    const line=model[li];
-    let xPos = layoutStartX(li);
-    for(let wi=0; wi<line.length; wi++){
-      const w=line[wi]; const tw=textWidth(w);
-      const bx=(w.manual?w.x:xPos), by=(w.manual?w.y:lineY(li));
-      if(x>=bx-2 && x<=bx+tw+2 && y>=by-w.size && y<=by+4) return {line:li,word:wi};
-      xPos += tw + wordSpacing();
+resSelect.addEventListener('change', e=>{
+  setResolution(e.target.value);
+  // swap presets for 64×64 -> use C/D thumbnails automatically
+  const tiles = bgGrid.querySelectorAll('.bg-tile');
+  tiles.forEach((tile,i)=>{
+    const kind = tile.dataset.kind;
+    if(kind==='preset'){
+      const id = (ledW===64&&ledH===64) ? (i===0?'C':'D') : (i===0?'A':'B');
+      tile.dataset.id = id;
+      tile.querySelector('img').src = `assets/Preset_${id}.png`;
+      tile.querySelector('.label').textContent = `Preset ${id}`;
     }
-  }
-  return null;
-}
-
-deleteBtn.addEventListener('click', ()=>{
-  if(!hasSelection()) return;
-  const line=model[selected.line];
-  line.splice(selected.word,1);
-  if(line.length===0) model.splice(selected.line,1);
-  clearSelection(); pushHistory(); draw(); refreshEmptyState();
+  });
 });
 
-// Inline editor
-function openInlineEditorAtSelection(){
-  if(!hasSelection()) return;
-  const w=wordAt(selected);
-  const b=boundsOf(selected);
-  const rect=canvas.getBoundingClientRect();
-  const edit=document.createElement('input');
-  edit.className='pill';
-  edit.value=w.text;
-  edit.style.left = (rect.left + (b.x)*3*zoom/dpi())+'px';
-  edit.style.top  = (rect.top  + (b.y - 26)*3*zoom/dpi())+'px';
-  document.body.appendChild(edit);
-  edit.focus();
-  edit.addEventListener('input', ()=>{
-    const parts = edit.value.split(' ');
-    w.text = parts[0];
-    if(parts.length>1){
-      const rest = parts.slice(1).map(t=>({ text:t, color:w.color, size:w.size, align:w.align, manual:w.manual, x:w.x, y:w.y, fx:Object.assign({},w.fx) }));
-      model[selected.line].splice(selected.word+1, 0, ...rest);
-    }
-    if(document.getElementById('autoSize').checked){ fitLine(selected.line); }
-    positionDelete();
-    draw();
-  });
-  function done(){ edit.remove(); pushHistory(); }
-  edit.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key==='Escape'){ done(); } });
-  edit.addEventListener('blur', done);
+function layoutCanvas(){
+  // scale canvas to keep correct aspect and fit container
+  const wrap = document.getElementById('preview-wrap');
+  const maxW = wrap.clientWidth - 32;
+  const maxH = Math.max(220, wrap.clientHeight - 32);
+  const s = Math.min(maxW/ledW, maxH/ledH) * zoom;
+  canvas.width = Math.round(ledW * s);
+  canvas.height = Math.round(ledH * s);
+  overlay.style.inset = '16px';
+  drawAll();
+}
+window.addEventListener('resize', layoutCanvas);
+
+/* Background */
+const bgImg = new Image();
+bgImg.onload = ()=> { drawAll(); };
+function setBgPreset(id){
+  bgMode = {kind:'preset', id, color:'#000000', img:`assets/Preset_${id}.png`};
+  bgImg.src = bgMode.img;
+  pushHistory();
+}
+function setSolidColor(){
+  bgMode = {kind:'solid', color:colorPicker.value || '#000000'};
+  pushHistory(); drawAll();
+}
+function setCustom(file){
+  const url = URL.createObjectURL(file);
+  bgMode = {kind:'custom', img:url, color:'#000000'};
+  bgImg.src = url;
+  pushHistory();
 }
 
-// Autosize per line
-function fitLine(li){
-  const words = model[li]; if(!words?.length) return;
-  const max = canvas.width/dpi() - 4;
-  let size = words[0].size||22;
-  for(let tries=0; tries<40; tries++){
-    let total=0;
-    for(let i=0;i<words.length;i++){ ctx.font=`${size}px monospace`; total += ctx.measureText(words[i].text).width + (i>0?wordSpacing():0); }
-    if(total<=max) break; size -= 1; if(size<8) break;
+bgGrid.addEventListener('click', (e)=>{
+  const tile = e.target.closest('.bg-tile');
+  if(!tile) return;
+  const kind = tile.dataset.kind;
+  if(kind==='preset'){
+    const id = tile.dataset.id || 'A';
+    setBgPreset(id);
+  }else if(kind==='solid'){
+    setSolidColor();
   }
-  words.forEach(w=> w.size=size);
+});
+
+bgUpload.addEventListener('change', e=>{
+  const f = e.target.files?.[0];
+  if(f) setCustom(f);
+});
+
+/* Words → overlay spans */
+function pxFromLed(x,y){
+  const r = canvas.getBoundingClientRect();
+  return { x: x/ledW * canvas.width, y: y/ledH * canvas.height };
+}
+function ledFromPx(px,py){
+  return { x: Math.max(0,Math.min(ledW, px/canvas.width*ledW)),
+           y: Math.max(0,Math.min(ledH, py/canvas.height*ledH)) };
 }
 
-// Animation toggles
-document.getElementById('fontSize').addEventListener('input',()=>{ if(hasSelection()){ wordAt(selected).size=parseInt(fontSize.value,10)||22; draw(); }});
-document.getElementById('autoSize').addEventListener('change',()=>{ if(hasSelection()) fitLine(selected.line); draw(); });
-document.getElementById('lineGap').addEventListener('input',()=> draw());
-document.getElementById('wordSpacing').addEventListener('input',()=> draw());
+function renderOverlay(){
+  overlay.innerHTML = '';
+  words.forEach(w=>{
+    const span = document.createElement('span');
+    span.className = 'word-span';
+    span.dataset.id = w.id;
+    span.textContent = w.text;
+    span.style.color = w.color;
+    span.style.fontFamily = w.font;
+    span.style.fontSize = `${w.size}px`;
+    const {x,y} = pxFromLed(w.x,w.y);
+    span.style.left = x + 'px';
+    span.style.top  = y + 'px';
+    if(w.id===selectedId){
+      span.classList.add('is-selected');
+      const del = document.createElement('button');
+      del.className = 'delete-pill';
+      del.textContent = '× Delete';
+      del.addEventListener('mousedown', ev=>{
+        ev.stopPropagation();
+        words = words.filter(v=>v.id!==w.id);
+        selectedId = null;
+        pushHistory();
+        syncAll();
+      });
+      span.appendChild(del);
+      if(alignMode.value==='manual'){ span.classList.add('drag-allowed'); }
+    }
+    span.addEventListener('mousedown', ev=>{
+      ev.stopPropagation();
+      selectWord(w.id);
+      if(alignMode.value==='manual'){
+        startDrag(span,w,ev);
+      }
+    });
+    overlay.appendChild(span);
+  });
+  inspector.setAttribute('aria-disabled', selectedId? 'false':'true');
+}
 
-document.getElementById('fxPulse').addEventListener('change',()=>{ if(hasSelection()){ wordAt(selected).fx.pulse = document.getElementById('fxPulse').checked; draw(); }});
-document.getElementById('fxFlicker').addEventListener('change',()=>{ if(hasSelection()){ wordAt(selected).fx.flicker = document.getElementById('fxFlicker').checked; draw(); }});
-document.getElementById('fxPulseAmt').addEventListener('input',()=>{ if(hasSelection()){ wordAt(selected).fx.pulseAmt = parseInt(document.getElementById('fxPulseAmt').value,10)||60; }});
-document.getElementById('fxFlickerAmt').addEventListener('input',()=>{ if(hasSelection()){ wordAt(selected).fx.flickerAmt = parseInt(document.getElementById('fxFlickerAmt').value,10)||35; }});
+function selectWord(id){
+  selectedId = id;
+  renderOverlay();
+  const span = overlay.querySelector(`[data-id="${id}"]`);
+  if(span){
+    span.setAttribute('contenteditable','true');
+    span.focus();
+    placeCaretEnd(span);
+    span.addEventListener('input', ()=>{
+      const w = words.find(v=>v.id===id);
+      w.text = span.textContent;
+      if(autoSize.checked) autoSizeWord(w,span);
+      drawAll();
+    });
+  }
+}
 
-// Draw background fit to canvas (no cropping)
-function draw(ts){
-  // Clear
+function placeCaretEnd(el){
+  const r = document.createRange();
+  r.selectNodeContents(el); r.collapse(false);
+  const s = window.getSelection();
+  s.removeAllRanges(); s.addRange(r);
+}
+
+function startDrag(span,w,ev){
+  span.classList.add('dragging');
+  let lastX = ev.clientX, lastY = ev.clientY;
+  function move(e){
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    const r = canvas.getBoundingClientRect();
+    const sx = ledW / canvas.width;
+    const sy = ledH / canvas.height;
+    w.x = Math.max(0, Math.min(ledW, w.x + dx*sx));
+    w.y = Math.max(0, Math.min(ledH, w.y + dy*sy));
+    renderOverlay(); drawAll();
+  }
+  function up(){
+    span.classList.remove('dragging');
+    window.removeEventListener('mousemove', move);
+    window.removeEventListener('mouseup', up);
+    pushHistory();
+  }
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', up);
+}
+
+function addWordAtCenter(txt='Hello'){
+  const id = Math.random().toString(36).slice(2,9);
+  const w = { id, text: txt, x: ledW/2, y: ledH/2, color: '#ffffff', size: 22, font: fontSelect.value, anim:{pulse:0,flicker:0} };
+  words.push(w); selectedId = id;
+  pushHistory();
+  syncAll();
+}
+
+addWord.addEventListener('click', ()=> addWordAtCenter('Hello'));
+addLine.addEventListener('click', ()=> addWordAtCenter('New Line'));
+btnClear.addEventListener('click', ()=>{ words = []; selectedId=null; pushHistory(); syncAll(); });
+
+/* Inspector bindings */
+fontSelect.onchange = ()=> applyToSel('font', fontSelect.value);
+fontSize.oninput = ()=> applyToSel('size', parseInt(fontSize.value,10));
+lineGap.oninput = ()=> { /* reserved: affects multi-line layout later */ };
+wordSpacing.oninput = ()=> { /* reserved */ };
+alignMode.onchange = ()=> renderOverlay();
+resetAlign.onclick = ()=>{
+  const w = getSel(); if(!w) return;
+  w.x = ledW/2; w.y = ledH/2; renderOverlay(); drawAll();
+};
+
+// swatches init + clicks change color immediately
+const defaultSwatches = ['#00b7ff','#37d63c','#ffd13c','#ff68d9','#ff4d4d','#ffffff','#000000'];
+function buildSwatches(){
+  swatchesEl.innerHTML='';
+  defaultSwatches.forEach(hex=>{
+    const s=document.createElement('button');
+    s.className='swatch'; s.style.background=hex;
+    s.addEventListener('click', ()=>{
+      colorPicker.value = hex;
+      applyToSel('color', hex);
+    });
+    swatchesEl.appendChild(s);
+  });
+}
+buildSwatches();
+addSwatch.onclick = ()=>{
+  defaultSwatches.push(colorPicker.value);
+  buildSwatches();
+};
+colorPicker.oninput = ()=> applyToSel('color', colorPicker.value);
+
+autoSize.onchange = ()=>{
+  const w = getSel(); if(!w) return;
+  const span = overlay.querySelector(`[data-id="${w.id}"]`);
+  if(span) autoSizeWord(w,span);
+  drawAll();
+};
+
+function getSel(){ return words.find(v=>v.id===selectedId); }
+function applyToSel(k,v){
+  const w = getSel(); if(!w) return;
+  w[k]=v; renderOverlay(); drawAll();
+  pushHistory();
+}
+
+function autoSizeWord(w,span){
+  // shrink if overflow: ensure word fits within canvas width
+  const maxPx = canvas.width - 8;
+  let size = parseInt(window.getComputedStyle(span).fontSize,10);
+  span.style.fontSize = size + 'px';
+  while(span.offsetWidth > maxPx && size>6){
+    size -= 1; span.style.fontSize = size + 'px';
+  }
+  w.size = size;
+}
+
+/* Draw loop */
+function drawAll(){
+  // background
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  // Background
-  if(bg.type==='solid'){
-    ctx.fillStyle = bg.color;
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-  } else if(bg.type==='preset'){
-    const img = new Image();
-    img.onload = ()=>{
-      // Always fit exactly to canvas size (no cut off)
-      ctx.drawImage(img, 0,0, canvas.width, canvas.height);
-      drawWords(ts);
-    };
-    img.src = `assets/Preset_${bg.preset}.png`;
-    return;
-  } else if(bg.type==='image' && bg.img){
-    // Fit custom to canvas
-    ctx.drawImage(bg.img, 0,0, canvas.width, canvas.height);
+  if(bgMode.kind==='solid'){
+    ctx.fillStyle = bgMode.color || '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  }else if(bgImg.complete && (bgMode.kind==='preset' || bgMode.kind==='custom')){
+    const iw = bgImg.naturalWidth, ih = bgImg.naturalHeight;
+    const s = Math.max(canvas.width/iw, canvas.height/ih); // COVER, so no letterboxing
+    const w = iw*s, h = ih*s;
+    const x = (canvas.width - w)/2, y = (canvas.height - h)/2;
+    ctx.drawImage(bgImg, x,y,w,h);
+  }else{
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
   }
-  drawWords(ts);
+  // (optional) show animations rendering; for now we just rely on CSS overlay for typing/drag
 }
 
-function drawWords(ts){
-  refreshEmptyState();
-  for(let li=0; li<model.length; li++){
-    const line=model[li];
-    if(document.getElementById('autoSize').checked && line.length) fitLine(li);
-    let x = layoutStartX(li);
-    for(let wi=0; wi<line.length; wi++){
-      const w=line[wi];
-      let scale=1, alpha=1;
-      if(!editMode){
-        if(w.fx.pulse){ scale = 1 + (w.fx.pulseAmt/100)*0.2*Math.sin((ts||0)/300 + wi + li*0.7); }
-        if(w.fx.flicker){ alpha = 0.7 + 0.3*Math.max(0, Math.sin((ts||0)/90 + wi)); }
-      }
-      const tw=textWidth(w)*scale;
-      const drawX = w.manual? w.x : x;
-      const drawY = w.manual? w.y : lineY(li);
-      ctx.save();
-      ctx.translate(drawX, drawY);
-      ctx.scale(scale, scale);
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = w.color;
-      ctx.font = `${w.size}px monospace`;
-      ctx.textBaseline='top';
-      ctx.fillText(w.text, 0, 0);
-      ctx.restore();
+/* Preview vs Edit */
+btnPreview.onclick = ()=>{ playing = true; btnPreview.classList.add('active'); btnEdit.classList.remove('active'); };
+btnEdit.onclick = ()=>{ playing = false; btnEdit.classList.add('active'); btnPreview.classList.remove('active'); };
 
-      if(hasSelection() && selected.line===li && selected.word===wi && editMode){
-        ctx.strokeStyle='#ff57f0'; ctx.lineWidth=1; ctx.strokeRect(drawX-1, drawY-1, Math.ceil(tw)+2, w.size+2);
-        positionDelete();
-      }
-      x += textWidth(w) + wordSpacing();
-    }
-  }
-  if(!editMode) requestAnimationFrame(draw);
+// Deselect when clicking empty background to watch animations
+overlay.addEventListener('mousedown', (e)=>{
+  if(e.target===overlay){ selectedId=null; renderOverlay(); }
+});
+
+/* Zoom */
+function setZoom(z){ zoom = Math.max(.25, Math.min(4, z)); zLabel.textContent = Math.round(zoom*100)+'%'; layoutCanvas(); }
+zIn.onclick = ()=> setZoom(zoom+0.1);
+zOut.onclick = ()=> setZoom(zoom-0.1);
+
+/* Kickoff */
+function syncAll(){
+  layoutCanvas();
+  // load bg if preset selected
+  if(bgMode.kind==='preset' || bgMode.kind==='custom'){ if(bgMode.img) bgImg.src = bgMode.img; }
+  renderOverlay();
+  drawAll();
 }
+setResolution('96x128'); // default
+setBgPreset('A');
+syncAll();
 
-// Init
-['slotFont','slotColor','slotSpacing','slotAlign','slotAnim'].forEach(id=> document.getElementById(id).open=false);
-document.getElementById('zoomLabel').textContent='100%';
-resSel.addEventListener('change', e=> setResolution(e.target.value));
-setResolution('96x128');
-buildBgGrid();
-pushHistory();
-draw();
-refreshEmptyState();
+// If no words, show Add Word prominently
+if(words.length===0){ addWordAtCenter('Hello'); }
+

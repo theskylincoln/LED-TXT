@@ -1,118 +1,112 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator — v1.4.3</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LED Backpack Animator</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="app-title">LED Backpack Animator <span class="ver">v1.4.3</span></header>
+  <header class="page-header">
+    <h1>LED Backpack Animator <span class="ver">v1.4.4</span></h1>
+  </header>
 
-  <!-- BACKGROUND & RESOLUTION AT TOP -->
-  <section class="card">
-    <div class="topbar">
-      <div class="title">Backgrounds & Resolution</div>
-      <select id="resolution" class="pill-select">
+  <!-- Backgrounds + Resolution (no labels) -->
+  <section class="bg-res">
+    <div class="bg-grid" id="bgGrid">
+      <button class="bg-tile" data-kind="preset" data-id="A">
+        <img src="assets/Preset_A.png" alt=""><span class="label">Preset A</span>
+      </button>
+      <button class="bg-tile" data-kind="preset" data-id="B">
+        <img src="assets/Preset_B.png" alt=""><span class="label">Preset B</span>
+      </button>
+      <button class="bg-tile" data-kind="solid">
+        <img src="assets/solid-thumb.png" alt=""><span class="label">Solid Color</span>
+      </button>
+      <label class="bg-tile upload" title="Custom Upload">
+        <input type="file" id="bgUpload" accept="image/*" hidden />
+        <img src="assets/upload.svg" alt=""><span class="label">Custom</span>
+      </label>
+    </div>
+
+    <div class="res-wrap">
+      <select id="resSelect">
         <option value="96x128" selected>96×128</option>
         <option value="64x64">64×64</option>
       </select>
     </div>
+  </section>
 
-    <!-- 2x2 layout: first row presets A/B or C/D; second row Solid + Custom upload -->
-    <div id="bgGrid" class="bg-grid">
-      <!-- filled by JS per resolution -->
+  <section class="preview">
+    <div class="toolbar">
+      <button id="btnPreview">Preview Animation</button>
+      <button id="btnEdit">Edit Mode</button>
+      <button id="btnUndo">Undo</button>
+      <button id="btnRedo">Redo</button>
+      <button id="btnClear">Clear All Text</button>
+      <div class="zoom">
+        <button id="zOut">−</button><span id="zLabel">100%</span><button id="zIn">+</button>
+      </div>
+    </div>
+
+    <div id="preview-wrap">
+      <canvas id="ledCanvas"></canvas>
+      <div id="word-overlay"></div>
     </div>
   </section>
 
-  <main class="grid">
-    <section class="card">
-      <h2>Preview</h2>
-      <div class="toolbar">
-        <button id="btnPreview" class="btn">Preview Animation</button>
-        <button id="btnEdit" class="btn">Edit Mode</button>
-        <button id="btnRender" class="btn">Render</button>
-        <button id="btnClearText" class="btn danger">Clear All Text</button>
-        <div class="spacer"></div>
-        <button id="btnUndo" class="btn">Undo</button>
-        <button id="btnRedo" class="btn">Redo</button>
-        <div class="spacer"></div>
-        <button id="btnZoomOut" class="btn">−</button>
-        <span id="zoomLabel">100%</span>
-        <button id="btnZoomIn" class="btn">＋</button>
+  <!-- Inspector pinned below, collapsed sections -->
+  <section class="inspector" id="inspector" aria-disabled="true">
+    <details id="fontDet" class="ins-det"><summary>Font</summary>
+      <div class="row">
+        <select id="fontSelect">
+          <option value="monospace" selected>Monospace</option>
+          <option value="Arial">Arial</option>
+          <option value="Courier New">Courier</option>
+        </select>
+        <input id="fontSize" type="number" min="6" max="96" value="22" />
       </div>
-
-      <div class="canvas-wrap">
-        <canvas id="preview" width="96" height="128"></canvas>
-        <div id="uiOverlay">
-          <button id="btnDeleteWord" class="pill danger hidden">× Delete</button>
+      <label class="row"><input id="autoSize" type="checkbox" checked /> Auto-size (per line)</label>
+      <details class="swatch-det">
+        <summary>Color</summary>
+        <div id="swatches" class="swatches"></div>
+        <div class="row">
+          <input type="color" id="colorPicker" value="#ffffff" />
+          <button id="addSwatch">+ Add Swatch</button>
         </div>
+      </details>
+    </details>
+
+    <details id="spacingDet" class="ins-det"><summary>Spacing</summary>
+      <div class="row">
+        <label>Line Gap <input id="lineGap" type="number" value="2" /></label>
+        <label>Word Spacing <input id="wordSpacing" type="number" value="3" /></label>
       </div>
+    </details>
 
-      <!-- Inspector BAR (collapsed by default) -->
-      <div id="inspectorBar" class="inspector-bar disabled">
-        <details class="slot" id="slotFont">
-          <summary>Font</summary>
-          <div class="slot-body">
-            <label>Size <input id="fontSize" type="number" min="6" max="64" value="22"/></label>
-            <label class="inline"><input id="autoSize" type="checkbox" checked/> Auto-size (per line)</label>
-          </div>
-        </details>
-
-        <details class="slot" id="slotColor">
-          <summary>Color</summary>
-          <div class="slot-body">
-            <div id="wordSwatches" class="swatches"></div>
-            <input id="wordColorPicker" type="color" value="#ffffff"/>
-            <button id="addWordSwatch" class="btn small">+ Add swatch</button>
-          </div>
-        </details>
-
-        <details class="slot" id="slotSpacing">
-          <summary>Spacing</summary>
-          <div class="slot-body">
-            <label>Line Gap <input id="lineGap" type="number" min="0" max="20" value="2"/></label>
-            <label>Word Spacing <input id="wordSpacing" type="number" min="0" max="20" value="3"/></label>
-          </div>
-        </details>
-
-        <details class="slot" id="slotAlign">
-          <summary>Alignment</summary>
-          <div class="slot-body row">
-            <button class="btn align" data-align="left">← Left</button>
-            <button class="btn align" data-align="center">⇔ Center</button>
-            <button class="btn align" data-align="right">⇒ Right</button>
-            <button class="btn align" data-align="manual">✥ Manual</button>
-          </div>
-        </details>
-
-        <details class="slot" id="slotAnim">
-          <summary>Animation</summary>
-          <div class="slot-body column">
-            <div class="anim-line">
-              <label class="inline"><input type="checkbox" id="fxPulse"/> Pulse</label>
-              <input type="range" id="fxPulseAmt" min="0" max="100" value="60" />
-            </div>
-            <div class="anim-line">
-              <label class="inline"><input type="checkbox" id="fxFlicker"/> Flicker</label>
-              <input type="range" id="fxFlickerAmt" min="0" max="100" value="35" />
-            </div>
-          </div>
-        </details>
-
-        <button id="btnAddLine" class="btn small">+ Line</button>
+    <details id="alignDet" class="ins-det"><summary>Alignment</summary>
+      <div class="row">
+        <select id="alignMode">
+          <option value="left">Left</option>
+          <option value="center" selected>Center</option>
+          <option value="right">Right</option>
+          <option value="manual">Manual (drag)</option>
+        </select>
+        <button id="resetAlign">Reset</button>
       </div>
+    </details>
 
-      <!-- Empty-state Add Word -->
-      <div id="emptyState" class="empty hidden">
-        <p>No words yet.</p>
-        <button id="btnAddWord" class="btn">+ Add Word</button>
-      </div>
-    </section>
-  </main>
+    <details id="animDet" class="ins-det"><summary>Animation</summary>
+      <div class="anim-line"><label><input type="checkbox" class="animChk" data-anim="pulse" /> Pulse</label><input type="range" min="0" max="100" value="60" class="animSlider" data-anim="pulse" /></div>
+      <div class="anim-line"><label><input type="checkbox" class="animChk" data-anim="flicker" /> Flicker</label><input type="range" min="0" max="100" value="40" class="animSlider" data-anim="flicker" /></div>
+    </details>
 
-  <footer class="foot"><small>Click background to deselect. Click a word to enter Edit Mode and edit inline; space splits it into a new word. “Preview Animation” plays effects; “Edit Mode” stops them.</small></footer>
+    <div class="ins-actions">
+      <button id="addLine">+ Add Line</button>
+      <button id="addWord">+ Add Word</button>
+    </div>
+  </section>
 
   <script src="app.js"></script>
 </body>
