@@ -4,66 +4,75 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator — v1.1.8</title>
+  <title>LED Backpack Animator — v1.1.9 • Step 2</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-<header>
-  <h1>LED Backpack Animator <span class="ver">v1.1.8</span></h1>
-</header>
+<header><h1>LED Backpack Animator <span class="ver">v1.1.9 • Step 2</span></h1></header>
 
 <main class="grid">
-  <!-- BACKGROUNDS & RESOLUTION -->
-  <section class="card" id="bgres">
+  <section class="card">
     <h3>Backgrounds & Resolution</h3>
     <div class="bgThumbs">
-      <button class="bgTile" data-tile="preset">
-        <span class="thumb preset"></span>
-        <div class="tileLabel">Background</div>
-      </button>
-      <button class="bgTile" data-tile="res">
-        <span class="thumb res"></span>
-        <div class="tileLabel">
-          <select id="resolutionSelect">
-            <option value="96x128" selected>96×128</option>
-            <option value="64x64">64×64</option>
-            <option value="128x96">128×96</option>
-          </select>
-        </div>
-      </button>
-      <button class="bgTile" data-tile="solid">
-        <span class="thumb solid" id="solidThumb"></span>
-        <div class="tileLabel">Solid Color</div>
-      </button>
-      <button class="bgTile" data-tile="custom">
-        <span class="thumb custom">+</span>
-        <div class="tileLabel">Custom</div>
-      </button>
+      <button class="bgTile" data-tile="preset1"><span class="thumb preset" id="t1"></span><div>Preset A</div></button>
+      <button class="bgTile" data-tile="preset2"><span class="thumb preset" id="t2"></span><div>Preset B</div></button>
+      <button class="bgTile" data-tile="solid"><span class="thumb solid" id="solidThumb"></span><div>Solid Color</div></button>
+      <button class="bgTile" data-tile="custom"><span class="thumb custom">+</span><div>Custom</div></button>
     </div>
-    <div class="row hidden" id="solidColorRow">
-      <label>Color <input type="color" id="bgSolidColor" value="#000000"/></label>
-      <span class="chip" id="bgColorChip"></span>
+    <div class="row">
+      <label class="select"><span>Resolution</span>
+        <select id="resolutionSelect">
+          <option value="96x128" selected>96×128</option>
+          <option value="64x64">64×64</option>
+        </select>
+      </label>
+      <div id="solidColorRow" class="row hidden">
+        <label>Color <input type="color" id="bgSolidColor" value="#000000"/></label>
+        <span id="bgColorChip" class="chip"></span>
+      </div>
     </div>
   </section>
 
-  <!-- PREVIEW -->
   <section class="card" id="preview">
     <h3>Preview</h3>
     <div class="toolbar">
       <button id="showAnim" class="btn">🌀 Show Animation</button>
       <button id="hideAnim" class="btn">🙈 Hide Animation</button>
       <button id="render" class="btn">🎬 Render</button>
-      <div class="zoom">
-        <button id="zoomOut" class="btn">−</button><span id="zoomPct">100%</span><button id="zoomIn" class="btn">+</button>
-      </div>
+      <div class="zoom"><button id="zoomOut" class="btn">−</button><span id="zoomPct">100%</span><button id="zoomIn" class="btn">+</button></div>
     </div>
-    <div class="preview"><canvas id="canvas"></canvas></div>
+
+    <!-- Collapsible render options -->
+    <details id="renderOpts" class="renderOpts" open>
+      <summary>Render Options</summary>
+      <div class="renderRow">
+        <label>File name
+          <input id="renderName" type="text" value="led_backpack">
+        </label>
+        <label>FPS
+          <select id="renderFps">
+            <option>8</option>
+            <option>12</option>
+            <option selected>15</option>
+            <option>24</option>
+            <option>30</option>
+          </select>
+        </label>
+        <label>Length (s)
+          <input id="renderLen" type="number" min="1" max="20" step="1" value="8">
+        </label>
+        <span id="renderStatus" class="status"></span>
+      </div>
+    </details>
+
+    <div class="preview">
+      <canvas id="canvas"></canvas>
+      <textarea id="canvasIME" class="hidden" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+    </div>
   </section>
 
-  <!-- INSPECTOR -->
-  <section class="card" id="inspector">
+  <section class="card">
     <h3>Inspector</h3>
-
     <div class="row">
       <label class="select"><span>Horizontal Align</span>
         <select id="alignH">
@@ -74,96 +83,45 @@
         </select>
       </label>
     </div>
-
+    <div class="row"><label>Word <input id="wordInput" placeholder="Type word…"/></label></div>
     <div class="row">
-      <label>Word <input id="wordInput" placeholder="Type word…"/></label>
-    </div>
-
-    <div class="row">
-      <label>Color <input type="color" id="wordColor" value="#FFFFFF"/></label>
+      <label>Color <input type="color" id="wordColor" value="#ffffff"/></label>
       <div class="swatches" id="swatches"></div>
     </div>
-
     <div class="row">
       <label class="select"><span>Font</span>
-        <select id="fontFamily">
-          <option>Monospace</option>
-          <option>Sans</option>
-          <option>Serif</option>
-        </select>
+        <select id="fontFamily"><option>Monospace</option><option>Sans</option><option>Serif</option></select>
       </label>
       <label>Size <input id="fontSize" type="number" value="22" min="6" max="64"/></label>
     </div>
-
     <div class="row">
       <label>Line Gap <input id="lineGap" type="number" value="2" min="0" max="16"/></label>
       <label>Word Spacing <input id="wordGap" type="number" value="3" min="0" max="16"/></label>
     </div>
-
     <div class="row">
       <button id="addLine" class="btn">+ Line</button>
       <button id="addWord" class="btn">+ Word</button>
       <button id="delWord" class="btn danger">× Delete Word</button>
     </div>
-
-    <div class="row">
-      <label><input type="checkbox" id="autosize" checked/> Auto-size (per line)</label>
-    </div>
+    <div class="row"><label><input type="checkbox" id="autosize" checked/> Auto-size (per line)</label></div>
   </section>
 
-  <!-- ANIMATION -->
-  <section class="card" id="anim">
+  <section class="card">
     <h3>Animation</h3>
-    <div class="fxpanel">
-      <label><input type="checkbox" id="fx-scroll"/> Scroll</label>
-      <label><input type="checkbox" id="fx-jitter"/> Jitter</label>
-      <label><input type="checkbox" id="fx-bounce"/> Bounce</label>
-      <label><input type="checkbox" id="fx-wave"/> Wave</label>
-      <label><input type="checkbox" id="fx-typewriter"/> Typewriter</label>
-      <label><input type="checkbox" id="fx-pulse"/> Pulse</label>
-      <label><input type="checkbox" id="fx-bubble"/> Bubble</label>
-      <label><input type="checkbox" id="fx-flicker"/> Flicker</label>
+    <div class="fxrow">
+      <label class="fxcheck"><input type="checkbox" id="fx-pulse"/> Pulse</label>
+      <div class="fxadv" data-for="fx-pulse"><label>Scale <input id="fxPulse" type="number" value="0.08" step="0.01"/></label></div>
     </div>
-    <details id="fxAdv"><summary>Advanced</summary>
-      <div class="row fx-scroll"><label>Scroll speed <input id="fxScroll" type="number" value="20" step="1"/></label></div>
-      <div class="row fx-jitter"><label>Jitter amount <input id="fxJitter" type="number" value="2" step="0.2"/></label></div>
-      <div class="row fx-bounce"><label>Bounce amount <input id="fxBounce" type="number" value="2" step="0.2"/></label></div>
-      <div class="row fx-wave"><label>Wave amount <input id="fxWave" type="number" value="2" step="0.2"/></label></div>
-      <div class="row fx-pulse"><label>Pulse scale <input id="fxPulse" type="number" value="0.08" step="0.01"/></label></div>
-      <div class="row fx-flicker"><label>Flicker amount <input id="fxFlicker" type="number" value="0.3" step="0.02"/></label></div>
-      <div class="row fx-typewriter"><label>Type CPS <input id="fxTypeCPS" type="number" value="12" step="1"/></label></div>
-    </details>
-    <div class="row">
-      <label>Effect Intensity <input id="fxIntensity" type="range" min="0" max="1" step="0.02" value="0.6"/></label><span id="fxPct">60%</span>
+    <div class="fxrow">
+      <label class="fxcheck"><input type="checkbox" id="fx-flicker"/> Flicker</label>
+      <div class="fxadv" data-for="fx-flicker"><label>Amount <input id="fxFlicker" type="number" value="0.3" step="0.02"/></label></div>
     </div>
-  </section>
-
-  <!-- PRESETS + ABOUT -->
-  <section class="card" id="presets">
-    <h3>Presets</h3>
-    <div class="row">
-      <button id="downloadPreset" class="btn">⬇️ Download Preset (JSON)</button>
-      <label class="btn file">
-        ⬆️ Upload Preset (JSON)
-        <input id="uploadPreset" type="file" accept="application/json" hidden/>
-      </label>
-    </div>
-  </section>
-
-  <section class="card" id="about">
-    <h3>About</h3>
-    <p>LED Backpack Text Animator — optimized for Kemimoto (96×128) and Ryangear (64×64).</p>
-    <div class="row">
-      <label>Owner Key <input id="ownerKey" placeholder="Abraham"/></label>
-      <button id="unlock" class="btn">Unlock</button>
-    </div>
-    <div id="ownerRow" class="row hidden">
-      <button id="presetA" class="btn">Preset A</button>
-      <button id="presetB" class="btn">Preset B</button>
-    </div>
+    <div class="row"><label>Effect Intensity <input id="fxIntensity" type="range" min="0" max="1" step="0.02" value="0.6"/></label><span id="fxPct">60%</span></div>
   </section>
 </main>
 
 <script src="app.js"></script>
+<!-- gif.js for GIF rendering -->
+<script src="https://unpkg.com/gif.js.optimized/dist/gif.min.js"></script>
 </body>
 </html>
