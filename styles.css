@@ -1,0 +1,36 @@
+*{box-sizing:border-box}
+:root{--bg:#0d1522;--panel:#101b2d;--ink:#d6e2ff;--muted:#92a3c6;--accent:#6aa2ff;--magenta:#db6cff}
+html,body{height:100%} body{margin:0;background:radial-gradient(1200px 500px at 30% -10%,#17305500 0,#17305544 70%,transparent 71%), var(--bg);color:var(--ink);font:14px/1.3 ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+.topbar{padding:8px 12px;border-bottom:1px solid #20314f}
+.bg-row{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+.thumbs{display:flex;gap:8px}
+.thumb{width:70px;height:70px;border-radius:10px;border:1px dashed #2e466a;background:#0c1728;display:flex;align-items:center;justify-content:center;gap:6px;color:#9fb3d9}
+.thumb img{max-width:100%;max-height:100%;border-radius:9px}
+.thumb .swatch{width:60%;height:60%;border-radius:6px;background:#000}
+.thumb.upload{padding:0}
+.toolbar{display:flex;gap:8px;align-items:center}
+.toolbar .grow{flex:1}
+.zoom button,.toolbar button, .inspector button{background:#182946;border:1px solid #2d4670;color:#cfe1ff;padding:6px 10px;border-radius:8px;cursor:pointer}
+.toolbar button:disabled{opacity:.5;cursor:not-allowed}
+.content{display:grid;grid-template-columns: minmax(260px,1fr) 360px; gap:16px;padding:16px}
+.stage{background:var(--panel);border:1px solid #22324e;border-radius:12px;padding:12px;display:flex;justify-content:center;align-items:center;position:relative;min-height:520px}
+#canvas{image-rendering: pixelated;background:#000;border-radius:8px;border:1px solid #20314f}
+.inspector{background:var(--panel);border:1px solid #22324e;border-radius:12px;padding:12px;max-height:80vh;overflow:auto}
+.inspector .block{margin-bottom:8px}
+.inspector summary{cursor:pointer;color:#cfe1ff;padding:6px 8px;background:#0e1a2c;border-radius:8px;border:1px solid #1f3353}
+.inspector .row{display:flex;gap:10px;align-items:center;padding:6px 4px;flex-wrap:wrap}
+label{color:#a9bee3}
+.swatches{display:flex;gap:6px;align-items:center}
+.swatches .chip{width:18px;height:18px;border-radius:4px;border:1px solid #4a5f84;cursor:pointer;position:relative}
+.swatches .chip.custom::after{content:'×';position:absolute;right:-6px;top:-10px;font-size:12px;color:#fa9;display:none}
+.swatches .chip.custom:hover::after{display:block}
+/* floating delete */
+.delete-pill{position:absolute;background:#a53b4b;border:1px solid #c85d6e;color:white;font-size:12px;padding:3px 8px;border-radius:999px;pointer-events:auto}
+/* selection box */
+.sel{position:absolute;border:2px solid var(--magenta);border-radius:6px;pointer-events:none;mix-blend:screen}
+/* responsive */
+@media (max-width: 980px){
+  .content{grid-template-columns:1fr;gap:12px}
+  .stage{min-height:380px}
+  .inspector{max-height:none}
+}

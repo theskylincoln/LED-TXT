@@ -1,514 +1,457 @@
+// Basic 2D text animator for LED backpack
 
-/* LED Backpack Animator v1.4.7 - single-file core */
-const resSel = document.getElementById('resolution');
-const bgCanvas = document.getElementById('bgCanvas');
-const drawCanvas = document.getElementById('drawCanvas');
-const bgCtx = bgCanvas.getContext('2d');
-const ctx = drawCanvas.getContext('2d');
-const wrap = document.querySelector('.canvasWrap');
-const btnPreview = document.getElementById('btnPreview');
-const btnEdit = document.getElementById('btnEdit');
-const btnUndo = document.getElementById('btnUndo');
-const btnRedo = document.getElementById('btnRedo');
-const btnClear = document.getElementById('btnClear');
-const zoomIn = document.getElementById('zoomIn');
-const zoomOut = document.getElementById('zoomOut');
-const zoomPct = document.getElementById('zoomPct');
-const deletePill = document.getElementById('deletePill');
-const inspector = document.getElementById('inspector');
-const secFont = document.getElementById('secFont');
-const fontFamily = document.getElementById('fontFamily');
-const fontSize = document.getElementById('fontSize');
-const autoSize = document.getElementById('autoSize');
-const lineGap = document.getElementById('lineGap');
-const wordSpacing = document.getElementById('wordSpacing');
-const secAlign = document.getElementById('secAlign');
-const alignBtns = secAlign.querySelectorAll('button[data-align]');
-const btnReset = document.getElementById('btnReset');
-const btnAddLine = document.getElementById('btnAddLine');
-const btnAddWord = document.getElementById('btnAddWord');
-const swatches = document.getElementById('swatches');
-const colorPicker = document.getElementById('colorPicker');
-const addSwatch = document.getElementById('addSwatch');
-const anPulse = document.getElementById('anPulse');
-const pulseAmt = document.getElementById('pulseAmt');
-const anFlicker = document.getElementById('anFlicker');
-const flickerAmt = document.getElementById('flickerAmt');
-const bgUpload = document.getElementById('bgUpload');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let zoom = 4; // initial zoom to make canvas visible
+let previewMode = false;
 
-let state = {
+// State
+const state = {
   res: {w:96,h:128},
-  zoom: 3,               // canvas pixel zoom
-  words: [],             // {text,color,font,size,x,y,line,align,manual,anim:{pulse,flicker}}
-  lines: [[]],           // array of arrays of indices for state.words
-  selected: -1,
-  bg: {type:'solid', color:'#000000', img:null},
-  mode: 'edit',          // 'edit' | 'preview'
-  undo: [], redo: []
+  bg: {mode:'solid', color:'#000000', image:null},
+  lines: [], // [{y, words:[{text,x,y,color,font,size,manual,anim:{pulse:0..1,flicker:0..1}}]}]
+  lineGap: 2,
+  wordSpacing: 3,
+  selection: {lineIdx:-1, wordIdx:-1},
+  undo: [],
+  redo: [],
 };
 
-const MAX_UNDO = 20;
-
-// ---------- Helpers
+// Helpers
 function pushUndo(){
-  const snap = JSON.stringify(state, (k,v)=> (k==='undo'||k==='redo'||k==='bg'&&v?.img)? (k==='bg'? {...v, img:null}: undefined) : v );
-  state.undo.push(snap);
-  if(state.undo.length>MAX_UNDO) state.undo.shift();
-  state.redo.length=0;
+  const snapshot = JSON.stringify(state, (k,v)=> (k==='undo'||k==='redo'||k==='imageData')?undefined:v);
+  state.undo.push(snapshot);
+  if(state.undo.length>20) state.undo.shift();
+  state.redo = [];
+  document.getElementById('btnUndo').disabled = state.undo.length===0;
+  document.getElementById('btnRedo').disabled = true;
 }
-function applySnap(snap){
-  const obj=JSON.parse(snap);
-  // restore and keep bg image reference
-  const img = state.bg.img;
+function undo(){
+  if(!state.undo.length) return;
+  const curr = JSON.stringify(state, (k,v)=> (k==='undo'||k==='redo'||k==='imageData')?undefined:v);
+  state.redo.push(curr);
+  const snap = state.undo.pop();
+  const obj = JSON.parse(snap);
   Object.assign(state, obj);
-  state.bg.img = img;
-  layout();
+  document.getElementById('btnUndo').disabled = state.undo.length===0;
+  document.getElementById('btnRedo').disabled = state.redo.length===0;
+  render();
+}
+function redo(){
+  if(!state.redo.length) return;
+  const curr = JSON.stringify(state, (k,v)=> (k==='undo'||k==='redo'||k==='imageData')?undefined:v);
+  state.undo.push(curr);
+  const snap = state.redo.pop();
+  const obj = JSON.parse(snap);
+  Object.assign(state, obj);
+  document.getElementById('btnUndo').disabled = state.undo.length===0;
+  document.getElementById('btnRedo').disabled = state.redo.length===0;
   render();
 }
 
-function setRes(str){
-  const [w,h]=str.split('x').map(n=>parseInt(n,10));
-  state.res={w,h};
-  layout();
+function setResolution(v){
+  const [w,h] = v.split('x').map(n=>parseInt(n,10));
+  state.res = {w,h};
+  canvas.width = w;
+  canvas.height = h;
+  fitCanvasOnScreen();
   render();
 }
-function layout(){
-  const pad=10;
-  const scal = Math.max(2, Math.min(6, state.zoom));
-  const cw = state.res.w*scal;
-  const ch = state.res.h*scal;
-  bgCanvas.width = cw; bgCanvas.height = ch;
-  drawCanvas.width = cw; drawCanvas.height = ch;
-  wrap.style.width = (cw+pad*2)+'px';
-  wrap.style.height = (ch+pad*2)+'px';
-  renderBackground();
+
+function fitCanvasOnScreen(){
+  // scale canvas CSS according to zoom
+  canvas.style.width = (canvas.width*zoom)+'px';
+  canvas.style.height = (canvas.height*zoom)+'px';
 }
-function renderBackground(){
-  bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
-  if(state.bg.type==='image' && state.bg.img){
-    // contain
-    const iw = state.bg.img.width;
-    const ih = state.bg.img.height;
-    const rw = bgCanvas.width, rh = bgCanvas.height;
-    const s = Math.min(rw/iw, rh/ih);
-    const dw = iw*s, dh = ih*s;
-    const dx = (rw-dw)/2, dy=(rh-dh)/2;
-    bgCtx.drawImage(state.bg.img, dx, dy, dw, dh);
-  } else {
-    bgCtx.fillStyle = state.bg.color || '#000';
-    bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
+
+function loadPreset(name){
+  state.bg.mode = 'image';
+  const path = `assets/Preset_${name}.png`;
+  const img = new Image();
+  img.onload = ()=> { state.bg.image = img; render(); };
+  img.src = path;
+  deselect();
+}
+function setSolidColor(hex){
+  state.bg.mode='solid';
+  state.bg.color=hex;
+  document.getElementById('solidSwatch').style.background = hex;
+  render();
+  deselect();
+}
+function deselect(){
+  state.selection = {lineIdx:-1, wordIdx:-1};
+  drawSelection();
+}
+
+function ensureOneLineIfEmpty(){
+  if(state.lines.length===0){
+    state.lines.push({y: 0, words: []});
   }
 }
 
-function selectWord(idx){
-  state.selected = idx;
-  updateInspectorEnabled();
-  render();
-}
-function deselect(){
-  state.selected = -1;
-  updateInspectorEnabled();
-  render();
-}
-
-function updateInspectorEnabled(){
-  const disabled = (state.selected<0);
-  inspector.classList.toggle('disabled', disabled);
-  deletePill.style.display = disabled? 'none':'block';
-}
-
-function addWord(text, lineIndex, xCenter){
-  const color = '#ffffff';
-  const w = {text, color, font:fontFamily.value, size:parseInt(fontSize.value,10), x: xCenter||drawCanvas.width/2, y: 10, line: lineIndex, align:'center', manual:false, anim:{pulse:false,pulseAmt:60,flicker:false,flickerAmt:40}};
-  const idx = state.words.push(w)-1;
-  if(!state.lines[lineIndex]) state.lines[lineIndex]=[];
-  state.lines[lineIndex].push(idx);
-  autoPlaceLines();
-  selectWord(idx);
-}
-
-function addLine(){
+function addWordAt(x,y, text=''){
+  ensureOneLineIfEmpty();
+  // Find line by nearest y or create new under last
+  let lineIdx = state.lines.findIndex(l=> Math.abs(l.y - y) < 6 );
+  if(lineIdx===-1){
+    lineIdx = state.lines.length;
+    const lastY = state.lines.length? state.lines[state.lines.length-1].y : 0;
+    state.lines.push({y: lastY + 10 + state.lineGap, words: []});
+  }
+  const line = state.lines[lineIdx];
+  const word = {text, x:x, y: line.y, color: currentColor(), font: currentFont(), size: currentSize(), manual:false, anim:{pulse:0, flicker:0}};
+  // avoid overlap: if x intersects existing, place after last
+  let lastRight = 0;
+  for(const w of line.words){
+    const m = measureWord(w);
+    lastRight = Math.max(lastRight, w.x + m.w + state.wordSpacing);
+  }
+  if(x < lastRight) x = lastRight;
+  word.x = x;
+  line.words.push(word);
+  state.selection = {lineIdx, wordIdx: line.words.length-1};
   pushUndo();
-  state.lines.push([]);
-  autoPlaceLines();
   render();
 }
 
 function measureWord(w){
-  ctx.save();
   ctx.font = `${w.size}px ${w.font}`;
-  const m = ctx.measureText(w.text);
-  ctx.restore();
+  const m = ctx.measureText(w.text||'');
+  // approximate pixel font box
   return {w: Math.ceil(m.width), h: w.size};
 }
 
-function autoPlaceLines(){
-  // set y positions spaced by lineGap with vertical centering
-  const lg = parseInt(lineGap.value,10);
-  const totalH = state.lines.length * (currentSize() + lg) - lg;
-  let startY = (drawCanvas.height - totalH)/2 + currentSize();
-  state.lines.forEach((line, i)=>{
-    line.forEach(idx=>{
-      const w = state.words[idx];
-      w.y = startY + i*(currentSize()+lg);
-    });
-  });
-  layoutLineX();
-}
-
-function currentSize(){
-  return parseInt(fontSize.value,10);
-}
-function layoutLineX(){
-  const ws = parseInt(wordSpacing.value,10);
-  state.lines.forEach(line => {
-    // center layout
-    let widths = line.map(idx=>measureWord(state.words[idx]).w);
-    let total = widths.reduce((a,b)=>a+b,0) + ws*(Math.max(0,line.length-1));
-    let x = (drawCanvas.width-total)/2;
-    for(let i=0;i<line.length;i++){
-      const w = state.words[line[i]];
-      if(!w.manual){
-        w.x = x + widths[i]/2;
-      }
-      x += widths[i]+ws;
+function layoutCenterAll(){
+  // center all lines horizontally, space lines vertically from top to bottom using lineGap
+  let y = 10;
+  for(const line of state.lines){
+    // compute total width
+    let total=0;
+    for(let i=0;i<line.words.length;i++){
+      const w = line.words[i];
+      const m = measureWord(w);
+      total += m.w;
+      if(i<line.words.length-1) total += state.wordSpacing;
     }
-  });
+    const startX = Math.max(0, Math.floor((state.res.w - total)/2));
+    let x = startX;
+    for(const w of line.words){
+      if(!w.manual){
+        w.x = x;
+        w.y = y;
+      }
+      const m = measureWord(w);
+      x += m.w + state.wordSpacing;
+    }
+    y += 10 + state.lineGap +  (line.words[0]? line.words[0].size: 8);
+    line.y = (line.words[0]? line.words[0].y : y);
+  }
+  render();
 }
 
-function render(){
-  ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
-  const caretBlink = (Date.now()/500|0)%2===0;
-  state.lines.forEach(line=>{
-    line.forEach(idx=>{
-      const w = state.words[idx];
-      ctx.save();
-      // animations (only when previewing)
-      let alpha=1, scale=1;
-      if(state.mode==='preview'){
-        if(w.anim.flicker && w.anim.flickerAmt>0){
-          const f = w.anim.flickerAmt/100;
-          alpha = 1 - (Math.random()*0.6*f);
+function currentFont(){
+  return document.getElementById('fontFamily').value;
+}
+function currentSize(){
+  return parseInt(document.getElementById('fontSize').value,10);
+}
+function currentColor(){
+  return document.getElementById('_currentColor')?.value || '#ffffff';
+}
+
+function renderBackground(){
+  if(state.bg.mode==='image' && state.bg.image){
+    // contain
+    const iw=state.bg.image.width, ih=state.bg.image.height;
+    const scale = Math.min(canvas.width/iw, canvas.height/ih);
+    const w = Math.floor(iw*scale), h = Math.floor(ih*scale);
+    const x = Math.floor((canvas.width - w)/2);
+    const y = Math.floor((canvas.height - h)/2);
+    ctx.drawImage(state.bg.image, x,y,w,h);
+  }else{
+    ctx.fillStyle = state.bg.color || '#000';
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+  }
+}
+
+function renderWords(time){
+  for(const line of state.lines){
+    for(const w of line.words){
+      let scale = 1, alpha = 1;
+      if(previewMode){
+        if(w.anim.pulse>0){
+          const amt = w.anim.pulse;
+          scale = 1 + 0.1*amt*Math.sin(time/200);
         }
-        if(w.anim.pulse && w.anim.pulseAmt>0){
-          const p = w.anim.pulseAmt/100;
-          scale = 1 + Math.sin(performance.now()/300)*0.15*p;
+        if(w.anim.flicker>0){
+          const f = (Math.sin(time/50)+1)/2;
+          alpha = 0.5 + 0.5*(1 - w.anim.flicker*0.9 + f* w.anim.flicker*0.9);
         }
       }
+      ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(w.x, w.y);
+      ctx.translate(w.x + (measureWord(w).w/2), w.y);
       ctx.scale(scale, scale);
+      ctx.translate(-(measureWord(w).w/2), 0);
       ctx.font = `${w.size}px ${w.font}`;
       ctx.fillStyle = w.color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(w.text, 0, 0);
+      ctx.textBaseline = 'top';
+      ctx.fillText(w.text||'', 0, 0);
       ctx.restore();
-
-      // selection box & caret
-      if(state.selected===idx && state.mode==='edit'){
-        const m = measureWord(w);
-        const x = w.x - m.w/2;
-        const y = w.y - m.h/2;
-        ctx.save();
-        ctx.strokeStyle = '#ff4dff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x-6,y-4,m.w+12,m.h+8);
-        if(caretBlink){
-          ctx.fillStyle='#ffffff';
-          ctx.fillRect(w.x + m.w/2 + 2, y-2, 2, m.h+4);
-        }
-        ctx.restore();
-        // position delete pill
-        deletePill.style.left = (wrap.offsetLeft + 10 + x + m.w + 8)+'px';
-        deletePill.style.top  = (wrap.offsetTop + 10 + y - 22)+'px';
-      }
-    });
-  });
+    }
+  }
+}
+function render(time=0){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  renderBackground();
+  renderWords(time);
+  drawSelection();
 }
 
-function setAlign(al){
-  if(state.selected<0) return;
-  pushUndo();
-  const w = state.words[state.selected];
-  w.align=al;
-  w.manual=(al==='manual');
-  if(al!=='manual') layoutLineX();
+let rafId = null;
+function startPreview(){
+  previewMode = true;
+  function tick(ts){
+    render(ts);
+    rafId = requestAnimationFrame(tick);
+  }
+  if(!rafId) rafId = requestAnimationFrame(tick);
+}
+function stopPreview(){
+  previewMode = false;
+  if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
   render();
-  alignBtns.forEach(b=>b.classList.toggle('active', b.dataset.align===al));
 }
 
-alignBtns.forEach(b=> b.addEventListener('click',()=> setAlign(b.dataset.align)) );
-btnReset.addEventListener('click',()=>{
-  if(state.selected<0) return;
-  pushUndo();
-  const w = state.words[state.selected];
-  w.manual=false; w.align='center';
-  layoutLineX(); render();
-  alignBtns.forEach(b=>b.classList.toggle('active', b.dataset.align==='center'));
-});
+function drawSelection(){
+  // Remove old dom selection rectangles
+  for(const el of document.querySelectorAll('.sel, .delete-pill')) el.remove();
+  if(state.selection.lineIdx<0) return;
+  const line = state.lines[state.selection.lineIdx];
+  const w = line.words[state.selection.wordIdx];
+  if(!w) return;
+  const m = measureWord(w);
+  const rect = {x:w.x, y:w.y, w:m.w, h:w.size};
+  // create selection overlay elements positioned relative to canvas
+  const stage = document.querySelector('.stage');
+  const r = canvas.getBoundingClientRect();
+  const stageR = stage.getBoundingClientRect();
+  const selDiv = document.createElement('div');
+  selDiv.className='sel';
+  selDiv.style.left = (r.left - stageR.left + rect.x*zoom)+'px';
+  selDiv.style.top =  (r.top - stageR.top + rect.y*zoom)+'px';
+  selDiv.style.width = (rect.w*zoom)+'px';
+  selDiv.style.height = (rect.h*zoom)+'px';
+  stage.appendChild(selDiv);
 
-// zoom
-function setZoom(delta){
-  state.zoom = Math.max(1, Math.min(8, state.zoom + delta));
-  zoomPct.textContent = (state.zoom*100/3|0)+'%';
-  layout(); render();
+  const del = document.createElement('button');
+  del.className='delete-pill';
+  del.textContent='Delete';
+  del.style.left = (r.left - stageR.left + (rect.x+rect.w)*zoom - 10)+'px';
+  del.style.top  = (r.top - stageR.top + rect.y*zoom - 14)+'px';
+  del.onclick = ()=>{
+    const line = state.lines[state.selection.lineIdx];
+    line.words.splice(state.selection.wordIdx,1);
+    if(line.words.length===0){
+      state.lines.splice(state.selection.lineIdx,1);
+    }
+    state.selection = {lineIdx:-1, wordIdx:-1};
+    pushUndo();
+    render();
+  };
+  stage.appendChild(del);
 }
-zoomIn.addEventListener('click',()=>setZoom(+1));
-zoomOut.addEventListener('click',()=>setZoom(-1));
 
-// resolution
-resSel.addEventListener('change', e=>{
-  setRes(e.target.value);
-});
-
-// background thumbnails
-document.querySelectorAll('.thumb').forEach(th=>{
-  th.addEventListener('click', ()=>{
-    pushUndo();
-    document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('active'));
-    th.classList.add('active');
-    if(th.dataset.type==='preset'){
-      const name = th.dataset.name;
-      const img = new Image();
-      img.onload = ()=>{ state.bg={type:'image',img}; renderBackground(); render(); };
-      img.src = `assets/${name}.png`;
-    } else if(th.dataset.type==='solid'){
-      state.bg={type:'solid', color:'#000000'};
-      renderBackground(); render();
-    }
-    deselect();
-  });
-});
-
-bgUpload.addEventListener('change', (e)=>{
-  const f = e.target.files[0];
-  if(!f) return;
-  const url = URL.createObjectURL(f);
-  const img = new Image();
-  img.onload = ()=>{ state.bg={type:'image',img}; renderBackground(); render(); };
-  img.src = url;
-  deselect();
-});
-
-// canvas interactions
-let dragActive=false;
-drawCanvas.addEventListener('mousedown', (e)=>{
-  const pt = canvasPoint(e);
-  const hit = hitTest(pt.x, pt.y);
-  if(hit>=0){
-    if(state.mode==='preview'){ setMode('edit'); }
-    selectWord(hit);
-    // if double-click, enable manual drag
-    if(e.detail===2){
-      setAlign('manual');
-      dragActive=true;
-    }
-  } else {
-    // click on blank: start new word on that line center
-    if(state.mode!=='edit') setMode('edit');
-    pushUndo();
-    const lineIndex = state.lines.length-1;
-    addWord('', lineIndex, pt.x);
+// Canvas events
+let dragging = false, dragOffset = {x:0,y:0};
+canvas.addEventListener('mousedown', e=>{
+  const pos = canvasPosFromEvent(e);
+  const hit = hitTest(pos.x,pos.y);
+  if(hit){
+    state.selection = hit;
+    drawSelection();
+  }else{
+    // create word
+    addWordAt(pos.x, pos.y, '');
   }
 });
-drawCanvas.addEventListener('mousemove', (e)=>{
-  if(dragActive && state.selected>=0){
-    const pt = canvasPoint(e);
-    const w = state.words[state.selected];
-    w.x = pt.x; w.y = pt.y;
+canvas.addEventListener('dblclick', e=>{
+  const pos = canvasPosFromEvent(e);
+  const hit = hitTest(pos.x,pos.y);
+  if(hit){
+    const w = state.lines[hit.lineIdx].words[hit.wordIdx];
+    w.manual = true;
+    dragging = true;
+    dragOffset.x = pos.x - w.x;
+    dragOffset.y = pos.y - w.y;
+  }
+});
+canvas.addEventListener('mousemove', e=>{
+  const pos = canvasPosFromEvent(e);
+  if(dragging && state.selection.lineIdx>=0){
+    const w = state.lines[state.selection.lineIdx].words[state.selection.wordIdx];
+    w.x = Math.max(0, Math.min(state.res.w-1, pos.x - dragOffset.x));
+    w.y = Math.max(0, Math.min(state.res.h-1, pos.y - dragOffset.y));
     render();
   }
 });
-window.addEventListener('mouseup', ()=> dragActive=false);
+window.addEventListener('mouseup', ()=>{
+  if(dragging){ dragging=false; pushUndo(); }
+});
 
-function hitTest(x,y){
-  for(let i=state.words.length-1;i>=0;i--){
-    const w=state.words[i];
-    const m = measureWord(w);
-    const rx = w.x - m.w/2 -6, ry = w.y - m.h/2 -4, rw=m.w+12, rh=m.h+8;
-    if(x>=rx && x<=rx+rw && y>=ry && y<=ry+rh) return i;
-  }
-  return -1;
-}
-function canvasPoint(e){
-  const r = drawCanvas.getBoundingClientRect();
-  const x = (e.clientX - r.left);
-  const y = (e.clientY - r.top);
+function canvasPosFromEvent(e){
+  const r = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left)/zoom);
+  const y = Math.floor((e.clientY - r.top)/zoom);
   return {x,y};
 }
+function hitTest(x,y){
+  for(let li=0; li<state.lines.length; li++){
+    const line = state.lines[li];
+    for(let wi=0; wi<line.words.length; wi++){
+      const w = line.words[wi];
+      const m = measureWord(w);
+      if(x>=w.x && x<=w.x+m.w && y>=w.y && y<=w.y+m.h){
+        return {lineIdx:li, wordIdx:wi};
+      }
+    }
+  }
+  return null;
+}
 
-// typing editing in place
-window.addEventListener('keydown', (e)=>{
-  if(state.selected<0) return;
-  const w = state.words[state.selected];
+// Typing on canvas
+window.addEventListener('keydown', e=>{
+  if(state.selection.lineIdx<0) return;
+  const line = state.lines[state.selection.lineIdx];
+  const w = line.words[state.selection.wordIdx];
   if(e.key==='Backspace'){
+    w.text = (w.text||'').slice(0,-1);
+    render();
     e.preventDefault();
-    pushUndo();
-    w.text = w.text.slice(0,-1);
-    layoutLineX(); render();
     return;
   }
   if(e.key===' '){
+    // add next word on same line, respecting spacing
+    const m = measureWord(w);
+    const nextX = w.x + m.w + state.wordSpacing;
+    addWordAt(nextX, w.y, '');
     e.preventDefault();
-    pushUndo();
-    // split into a new word on same line
-    const idx = state.selected;
-    const line = state.words[idx].line;
-    addWord('', line);
     return;
   }
-  if(e.key.length===1 && !e.ctrlKey && !e.metaKey){
-    pushUndo();
-    w.text += e.key;
-    layoutLineX(); render();
-  }
-});
-
-// inspector controls wiring
-fontFamily.addEventListener('change', ()=>{
-  if(state.selected<0) return;
-  pushUndo();
-  state.words[state.selected].font = fontFamily.value;
-  render();
-});
-fontSize.addEventListener('change', ()=>{
-  if(state.selected<0) return;
-  pushUndo();
-  state.words[state.selected].size = parseInt(fontSize.value,10);
-  layoutLineX(); render();
-});
-autoSize.addEventListener('change', ()=>{
-  // placeholder flag; auto-shrink can be enhanced further
-});
-lineGap.addEventListener('change', ()=>{ autoPlaceLines(); render(); });
-wordSpacing.addEventListener('change', ()=>{ layoutLineX(); render(); });
-
-swatches.addEventListener('click', (e)=>{
-  const b = e.target.closest('.sw');
-  if(!b || state.selected<0) return;
-  pushUndo();
-  const col = b.dataset.color;
-  state.words[state.selected].color = col;
-  render();
-});
-swatches.addEventListener('contextmenu', (e)=>{
-  const b = e.target.closest('.sw.custom');
-  if(!b) return;
-  e.preventDefault();
-  b.remove();
-});
-
-addSwatch.addEventListener('click', ()=>{
-  const col = colorPicker.value;
-  const btn = document.createElement('button');
-  btn.className='sw custom';
-  btn.dataset.color = col;
-  btn.style.setProperty('--c', col);
-  swatches.appendChild(btn);
-});
-
-btnAddLine.addEventListener('click', ()=>{
-  addLine();
-});
-btnAddWord.addEventListener('click', ()=>{
-  pushUndo();
-  addWord('', state.lines.length-1);
-});
-
-// delete selected word
-deletePill.addEventListener('click', ()=>{
-  if(state.selected<0) return;
-  pushUndo();
-  const idx = state.selected;
-  // remove from line
-  const line = state.words[idx].line;
-  state.lines[line] = state.lines[line].filter(i=>i!==idx);
-  state.words.splice(idx,1);
-  // fix indices in lines
-  state.lines = state.lines.map(arr=>arr.map(i=> i>idx? i-1: i));
-  deselect();
-  render();
-});
-
-// mode switching and animation loop
-let rafId = 0;
-function setMode(m){
-  state.mode=m;
-  if(m==='preview'){
-    loop();
-  } else {
-    cancelAnimationFrame(rafId);
-    rafId=0;
+  if(e.key.length===1){
+    w.text = (w.text||'') + e.key;
     render();
   }
+});
+
+// Buttons
+document.getElementById('zoomIn').onclick = ()=>{ zoom = Math.min(10, zoom+0.5); fitCanvasOnScreen(); drawSelection(); document.getElementById('zoomPct').textContent = Math.round(zoom*25)+'%'; };
+document.getElementById('zoomOut').onclick = ()=>{ zoom = Math.max(1, zoom-0.5); fitCanvasOnScreen(); drawSelection(); document.getElementById('zoomPct').textContent = Math.round(zoom*25)+'%'; };
+document.getElementById('btnPreview').onclick = ()=> startPreview();
+document.getElementById('btnEdit').onclick = ()=> stopPreview();
+document.getElementById('btnClear').onclick = ()=>{ if(confirm('Clear all text?')){ pushUndo(); state.lines=[]; state.selection={lineIdx:-1,wordIdx:-1}; render(); } };
+document.getElementById('btnUndo').onclick = undo;
+document.getElementById('btnRedo').onclick = redo;
+document.getElementById('btnCenterTop').onclick = ()=>{ layoutCenterAll(); };
+document.getElementById('btnCenterBottom').onclick = ()=>{ layoutCenterAll(); };
+
+document.getElementById('resolution').addEventListener('change', e=>{
+  setResolution(e.target.value);
+});
+
+// Align controls
+document.getElementById('alignLeft').onclick = ()=>{ if(state.selection.lineIdx<0) return; const line=state.lines[state.selection.lineIdx]; let x=0; for(const w of line.words){ w.manual=false; w.x=x; w.y=line.y; x+=measureWord(w).w+state.wordSpacing; } render(); };
+document.getElementById('alignCenter').onclick = ()=>{ layoutCenterAll(); };
+document.getElementById('alignRight').onclick = ()=>{ if(state.selection.lineIdx<0) return; const line=state.lines[state.selection.lineIdx]; let total=0; for(let i=0;i<line.words.length;i++){ const m = measureWord(line.words[i]); total+=m.w; if(i<line.words.length-1) total+=state.wordSpacing; } let x=Math.max(0,state.res.w-total); for(const w of line.words){ w.manual=false; w.x=x; w.y=line.y; x+=measureWord(w).w+state.wordSpacing; } render(); };
+document.getElementById('alignManual').onclick = ()=>{ if(state.selection.lineIdx<0) return; for(const w of state.lines[state.selection.lineIdx].words){ w.manual=true; } };
+document.getElementById('alignReset').onclick = ()=>{ for(const line of state.lines){ for(const w of line.words){ w.manual=false; } } layoutCenterAll(); };
+
+// Spacing
+document.getElementById('lineGap').addEventListener('input', e=>{ state.lineGap=parseInt(e.target.value,10); layoutCenterAll(); });
+document.getElementById('wordSpacing').addEventListener('input', e=>{ state.wordSpacing=parseInt(e.target.value,10); layoutCenterAll(); });
+
+// Font & size
+document.getElementById('fontFamily').addEventListener('change', ()=>{ if(state.selection.lineIdx<0) return; const w=state.lines[state.selection.lineIdx].words[state.selection.wordIdx]; w.font=currentFont(); render(); });
+document.getElementById('fontSize').addEventListener('input', ()=>{ if(state.selection.lineIdx<0) return; const w=state.lines[state.selection.lineIdx].words[state.selection.wordIdx]; w.size=currentSize(); render(); });
+
+// Color swatches
+const defaultSwatches = ['#2bd1ff','#36e05d','#ffd400','#ff63d1','#ff4444','#ffffff','#000000'];
+const swWrap = document.getElementById('swatches');
+function setCurrentColor(hex){ 
+  let holder = document.getElementById('_currentColor');
+  if(!holder){ holder = document.createElement('input'); holder.type='hidden'; holder.id='_currentColor'; document.body.appendChild(holder); }
+  holder.value = hex;
 }
-btnPreview.addEventListener('click', ()=> setMode('preview'));
-btnEdit.addEventListener('click', ()=> setMode('edit'));
-
-function loop(){
-  renderBackground();
-  render();
-  rafId = requestAnimationFrame(loop);
+function buildSwatches(){
+  swWrap.innerHTML='';
+  const stored = JSON.parse(localStorage.getItem('customSwatches')||'[]');
+  const all = [...defaultSwatches, ...stored];
+  all.forEach((hex, idx)=>{
+    const chip = document.createElement('div');
+    chip.className='chip'+(idx>=defaultSwatches.length?' custom':'');
+    chip.style.background=hex;
+    chip.title=hex;
+    chip.oncontextmenu = (e)=>{
+      if(!chip.classList.contains('custom')) return;
+      e.preventDefault();
+      // delete
+      const arr = JSON.parse(localStorage.getItem('customSwatches')||'[]');
+      const i = arr.indexOf(hex);
+      if(i>-1){ arr.splice(i,1); localStorage.setItem('customSwatches', JSON.stringify(arr)); buildSwatches(); }
+    };
+    chip.onclick = ()=>{ setCurrentColor(hex); if(state.selection.lineIdx>=0){ const w=state.lines[state.selection.lineIdx].words[state.selection.wordIdx]; w.color=hex; render(); } if(document.getElementById('solidSwatch')){ document.getElementById('solidSwatch').style.background = hex; if(state.bg.mode==='solid'){ state.bg.color=hex; render(); } } };
+    swWrap.appendChild(chip);
+  });
 }
-// Anim toggles
-anPulse.addEventListener('change',()=>{
-  if(state.selected<0) return;
-  pushUndo();
-  const w = state.words[state.selected];
-  w.anim.pulse = anPulse.checked;
-  w.anim.pulseAmt = parseInt(pulseAmt.value,10);
-});
-pulseAmt.addEventListener('input',()=>{
-  if(state.selected<0) return;
-  const w = state.words[state.selected];
-  w.anim.pulseAmt = parseInt(pulseAmt.value,10);
-});
+document.getElementById('addSwatch').onclick = ()=>{
+  const hex = document.getElementById('colorPicker').value;
+  const arr = JSON.parse(localStorage.getItem('customSwatches')||'[]');
+  if(!arr.includes(hex) && arr.length<5){ arr.push(hex); localStorage.setItem('customSwatches', JSON.stringify(arr)); buildSwatches(); }
+};
+buildSwatches();
+setCurrentColor('#ffffff');
 
-anFlicker.addEventListener('change',()=>{
-  if(state.selected<0) return;
-  pushUndo();
-  const w = state.words[state.selected];
-  w.anim.flicker = anFlicker.checked;
-  w.anim.flickerAmt = parseInt(flickerAmt.value,10);
+// Background selection
+document.querySelectorAll('.thumb').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const t = btn.dataset.type;
+    if(t==='preset'){
+      loadPreset(btn.dataset.name);
+    }else if(t==='solid'){
+      setSolidColor(document.getElementById('_currentColor').value);
+    }
+  });
 });
-flickerAmt.addEventListener('input',()=>{
-  if(state.selected<0) return;
-  const w = state.words[state.selected];
-  w.anim.flickerAmt = parseInt(flickerAmt.value,10);
-});
-
-// undo/redo
-btnUndo.addEventListener('click', ()=>{
-  if(state.undo.length===0) return;
-  const snap = state.undo.pop();
-  state.redo.push(JSON.stringify(state));
-  applySnap(snap);
-});
-btnRedo.addEventListener('click', ()=>{
-  if(state.redo.length===0) return;
-  const snap = state.redo.pop();
-  state.undo.push(JSON.stringify(state));
-  applySnap(snap);
-});
-btnClear.addEventListener('click', ()=>{
-  pushUndo();
-  state.words=[]; state.lines=[[]];
-  deselect();
-  render();
-});
-
-// init
-function init(){
-  document.querySelector('.thumb[data-name="Preset_A"]').classList.add('active');
-  // load initial background
+document.getElementById('bgUpload').addEventListener('change', e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const url = URL.createObjectURL(file);
   const img = new Image();
-  img.onload = ()=>{ state.bg={type:'image',img}; layout(); render(); };
-  img.src = 'assets/Preset_A.png';
-  setRes(resSel.value);
-  zoomPct.textContent = (state.zoom*100/3|0)+'%';
-  updateInspectorEnabled();
-  // open Font by default
-  document.getElementById('secFont').setAttribute('open','');
-}
-init();
+  img.onload = ()=>{ state.bg.mode='image'; state.bg.image=img; render(); deselect(); };
+  img.src = url;
+});
+
+// Animations toggles
+document.querySelectorAll('.animToggle').forEach(cb=>{
+  cb.addEventListener('change', e=>{
+    if(state.selection.lineIdx<0) return;
+    const w=state.lines[state.selection.lineIdx].words[state.selection.wordIdx];
+    const key = e.target.dataset.anim;
+    w.anim[key] = e.target.checked ? (parseInt(document.querySelector(`.animAmt[data-anim="${key}"]`).value,10)/100) : 0;
+    render();
+  });
+});
+document.querySelectorAll('.animAmt').forEach(sl=>{
+  sl.addEventListener('input', e=>{
+    if(state.selection.lineIdx<0) return;
+    const w=state.lines[state.selection.lineIdx].words[state.selection.wordIdx];
+    const key = e.target.dataset.anim;
+    if(w.anim[key]>0){ w.anim[key] = parseInt(e.target.value,10)/100; render(); }
+  });
+});
+
+// Init
+setResolution('96x128');
+fitCanvasOnScreen();
+setSolidColor('#000000');
+render();
