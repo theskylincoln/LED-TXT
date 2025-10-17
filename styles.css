@@ -39,3 +39,11 @@ h3{margin:.2rem 0 1rem}
 .btn[disabled], select[disabled], input[disabled]{opacity:.6;pointer-events:none}
 
 @media (min-width:900px){.grid{grid-template-columns:1.1fr 1fr 1.1fr} #preview{grid-column:2/3}}
+
+/* Stack fields under file name on narrow screens */
+.renderRow{display:grid;grid-template-columns:1fr;gap:.6rem;align-items:center}
+.renderRow .inline{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+@media (min-width:560px){
+  .renderRow{grid-template-columns:1fr}
+  .renderRow .inline{display:flex}
+}
