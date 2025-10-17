@@ -47,3 +47,8 @@ h3{margin:.2rem 0 1rem}
   .renderRow{grid-template-columns:1fr}
   .renderRow .inline{display:flex}
 }
+
+/* --- STEP5: preview sizing/aspect fixes --- */
+#previewBox{height:auto;}
+#canvas{display:block;width:100%;height:auto;image-rendering: pixelated;image-rendering: crisp-edges;}
+.preview-canvas-wrap{width:100%;height:auto;}

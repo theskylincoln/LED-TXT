@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   bind('autosize','change',draw);
 
   bind('addLine','click',()=>{S.lines.push([{text:"",color:"#fff",size:S.font.size,font:S.font.family,offset:{x:2,y:2}}]); S.active={line:S.lines.length-1,word:0}; $('wordInput').value=""; draw();});
-  bind('addWord','click',()=>{const L=S.lines[S.active.line]||[]; L.push({text:"",color:"#fff",size:S.font.size,font:S.font.family,offset:{x:2,y:2}}); S.active.word=L.length-1; $('wordInput').value=""; draw();});
+  bind('addWord','click',()=>{ if(!S.lines[S.active.line]) S.lines[S.active.line]=[]; const L=S.lines[S.active.line]; L.push({text:"Word",color:"#fff",size:S.font.size,font:S.font.family,offset:{x:2,y:2}}); S.active.word=L.length-1; $('wordInput').value='Word'; draw(); const c=$('canvas'), ime=$('canvasIME'); const r=c.getBoundingClientRect(); ime.style.left=(8)+'px'; ime.style.top=(8)+'px'; ime.value='Word'; ime.classList.remove('hidden'); ime.focus(); });
   bind('delWord','click',()=>{const L=S.lines[S.active.line]; if(!L) return; L.splice(S.active.word,1); S.active.word=Math.max(0,S.active.word-1); draw();});
 
   bind('fxIntensity','input',e=>{S.fxIntensity=parseFloat(e.target.value)||0.6; const pct=document.getElementById('fxPct'); if(pct) pct.textContent=Math.round(S.fxIntensity*100)+'%';});
@@ -66,8 +66,17 @@ function onTile(ev){
 
 function handleResolution(v){
   const map={'96x128':{w:96,h:128}, '64x64':{w:64,h:64}};
+  S.res=map[v]||{w:96,h:128};
+  const c=document.getElementById('canvas');
+  c.width=S.res.w; c.height=S.res.h;
+  resetCanvasCSS();
+  // reset zoom UI if present
+  const zp=document.getElementById('zoomPct'); if(zp) zp.textContent='100%';
+  // trigger two-phase redraw to avoid stale layout after dimension change
+  requestAnimationFrame(()=>{ draw(); requestAnimationFrame(draw); });
+}, '64x64':{w:64,h:64}};
   S.res=map[v]||{w:128,h:96};
-  const c=document.getElementById('canvas'); c.width=S.res.w; c.height=S.res.h;
+  const c=document.getElementById('canvas'); c.width=S.res.w; c.height=S.res.h; c.style.width='100%'; c.style.height='auto'; document.getElementById('zoomPct').textContent='100%';
   draw();
 }
 
@@ -268,3 +277,10 @@ async function renderGIF(){
   gif.render();
 }
 (function(){ const btn=document.getElementById('render'); if(btn){ btn.onclick=()=>{ renderGIF().catch(()=> setUIBusy(false,'')); }; } })();
+
+function resetCanvasCSS(){
+  const c=document.getElementById('canvas');
+  if(!c) return;
+  c.style.width='100%';
+  c.style.height='auto';
+}
