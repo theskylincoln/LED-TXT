@@ -3,19 +3,33 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator — v1.4.0</title>
+  <title>LED Backpack Animator — v1.4.1</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <header class="app-title">LED Backpack Animator <span class="ver">v1.4.0</span></header>
+  <header class="app-title">LED Backpack Animator <span class="ver">v1.4.1</span></header>
+
+  <!-- BACKGROUND & RESOLUTION AT TOP -->
+  <section class="card">
+    <h2>Backgrounds & Resolution</h2>
+    <div class="row">
+      <label>Resolution</label>
+      <select id="resolution">
+        <option value="96x128" selected>96×128</option>
+        <option value="64x64">64×64</option>
+      </select>
+    </div>
+    <div id="bgThumbs" class="thumb-row"></div>
+  </section>
 
   <main class="grid">
     <section class="card">
       <h2>Preview</h2>
       <div class="toolbar">
-        <button id="btnToggleAnim" class="btn">Show Animation / Edit Mode</button>
-        <button id="btnHideAnim" class="btn">Hide Animation</button>
+        <button id="btnShow" class="btn">Show Animation</button>
+        <button id="btnEdit" class="btn">Edit Mode</button>
         <button id="btnRender" class="btn">Render</button>
+        <button id="btnClearText" class="btn danger">Clear All Text</button>
         <div class="spacer"></div>
         <button id="btnUndo" class="btn">Undo</button>
         <button id="btnRedo" class="btn">Redo</button>
@@ -28,94 +42,68 @@
         <canvas id="preview" width="96" height="128"></canvas>
         <div id="uiOverlay">
           <button id="btnDeleteWord" class="pill danger hidden">× Delete</button>
-
-          <div id="floatingInspector" class="inspector fade hidden">
-            <div class="inspector-head">
-              <strong>Inspector</strong>
-              <button id="btnPin" class="icon-btn" title="Pin">⚙️</button>
-            </div>
-            <div class="accordion">
-              <details id="secFont" open>
-                <summary>Font</summary>
-                <div class="group">
-                  <label>Size</label>
-                  <input id="fontSize" type="number" min="6" max="64" value="22"/>
-                </div>
-                <div class="group row">
-                  <label class="inline"><input id="autoSize" type="checkbox" checked/> Auto-size (per line)</label>
-                </div>
-                <details id="secColor">
-                  <summary>Color</summary>
-                  <div id="wordSwatches" class="swatches"></div>
-                  <div class="row">
-                    <input id="wordColorPicker" type="color" value="#ffffff"/>
-                    <button id="addWordSwatch" class="btn small">+ Add swatch</button>
-                  </div>
-                </details>
-              </details>
-
-              <details id="secPara">
-                <summary>Paragraph</summary>
-                <div class="group">
-                  <label>Line Gap</label>
-                  <input id="lineGap" type="number" min="0" max="20" value="2"/>
-                </div>
-                <div class="group">
-                  <label>Word Spacing</label>
-                  <input id="wordSpacing" type="number" min="0" max="20" value="3"/>
-                </div>
-              </details>
-
-              <details id="secAlign">
-                <summary>Alignment</summary>
-                <div class="row">
-                  <button class="btn align" data-align="left">← Left</button>
-                  <button class="btn align" data-align="center">⇔ Center</button>
-                  <button class="btn align" data-align="right">⇒ Right</button>
-                  <button class="btn align" data-align="manual">✥ Manual</button>
-                </div>
-              </details>
-
-              <details id="secAnim">
-                <summary>Animation</summary>
-                <div class="group">
-                  <label class="inline"><input type="checkbox" id="fxPulse"/> Pulse</label>
-                  <input type="range" id="fxPulseAmt" min="0" max="100" value="60" />
-                </div>
-                <div class="group">
-                  <label class="inline"><input type="checkbox" id="fxFlicker"/> Flicker</label>
-                  <input type="range" id="fxFlickerAmt" min="0" max="100" value="35" />
-                </div>
-              </details>
-
-              <div class="row">
-                <button id="btnAddLine" class="btn small">+ Line</button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
-    </section>
 
-    <section id="pinnedInspector" class="card hidden">
-      <h2>Inspector (Pinned)</h2>
-      <div id="pinnedMirror"></div>
-    </section>
+      <!-- PINNED INSPECTOR BAR BELOW PREVIEW -->
+      <div id="inspectorBar" class="inspector-bar disabled">
+        <details class="slot" id="slotFont" open>
+          <summary>Font</summary>
+          <div class="slot-body">
+            <label>Size <input id="fontSize" type="number" min="6" max="64" value="22"/></label>
+            <label class="inline"><input id="autoSize" type="checkbox" checked/> Auto-size (per line)</label>
+          </div>
+        </details>
 
-    <section class="card">
-      <h2>Backgrounds & Resolution</h2>
-      <div class="row">
-        <label>Resolution</label>
-        <select id="resolution">
-          <option value="96x128">96×128</option>
-          <option value="64x64">64×64</option>
-        </select>
+        <details class="slot" id="slotColor">
+          <summary>Color</summary>
+          <div class="slot-body">
+            <div id="wordSwatches" class="swatches"></div>
+            <input id="wordColorPicker" type="color" value="#ffffff"/>
+            <button id="addWordSwatch" class="btn small">+ Add swatch</button>
+          </div>
+        </details>
+
+        <details class="slot" id="slotSpacing">
+          <summary>Spacing</summary>
+          <div class="slot-body">
+            <label>Line Gap <input id="lineGap" type="number" min="0" max="20" value="2"/></label>
+            <label>Word Spacing <input id="wordSpacing" type="number" min="0" max="20" value="3"/></label>
+          </div>
+        </details>
+
+        <details class="slot" id="slotAlign">
+          <summary>Alignment</summary>
+          <div class="slot-body row">
+            <button class="btn align" data-align="left">← Left</button>
+            <button class="btn align" data-align="center">⇔ Center</button>
+            <button class="btn align" data-align="right">⇒ Right</button>
+            <button class="btn align" data-align="manual">✥ Manual</button>
+          </div>
+        </details>
+
+        <details class="slot" id="slotAnim">
+          <summary>Animation</summary>
+          <div class="slot-body">
+            <label class="inline"><input type="checkbox" id="fxPulse"/> Pulse</label>
+            <input type="range" id="fxPulseAmt" min="0" max="100" value="60" />
+            <label class="inline"><input type="checkbox" id="fxFlicker"/> Flicker</label>
+            <input type="range" id="fxFlickerAmt" min="0" max="100" value="35" />
+          </div>
+        </details>
+
+        <button id="btnAddLine" class="btn small">+ Line</button>
       </div>
-      <div id="bgThumbs" class="thumb-row"></div>
+
+      <!-- Add word fallback when there are no words -->
+      <div id="emptyState" class="empty hidden">
+        <p>No words yet.</p>
+        <button id="btnAddWord" class="btn">+ Add Word</button>
+      </div>
     </section>
   </main>
 
-  <footer class="foot"><small>Mobile‑first. Click a word to select; double‑click (desktop) / long‑press (mobile) to edit inline. Space splits a word.</small></footer>
+  <footer class="foot"><small>Single‑click a word to edit in place. Space splits into a new word. Animations show in “Show Animation”. Selecting a word switches back to “Edit Mode”.</small></footer>
 
   <script src="app.js"></script>
 </body>
