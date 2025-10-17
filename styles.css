@@ -19,7 +19,7 @@ button{cursor:pointer}button.danger{background:#3b1520;border-color:#5d2030}
 .toolbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:6px 0}
 .zoom{margin-left:auto;display:flex;gap:.5rem;align-items:center}
 details summary{cursor:pointer}
-.preview-canvas-wrap{width:100%;height:auto}
+.preview-canvas-wrap{width:100%;height:auto;position:relative}
 #canvas{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;border-radius:10px;border:1px solid #23344a}
 .ime{position:absolute;transform:translate(-50%,-50%);padding:.3rem .5rem;z-index:10}
 .hidden{display:none}

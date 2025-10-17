@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator v1.2.3 (clean)</title>
+  <title>LED Backpack Animator v1.2.4</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <header><h1>LED Backpack Animator <small>v1.2.3</small></h1></header>
+  <header><h1>LED Backpack Animator <small>v1.2.4</small></h1></header>
 
   <section class="panel">
     <h2>Backgrounds &amp; Resolution</h2>
@@ -15,7 +15,10 @@
       <button class="bg-tile" data-bg="preset1"><span class="thumb preset1"></span><label>Preset A</label></button>
       <button class="bg-tile" data-bg="preset2"><span class="thumb preset2"></span><label>Preset B</label></button>
       <button class="bg-tile" data-bg="solid"><span class="thumb solid"></span><label>Solid Color</label></button>
-      <button class="bg-tile" data-bg="custom"><span class="thumb custom">+</span><label>Custom</label></button>
+      <label class="bg-tile colorpick">
+        <span class="thumb custom">+</span><label>Custom</label>
+        <input type="file" id="bgFile" accept="image/*" hidden/>
+      </label>
     </div>
     <div class="row">
       <label for="resPick">Resolution</label>
@@ -105,8 +108,8 @@
       <label><input type="checkbox" id="fx-flicker"/> Flicker</label>
     </div>
     <div class="row two">
-      <label>Pulse Amount <input id="fxPulse" type="range" min="0" max="0.3" step="0.01" value="0.08"/></label>
-      <label>Flicker Amount <input id="fxFlicker" type="range" min="0" max="0.9" step="0.01" value="0.3"/></label>
+      <label id="rowPulse">Pulse Amount <input id="fxPulse" type="range" min="0" max="0.3" step="0.01" value="0.08"/></label>
+      <label id="rowFlick">Flicker Amount <input id="fxFlicker" type="range" min="0" max="0.9" step="0.01" value="0.3"/></label>
     </div>
   </section>
 

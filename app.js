@@ -1,5 +1,12 @@
 const $=id=>document.getElementById(id);
 
+function updateFxUI(){
+  const pr=document.getElementById('rowPulse');
+  const fr=document.getElementById('rowFlick');
+  pr.style.display=$('fx-pulse').checked?'':'none';
+  fr.style.display=$('fx-flicker').checked?'':'none';
+}
+
 const S = {
   res:{w:96,h:128},
   bg:{type:'preset', preset:1, color:'#000000'},
@@ -29,7 +36,6 @@ function init(){
     if(kind==='preset1'){ S.bg={type:'preset', preset:1}; }
     else if(kind==='preset2'){ S.bg={type:'preset', preset:2}; }
     else if(kind==='solid'){ S.bg={type:'solid', color:$('solidBg').value}; }
-    else { /* custom placeholder */ }
     draw();
   }));
   $('solidBg').addEventListener('input',()=>{ if(S.bg.type==='solid'){ S.bg.color=$('solidBg').value; draw(); }});
@@ -50,12 +56,14 @@ function init(){
     const L=S.lines[S.active.line];
     L.push({text:'Word', color:'#ffffff', size:S.font.size, font:S.font.family, offset:{x:4,y:4}});
     S.active.word=L.length-1;
-    $('wordInput').value='Word'; openIMEAt(12,12); draw();
+    $('wordInput').value='Word';
+    draw();
   });
   $('addLine').addEventListener('click', ()=>{
     S.lines.push([{text:'Word', color:'#ffffff', size:S.font.size, font:S.font.family, offset:{x:4,y:4}}]);
     S.active.line=S.lines.length-1; S.active.word=0;
-    $('wordInput').value='Word'; openIMEAt(12,12); draw();
+    $('wordInput').value='Word';
+    draw();
   });
   $('delWord').addEventListener('click', ()=>{
     ensureActiveLine();
@@ -66,10 +74,14 @@ function init(){
   });
 
   // effects
-  $('fx-pulse').addEventListener('change',draw);
-  $('fx-flicker').addEventListener('change',draw);
+  $('fx-pulse').addEventListener('change',()=>{updateFxUI(); draw();});
+  $('fx-flicker').addEventListener('change',()=>{updateFxUI(); draw();});
   $('fxPulse').addEventListener('input',draw);
   $('fxFlicker').addEventListener('input',draw);
+
+  // Show/Hide animation
+  $('btnShow').addEventListener('click',()=>{S.anim.show=true;});
+  $('btnHide').addEventListener('click',()=>{S.anim.show=false;});
 
   // zoom
   $('zPlus').addEventListener('click',()=>setZoom(1.15));
@@ -77,6 +89,7 @@ function init(){
 
   enableCanvasIME();
   handleResolution('96x128');
+  updateFxUI();
   syncInspector();
   tick();
 }
@@ -120,10 +133,19 @@ function draw(){
   const pAmt=parseFloat($('fxPulse').value)||0.08, fAmt=parseFloat($('fxFlicker').value)||0.3;
   let blockH=0, lineDims=[];
   for(const line of S.lines){
-    let lw=0, lh=0;
-    for(const W of line){ const size=W.size||S.font.size; ctx.font=size+'px '+(W.font||S.font.family); lw += ctx.measureText(W.text||'').width + (S.font.wgap||3); lh=Math.max(lh,size); }
+    let lw=0, lh=0, maxWord=0;
+    for(const W of line){
+      const size=W.size||S.font.size; ctx.font=size+'px '+(W.font||S.font.family);
+      const ww=ctx.measureText(W.text||'').width;
+      lw += ww + (S.font.wgap||3);
+      maxWord=Math.max(maxWord, ww);
+      lh=Math.max(lh,size);
+    }
     lw=Math.max(0,lw-(S.font.wgap||3));
-    let scale=1; if(autosize && lw>c.width-2*pad && lw>0){ scale=(c.width-2*pad)/lw; }
+    let scale=1;
+    const limit=c.width-2*pad;
+    if(autosize && lw>limit && lw>0){ scale=limit/lw; }
+    if(autosize && maxWord>limit){ scale=Math.min(scale, limit/maxWord); }
     lineDims.push({lw,lh,scale}); blockH += lh*scale + (S.font.gap||2);
   }
   blockH=Math.max(0,blockH-(S.font.gap||2));
@@ -160,7 +182,8 @@ function syncInspector(){
 }
 
 function openIMEAt(px,py){
-  const ime=$('canvasIME'); ime.style.left=px+'px'; ime.style.top=py+'px';
+  const ime=$('canvasIME'); const wrap=document.querySelector('.preview-canvas-wrap');
+  ime.style.left=px+'px'; ime.style.top=py+'px';
   ime.value=currentWord()?.text||''; ime.classList.remove('hidden'); ime.focus();
 }
 
@@ -172,7 +195,7 @@ function enableCanvasIME(){
     const r=c.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX);
     const cy=(e.touches?e.touches[0].clientY:e.clientY);
     const mx=(cx-r.left)*(c.width/r.width), my=(cy-r.top)*(c.height/r.height);
-    return {cx,cy,mx,my};
+    return {rect:r, cx, cy, mx, my};
   }
   function hit(mx,my){
     for(let i=S.layout.length-1;i>=0;i--){ const h=S.layout[i]; if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h) return h; }
@@ -180,22 +203,24 @@ function enableCanvasIME(){
   }
 
   c.addEventListener('click',(e)=>{
-    const {cx,cy,mx,my}=pos(e); const h=hit(mx,my);
+    const p=pos(e); const h=hit(p.mx,p.my);
     const now=Date.now(), dbl=(now-lastTap)<350; lastTap=now;
-    if(h){ S.active={line:h.line,word:h.word}; syncInspector(); draw(); if(dbl){ openIMEAt(cx-c.getBoundingClientRect().left, cy-c.getBoundingClientRect().top);} }
+    if(h){ S.active={line:h.line,word:h.word}; syncInspector(); draw();
+      if(dbl){ const rx=p.cx-p.rect.left, ry=p.cy-p.rect.top; openIMEAt(rx,ry); }
+    }
   });
 
   function startDrag(e){
     if(S.alignH!=='manual') return;
-    const {mx,my}=pos(e); const h=hit(mx,my);
+    const p=pos(e); const h=hit(p.mx,p.my);
     if(!h || h.line!==S.active.line || h.word!==S.active.word) return;
     const W=currentWord(); if(!W) return; dragging=true;
-    dragDX=(W.offset?.x??h.x)-mx; dragDY=(W.offset?.y??h.y)-my; e.preventDefault();
+    dragDX=(W.offset?.x??h.x)-p.mx; dragDY=(W.offset?.y??h.y)-p.my; e.preventDefault();
   }
   function moveDrag(e){
     if(!dragging) return;
-    const {mx,my}=pos(e); const W=currentWord(); if(!W) return;
-    W.offset={x:Math.round(mx+dragDX), y:Math.round(my+dragDY)}; draw();
+    const p=pos(e); const W=currentWord(); if(!W) return;
+    W.offset={x:Math.round(p.mx+dragDX), y:Math.round(p.my+dragDY)}; draw();
   }
   function endDrag(){ dragging=false; }
 
