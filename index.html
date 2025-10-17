@@ -4,23 +4,26 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator — v1.4.2</title>
+  <title>LED Backpack Animator — v1.4.3</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <header class="app-title">LED Backpack Animator <span class="ver">v1.4.2</span></header>
+  <header class="app-title">LED Backpack Animator <span class="ver">v1.4.3</span></header>
 
   <!-- BACKGROUND & RESOLUTION AT TOP -->
   <section class="card">
-    <h2>Backgrounds & Resolution</h2>
-    <div class="row">
-      <label>Resolution</label>
-      <select id="resolution">
+    <div class="topbar">
+      <div class="title">Backgrounds & Resolution</div>
+      <select id="resolution" class="pill-select">
         <option value="96x128" selected>96×128</option>
         <option value="64x64">64×64</option>
       </select>
     </div>
-    <div id="bgThumbs" class="thumb-row"></div>
+
+    <!-- 2x2 layout: first row presets A/B or C/D; second row Solid + Custom upload -->
+    <div id="bgGrid" class="bg-grid">
+      <!-- filled by JS per resolution -->
+    </div>
   </section>
 
   <main class="grid">
@@ -39,6 +42,7 @@
         <span id="zoomLabel">100%</span>
         <button id="btnZoomIn" class="btn">＋</button>
       </div>
+
       <div class="canvas-wrap">
         <canvas id="preview" width="96" height="128"></canvas>
         <div id="uiOverlay">
@@ -46,7 +50,7 @@
         </div>
       </div>
 
-      <!-- Inspector BAR (pinned, collapsed sections) -->
+      <!-- Inspector BAR (collapsed by default) -->
       <div id="inspectorBar" class="inspector-bar disabled">
         <details class="slot" id="slotFont">
           <summary>Font</summary>
@@ -108,7 +112,7 @@
     </section>
   </main>
 
-  <footer class="foot"><small>Click background to deselect. Click a word to enter Edit Mode and edit inline; space splits it into a new word. Use “Preview Animation” to play current effects.</small></footer>
+  <footer class="foot"><small>Click background to deselect. Click a word to enter Edit Mode and edit inline; space splits it into a new word. “Preview Animation” plays effects; “Edit Mode” stops them.</small></footer>
 
   <script src="app.js"></script>
 </body>
