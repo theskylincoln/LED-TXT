@@ -1,113 +1,127 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LED Backpack Animator</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LED Backpack Animator v1.4.6</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="page-header">
-    <h1>LED Backpack Animator <span class="ver">v1.4.4</span></h1>
-  </header>
+<header class="topbar">
+  <div class="bg-res">
+    <select id="resolution">
+      <option value="96x128">96×128</option>
+      <option value="64x64">64×64</option>
+    </select>
+    <div id="bgGrid" class="bg-grid">
+      <div class="tile" data-type="preset" data-id="A"><img src="assets/presets/Preset_A.png" alt="Preset A"></div>
+      <div class="tile" data-type="preset" data-id="B"><img src="assets/presets/Preset_B.png" alt="Preset B"></div>
+      <div class="tile" data-type="preset" data-id="C" data-res="64x64"><img src="assets/presets/Preset_C.png" alt="Preset C"></div>
+      <div class="tile" data-type="preset" data-id="D" data-res="64x64"><img src="assets/presets/Preset_D.png" alt="Preset D"></div>
+      <div class="tile" data-type="solid"><span>Solid</span></div>
+      <div class="tile" data-type="custom"><span>Upload</span><input id="bgUpload" type="file" accept="image/*"></div>
+    </div>
+  </div>
 
-  <!-- Backgrounds + Resolution (no labels) -->
-  <section class="bg-res">
-    <div class="bg-grid" id="bgGrid">
-      <button class="bg-tile" data-kind="preset" data-id="A">
-        <img src="assets/Preset_A.png" alt=""><span class="label">Preset A</span>
-      </button>
-      <button class="bg-tile" data-kind="preset" data-id="B">
-        <img src="assets/Preset_B.png" alt=""><span class="label">Preset B</span>
-      </button>
-      <button class="bg-tile" data-kind="solid">
-        <img src="assets/solid-thumb.png" alt=""><span class="label">Solid Color</span>
-      </button>
-      <label class="bg-tile upload" title="Custom Upload">
-        <input type="file" id="bgUpload" accept="image/*" hidden />
-        <img src="assets/upload.svg" alt=""><span class="label">Custom</span>
-      </label>
+  <div class="toolbar">
+    <button id="btnPreview">Preview Animation</button>
+    <button id="btnEdit">Edit Mode</button>
+    <button id="btnUndo">Undo</button>
+    <button id="btnRedo">Redo</button>
+    <button id="btnClear">Clear All Text</button>
+    <div class="zoom">
+      <button id="zoomOut">–</button>
+      <span id="zoomPct">100%</span>
+      <button id="zoomIn">+</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="led" width="96" height="128"></canvas>
+      <button id="deleteWord" class="delete-pill hidden">× Delete</button>
     </div>
 
-    <div class="res-wrap">
-      <select id="resSelect">
-        <option value="96x128" selected>96×128</option>
-        <option value="64x64">64×64</option>
-      </select>
-    </div>
-  </section>
-
-  <section class="preview">
-    <div class="toolbar">
-      <button id="btnPreview">Preview Animation</button>
-      <button id="btnEdit">Edit Mode</button>
-      <button id="btnUndo">Undo</button>
-      <button id="btnRedo">Redo</button>
-      <button id="btnClear">Clear All Text</button>
-      <div class="zoom">
-        <button id="zOut">−</button><span id="zLabel">100%</span><button id="zIn">+</button>
-      </div>
-    </div>
-
-    <div id="preview-wrap">
-      <canvas id="ledCanvas"></canvas>
-      <div id="word-overlay"></div>
-    </div>
-  </section>
-
-  <!-- Inspector pinned below, collapsed sections -->
-  <section class="inspector" id="inspector" aria-disabled="true">
-    <details id="fontDet" class="ins-det"><summary>Font</summary>
-      <div class="row">
-        <select id="fontSelect">
-          <option value="monospace" selected>Monospace</option>
-          <option value="Arial">Arial</option>
-          <option value="Courier New">Courier</option>
-        </select>
-        <input id="fontSize" type="number" min="6" max="96" value="22" />
-      </div>
-      <label class="row"><input id="autoSize" type="checkbox" checked /> Auto-size (per line)</label>
-      <details class="swatch-det">
-        <summary>Color</summary>
-        <div id="swatches" class="swatches"></div>
-        <div class="row">
-          <input type="color" id="colorPicker" value="#ffffff" />
-          <button id="addSwatch">+ Add Swatch</button>
+    <aside id="inspector" class="inspector disabled">
+      <div class="group">
+        <button class="accordion" data-target="#fontGroup">Font</button>
+        <div id="fontGroup" class="panel">
+          <div class="row">
+            <label>Font</label>
+            <select id="fontFamily">
+              <option value="monospace">Monospace</option>
+              <option value="sans-serif">Sans</option>
+              <option value="serif">Serif</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Size</label>
+            <input id="fontSize" type="number" min="6" max="64" value="22">
+          </div>
+          <div class="row">
+            <label><input id="autoSize" type="checkbox" checked> Auto-size (per line)</label>
+          </div>
+          <div class="row">
+            <label>Color</label>
+            <div id="swatches" class="swatches"></div>
+            <div class="swatch-actions">
+              <input id="colorPicker" type="color" value="#ffffff">
+              <button id="addSwatch">Add Swatch</button>
+            </div>
+          </div>
         </div>
-      </details>
-    </details>
-
-    <details id="spacingDet" class="ins-det"><summary>Spacing</summary>
-      <div class="row">
-        <label>Line Gap <input id="lineGap" type="number" value="2" /></label>
-        <label>Word Spacing <input id="wordSpacing" type="number" value="3" /></label>
       </div>
-    </details>
 
-    <details id="alignDet" class="ins-det"><summary>Alignment</summary>
-      <div class="row">
-        <select id="alignMode">
-          <option value="left">Left</option>
-          <option value="center" selected>Center</option>
-          <option value="right">Right</option>
-          <option value="manual">Manual (drag)</option>
-        </select>
-        <button id="resetAlign">Reset</button>
+      <div class="group">
+        <button class="accordion" data-target="#spacingGroup">Spacing</button>
+        <div id="spacingGroup" class="panel">
+          <div class="row">
+            <label>Line Gap</label>
+            <input id="lineGap" type="number" value="2" min="0" max="32">
+          </div>
+          <div class="row">
+            <label>Word Spacing</label>
+            <input id="wordSpacing" type="number" value="3" min="0" max="32">
+          </div>
+        </div>
       </div>
-    </details>
 
-    <details id="animDet" class="ins-det"><summary>Animation</summary>
-      <div class="anim-line"><label><input type="checkbox" class="animChk" data-anim="pulse" /> Pulse</label><input type="range" min="0" max="100" value="60" class="animSlider" data-anim="pulse" /></div>
-      <div class="anim-line"><label><input type="checkbox" class="animChk" data-anim="flicker" /> Flicker</label><input type="range" min="0" max="100" value="40" class="animSlider" data-anim="flicker" /></div>
-    </details>
+      <div class="group">
+        <button class="accordion" data-target="#alignGroup">Alignment</button>
+        <div id="alignGroup" class="panel">
+          <div class="row">
+            <button class="align" data-align="left">Left</button>
+            <button class="align active" data-align="center">Center</button>
+            <button class="align" data-align="right">Right</button>
+            <button class="align" data-align="manual">Manual (drag)</button>
+            <button id="alignReset">Reset</button>
+          </div>
+        </div>
+      </div>
 
-    <div class="ins-actions">
-      <button id="addLine">+ Add Line</button>
-      <button id="addWord">+ Add Word</button>
-    </div>
+      <div class="group">
+        <button class="accordion" data-target="#animGroup">Animation</button>
+        <div id="animGroup" class="panel">
+          <div class="row anim-line">
+            <label><input type="checkbox" id="animPulse"> Pulse</label>
+            <input type="range" id="pulseAmt" min="0" max="100" value="60">
+          </div>
+          <div class="row anim-line">
+            <label><input type="checkbox" id="animFlicker"> Flicker</label>
+            <input type="range" id="flickerAmt" min="0" max="100" value="40">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <button id="addLine">+ Add Line</button>
+      </div>
+    </aside>
   </section>
+</main>
 
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
