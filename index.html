@@ -1,37 +1,34 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>LED Backpack Animator v1.6.1 (Self-contained)</title>
-<link rel="stylesheet" href="styles.css"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>LED Backpack Animator v1.7 STABLE</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 <header class="topbar">
   <div class="bg-row">
     <select id="resolution">
-      <option value="96x128">96×128</option>
+      <option value="96x128" selected>96×128</option>
       <option value="64x64">64×64</option>
     </select>
-    <div class="thumbs">
-      <button class="thumb" data-type="preset" data-name="A" title="Preset A"><img src="assets/Preset_A.png" alt="A"/></button>
-      <button class="thumb" data-type="preset" data-name="B" title="Preset B"><img src="assets/Preset_B.png" alt="B"/></button>
-      <button class="thumb" data-type="preset" data-name="C" title="Preset C"><img src="assets/Preset_C.png" alt="C"/></button>
-      <button class="thumb" data-type="preset" data-name="D" title="Preset D"><img src="assets/Preset_D.png" alt="D"/></button>
-      <button class="thumb" data-type="solid" title="Solid Color"><div class="swatch" id="solidSwatch"></div><span>Solid</span></button>
-      <label class="thumb upload" title="Custom Upload">
-        <input type="file" id="bgUpload" accept="image/*" hidden/>
-        <img src="assets/icon_upload.svg" alt="Upload"/>
-      </label>
-    </div>
+    <div class="thumb" data-type="preset" data-name="Preset_A"><img src="assets/Preset_A.png" alt="A"><span>A</span></div>
+    <div class="thumb" data-type="preset" data-name="Preset_B"><img src="assets/Preset_B.png" alt="B"><span>B</span></div>
+    <div class="thumb" data-type="preset" data-name="Preset_C"><img src="assets/Preset_C.png" alt="C"><span>C</span></div>
+    <div class="thumb" data-type="preset" data-name="Preset_D"><img src="assets/Preset_D.png" alt="D"><span>D</span></div>
+    <div class="thumb" data-type="solid"><img src="assets/Solid.png" alt="Solid"><span>Solid</span></div>
+    <label class="thumb upload">
+      <input id="bgUpload" type="file" accept="image/*" hidden/>
+      <img src="assets/Upload.png" alt="Upload"><span>Upload</span>
+    </label>
   </div>
   <div class="toolbar">
     <button id="btnPreview">Preview Animation</button>
     <button id="btnEdit">Edit Mode</button>
-    <button id="btnUndo" disabled>Undo</button>
-    <button id="btnRedo" disabled>Redo</button>
+    <button id="btnUndo">Undo</button>
+    <button id="btnRedo">Redo</button>
     <button id="btnClear">Clear All Text</button>
-    <div class="grow"></div>
     <div class="zoom">
       <button id="zoomOut">−</button>
       <span id="zoomPct">100%</span>
@@ -40,140 +37,172 @@
   </div>
 </header>
 
-<main class="content">
-  <section class="stage">
-    <canvas id="canvas" width="96" height="128"></canvas>
-    <input id="mobileInput" class="mobileInput" inputmode="text" autocomplete="off" autocapitalize="sentences" />
-  </section>
+<main class="main">
+  <div class="canvasWrap">
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+    <button id="deletePill" class="deletePill">✕ Delete</button>
+  </div>
+</main>
 
-  <aside class="inspector">
-    <div class="bar">
-      <button class="tab" data-target="#secFont">Font</button>
-      <button class="tab" data-target="#secColor">Color</button>
-      <button class="tab" data-target="#secSpacing">Spacing</button>
-      <button class="tab" data-target="#secAlign">Alignment</button>
-      <button class="tab" data-target="#secAnim">Animation</button>
-      <button id="addLine" class="tab add">+ Add Line</button>
-    </div>
-
-    <div id="secFont" class="panel">
+<footer class="inspector" id="inspector">
+  <div class="accordion">
+    <details class="sec" id="secFont" open>
+      <summary>Font</summary>
       <div class="row">
         <label>Family</label>
         <select id="fontFamily">
-          <option value="ui-monospace, Menlo, Consolas, monospace">Mono (system)</option>
-          <option value="system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif">Sans (system)</option>
-          <option value="Georgia, Times, serif">Serif (system)</option>
+          <option value="monospace">Monospace</option>
+          <option value="sans-serif">Sans</option>
+          <option value="serif">Serif</option>
         </select>
         <label>Size</label>
-        <input id="fontSize" type="number" min="6" max="72" value="22"/>
-        <label class="chk"><input type="checkbox" id="autoSize" checked/> Auto-size (per line)</label>
+        <input id="fontSize" type="number" min="6" max="96" value="22"/>
+        <label><input id="autoSize" type="checkbox" checked/> Auto-size (per line)</label>
       </div>
-    </div>
+    </details>
 
-    <div id="secColor" class="panel">
+    <details class="sec" id="secColor">
+      <summary>Color</summary>
+      <div class="swatches" id="swatches">
+        <button class="sw" data-color="#25b7ff" style="--c:#25b7ff"></button>
+        <button class="sw" data-color="#27d845" style="--c:#27d845"></button>
+        <button class="sw" data-color="#ffd633" style="--c:#ffd633"></button>
+        <button class="sw" data-color="#ff66cc" style="--c:#ff66cc"></button>
+        <button class="sw" data-color="#ff3347" style="--c:#ff3347"></button>
+        <button class="sw" data-color="#ffffff" style="--c:#ffffff"></button>
+        <button class="sw" data-color="#000000" style="--c:#000000"></button>
+      </div>
       <div class="row">
-        <div class="swatches" id="swatches"></div>
-        <input type="color" id="colorPicker" value="#ffffff"/>
-        <button id="addSwatch">+ Add Swatch</button>
+        <input id="colorPicker" type="color" value="#ffffff"/>
+        <button id="addSwatch">Add Swatch</button>
+        <small>Right-click custom swatch to delete</small>
       </div>
-      <div class="row bgColorRow">
-        <div class="label">Solid BG</div>
-        <div class="bgSwatches" id="bgSwatches"></div>
-        <input type="color" id="bgColorPicker" value="#000000"/>
-      </div>
-    </div>
+    </details>
 
-    <div id="secSpacing" class="panel">
-      <div class="row spaced">
-        <label>Line Gap <input id="lineGap" type="number" min="0" max="20" value="2"></label>
-        <label>Word Spacing <input id="wordSpacing" type="number" min="0" max="20" value="3"></label>
-        <label class="chk"><input type="checkbox" id="preventCutoff" checked/> Prevent cutoff & auto-disable scroll</label>
+    <details class="sec" id="secSpacing">
+      <summary>Spacing</summary>
+      <div class="row">
+        <label>Line Gap</label><input id="lineGap" type="number" min="0" max="32" value="2"/>
+        <label>Word Spacing</label><input id="wordSpacing" type="number" min="0" max="32" value="3"/>
+        <label><input id="preventCutoff" type="checkbox"/> Prevent cutoff</label>
       </div>
-    </div>
+    </details>
 
-    <div id="secAlign" class="panel">
-      <div class="row spaced">
-        <div class="col">
-          <div class="label">Horizontal</div>
-          <div class="btnset">
-            <button class="btn alignH" data-h="left">Left</button>
-            <button class="btn alignH active" data-h="center">Center</button>
-            <button class="btn alignH" data-h="right">Right</button>
+    <details class="sec" id="secAlign">
+      <summary>Alignment</summary>
+      <div class="row">
+        <div class="alignBtns">
+          <button data-align="left">Left</button>
+          <button data-align="center" class="active">Center</button>
+          <button data-align="right">Right</button>
+          <button data-align="manual">Manual (drag)</button>
+          <button id="btnReset">Reset</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="sec" id="secAnim">
+      <summary>Animation</summary>
+      <div class="animCol" id="animCol">
+        <!-- Pulse -->
+        <div class="animItem" data-anim="pulse">
+          <label class="animHead"><input type="checkbox" class="animChk"> Pulse <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Strength</label><input type="range" min="0" max="100" value="60" class="animSlider" data-key="amt">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
           </div>
         </div>
-        <div class="col">
-          <div class="label">Vertical</div>
-          <div class="btnset">
-            <button class="btn alignV" data-v="top">Top</button>
-            <button class="btn alignV active" data-v="middle">Middle</button>
-            <button class="btn alignV" data-v="bottom">Bottom</button>
+        <!-- Flicker -->
+        <div class="animItem" data-anim="flicker">
+          <label class="animHead"><input type="checkbox" class="animChk"> Flicker <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Frequency</label><input type="range" min="0" max="100" value="40" class="animSlider" data-key="amt">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
           </div>
         </div>
-        <div class="col">
-          <button id="alignManual" class="btn">Manual (drag)</button>
-          <button id="alignReset" class="btn">Reset</button>
+        <!-- Wave -->
+        <div class="animItem" data-anim="wave">
+          <label class="animHead"><input type="checkbox" class="animChk"> Wave <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Amplitude</label><input type="range" min="0" max="20" value="6" class="animSlider" data-key="amp">
+            <label>Speed</label><input type="range" min="0" max="100" value="50" class="animSlider" data-key="spd">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
+          </div>
+        </div>
+        <!-- Scroll -->
+        <div class="animItem" data-anim="scroll">
+          <label class="animHead"><input type="checkbox" class="animChk"> Scroll <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Direction</label>
+            <select class="animSelect" data-key="dir">
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="up">Up</option>
+              <option value="down">Down</option>
+            </select>
+            <label>Speed</label><input type="range" min="1" max="100" value="30" class="animSlider" data-key="spd">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
+          </div>
+        </div>
+        <!-- Bounce -->
+        <div class="animItem" data-anim="bounce">
+          <label class="animHead"><input type="checkbox" class="animChk"> Bounce <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Height</label><input type="range" min="0" max="20" value="8" class="animSlider" data-key="hgt">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
+          </div>
+        </div>
+        <!-- Fade -->
+        <div class="animItem" data-anim="fade">
+          <label class="animHead"><input type="checkbox" class="animChk"> Fade <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Speed</label><input type="range" min="1" max="100" value="40" class="animSlider" data-key="spd">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
+          </div>
+        </div>
+        <!-- Typewriter -->
+        <div class="animItem" data-anim="type">
+          <label class="animHead"><input type="checkbox" class="animChk"> Typewriter <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Speed</label><input type="range" min="1" max="100" value="50" class="animSlider" data-key="spd">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
+          </div>
+        </div>
+        <!-- Glitch -->
+        <div class="animItem" data-anim="glitch">
+          <label class="animHead"><input type="checkbox" class="animChk"> Glitch <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Intensity</label><input type="range" min="0" max="20" value="4" class="animSlider" data-key="int">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
+          </div>
+        </div>
+        <!-- Bubble -->
+        <div class="animItem" data-anim="bubble">
+          <label class="animHead"><input type="checkbox" class="animChk"> Bubble <button class="gear">⚙</button></label>
+          <div class="animSettings">
+            <label>Height</label><input type="range" min="0" max="20" value="6" class="animSlider" data-key="hgt">
+            <button class="reset">Default</button>
+            <button class="close">Close</button>
+          </div>
         </div>
       </div>
-    </div>
+    </details>
 
-    <div id="secAnim" class="panel">
-      <div class="row stack">
-        <div class="animLine">
-          <label class="chk"><input type="checkbox" id="pulseChk"> Pulse</label>
-          <label>Amt <input type="range" id="pulseAmt" min="0" max="100" value="50"/></label>
-          <label>Speed <input type="range" id="pulseSpeed" min="1" max="200" value="100"/></label>
-        </div>
-        <div class="animLine">
-          <label class="chk"><input type="checkbox" id="flickerChk"> Flicker</label>
-          <label>Int <input type="range" id="flickerAmt" min="0" max="100" value="30"/></label>
-          <label>Irreg <input type="range" id="flickerJit" min="0" max="100" value="40"/></label>
-        </div>
-        <div class="animLine">
-          <label class="chk"><input type="checkbox" id="bounceChk"> Bounce</label>
-          <label>Hgt <input type="range" id="bounceH" min="0" max="20" value="6"/></label>
-          <label>Speed <input type="range" id="bounceS" min="10" max="300" value="120"/></label>
-        </div>
-        <div class="animLine">
-          <label class="chk"><input type="checkbox" id="waveChk"> Wave</label>
-          <label>Amp <input type="range" id="waveA" min="0" max="20" value="6"/></label>
-          <label>Len <input type="range" id="waveL" min="5" max="50" value="20"/></label>
-          <label>Speed <input type="range" id="waveS" min="10" max="300" value="120"/></label>
-        </div>
-        <div class="animLine">
-          <label class="chk"><input type="checkbox" id="typeChk"> Typewriter</label>
-          <label>CPS <input type="range" id="typeCPS" min="1" max="30" value="8"/></label>
-          <label class="chk small"><input type="checkbox" id="typeLoop" checked/> Loop</label>
-        </div>
-        <div class="animLine">
-          <label class="chk"><input type="checkbox" id="glitchChk"> Glitch</label>
-          <label>Freq <input type="range" id="glitchF" min="0" max="100" value="20"/></label>
-          <label>Mag <input type="range" id="glitchM" min="0" max="20" value="4"/></label>
-        </div>
-        <div class="animLine">
-          <label class="chk"><input type="checkbox" id="bubbleChk"> Bubble</label>
-          <label>Size <input type="range" id="bubbleSz" min="0" max="30" value="10"/></label>
-          <label>Cadence <input type="range" id="bubbleCad" min="10" max="300" value="160"/></label>
-        </div>
-        <div class="animLine">
-          <label class="chk"><input type="checkbox" id="fadeChk"> Fade</label>
-          <label>Period <input type="range" id="fadeP" min="20" max="400" value="200"/></label>
-          <label>Floor <input type="range" id="fadeFloor" min="0" max="100" value="30"/></label>
-        </div>
-        <div class="animLine">
-          <div class="label">Scroll</div>
-          <select id="scrollDir">
-            <option value="off">Off</option>
-            <option value="left">Left</option>
-            <option value="up">Up</option>
-            <option value="down">Down</option>
-          </select>
-          <label>Speed <input type="number" id="scrollSpeed" value="20" min="1" max="200"> px/s</label>
-          <label class="chk"><input type="checkbox" id="wholeWord"> Whole-word only</label>
-        </div>
-      </div>
+    <div class="row">
+      <button id="btnAddLine">+ Add Line</button>
+      <button id="btnAddWord" class="ghost">+ Add Word</button>
     </div>
-  </aside>
-</main>
+  </div>
+</footer>
 
 <script src="app.js"></script>
 </body>
