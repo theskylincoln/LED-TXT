@@ -1,33 +1,54 @@
+@font-face {
+  font-family: 'VT323';
+  src: url('assets/fonts/VT323-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DotGothic16';
+  src: url('assets/fonts/DotGothic16-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('assets/fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-display: swap;
+}
 
 :root{--ink:#d6e6ff;--bg:#0c1320;--panel:#0f1724;--b:#263955;--acc:#54b2ff;--mag:#ff5bf2}
 *{box-sizing:border-box}html,body{height:100%;background:#0b1220;color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
 .topbar{padding:10px;border-bottom:1px solid var(--b);background:linear-gradient(180deg,#0e182a,#0c1424)}
-.bg-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.title{display:flex;align-items:flex-end;gap:10px}
+.title .app{font-weight:700;font-size:20px}
+.title .ver{opacity:.7}
+.toolbar{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.toolbar button{background:#142238;border:1px solid #2b3b56;border-radius:10px;padding:8px 12px;color:var(--ink);cursor:pointer}
+.toolbar .zoom{display:flex;align-items:center;gap:10px;margin-left:auto}
+.toolbar .zoom button{width:36px;height:36px;border-radius:10px}
+.bg-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.presets{display:flex;gap:10px}
 .thumb{width:64px;height:64px;border:1px dashed #33507a;border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:#0b1422;cursor:pointer}
 .thumb img{width:100%;height:100%;object-fit:cover}
 .thumb span{position:absolute;bottom:2px;right:4px;font-size:11px;background:#0b1320a0;padding:2px 4px;border-radius:6px}
 .thumb.active{outline:2px solid var(--acc)}
-.toolbar{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
-.toolbar button{background:#142238;border:1px solid #2b3b56;border-radius:10px;padding:8px 12px;color:var(--ink);cursor:pointer}
-.toolbar .zoom{display:flex;align-items:center;gap:10px;margin-left:auto}
-.toolbar .zoom button{width:36px;height:36px;border-radius:10px}
 
 .main{padding:14px;display:flex;justify-content:center}
 .canvasWrap{position:relative;background:#0b1523;border:1px solid #26344d;border-radius:12px;padding:10px}
 #bgCanvas,#drawCanvas{image-rendering:pixelated;display:block;position:absolute;left:10px;top:10px}
 .deletePill{position:absolute;display:none;background:#2a0f14;color:#fff;border:1px solid #6a1b26;border-radius:12px;padding:4px 8px;font-size:12px;z-index:5}
 
-.inspector{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--b);padding:8px 12px}
+.inspector{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--b);padding:8px 12px;transition:transform .2s ease, opacity .2s ease}
+.inspector:not(.open){transform:translateY(92%); opacity:.2}
 .inspector .accordion{max-width:1140px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
 .sec{background:#0e1624;border:1px solid #23324a;border-radius:12px;min-width:260px}
 .sec>summary{cursor:pointer;padding:8px 12px;font-weight:600;list-style:none}
 .sec .row{padding:8px 12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.alignBtns{display:flex;gap:12px;flex-wrap:wrap}
+.alignBtns .group{display:flex;gap:8px}
 .alignBtns button{background:#15233a;border:1px solid #2a3b58;border-radius:8px;padding:6px 10px;color:var(--ink);cursor:pointer}
 .alignBtns button.active{outline:2px solid var(--acc)}
 .swatches{display:flex;gap:8px;flex-wrap:wrap;padding:6px 12px}
 .sw{width:26px;height:26px;border-radius:6px;border:1px solid #1a2436;background:var(--c);cursor:pointer}
 .sw.custom:hover{outline:2px solid var(--acc)}
-.ghost{opacity:.75}
 .disabled{opacity:.4;pointer-events:none}
 
 #secAnim .animCol{display:flex;flex-direction:column;gap:8px;padding:8px 12px}
@@ -38,3 +59,15 @@
 .animItem.active .animSettings{display:flex}
 .animItem.active{outline:1px solid #2f4e86}
 .animSettings .reset,.animSettings .close{background:#15233a;border:1px solid #2a3b58;border-radius:8px;padding:6px 10px;color:var(--ink);cursor:pointer}
+
+/* Modal */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center}
+.modal[aria-hidden="false"]{display:flex}
+.modalBackdrop{position:absolute;inset:0;background:#0008;backdrop-filter:blur(3px);opacity:0;animation:fade .18s ease forwards}
+.modalCard{position:relative;z-index:2;background:#0c1526;border:1px solid #2a3b58;border-radius:12px;padding:16px;min-width:320px;opacity:0;transform:translateY(8px);animation:pop .2s ease forwards}
+.modalClose{position:absolute;top:8px;right:8px;background:#15233a;border:1px solid #2a3b58;border-radius:8px;color:#fff;cursor:pointer}
+.modal .actions{display:flex;gap:10px;margin-top:12px}
+.modal .primary{background:#1452a8;border:1px solid #2b6fdd;border-radius:8px;padding:8px 12px;color:#fff;cursor:pointer}
+.chk{display:flex;gap:8px;align-items:center;margin-top:8px}
+@keyframes fade{to{opacity:1}}
+@keyframes pop{to{opacity:1; transform:translateY(0)}}
