@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>LED Backpack Animator v1.9.0</title>
+<link rel="stylesheet" href="styles.css"/></head>
+<body>
+<header class="topbar">
+  <h1>LED Backpack Animator <small>v1.9.0</small></h1>
+  <div class="toolbar">
+    <button id="btnPreview">Preview Animation</button>
+    <button id="btnEdit">Edit Mode</button>
+    <button id="btnUndo" disabled>Undo</button>
+    <button id="btnRedo" disabled>Redo</button>
+    <button id="btnClear">Clear All Text</button>
+    <div class="zoom"><button id="zoomOut">−</button><span id="zoomPct">100%</span><button id="zoomIn">+</button></div>
+    <button id="btnInspector">Show/Hide Inspector</button>
+  </div>
+</header>
+<main>
+<section class="bgPanel">
+  <div class="row">
+    <div class="resolution"><select id="resolution">
+      <option value="96x128">96×128</option>
+      <option value="64x64">64×64</option>
+    </select></div>
+    <div class="thumbs" id="thumbs"></div>
+  </div>
+</section>
+<section class="previewPanel">
+  <div id="previewWrap"><canvas id="preview" width="96" height="128"></canvas><div id="caret"></div></div>
+</section>
+<section class="inspector" id="inspector">
+  <div class="inspector-bar">
+    <button class="acc" data-acc="font">Font</button>
+    <button class="acc" data-acc="color">Color</button>
+    <button class="acc" data-acc="spacing">Spacing</button>
+    <button class="acc" data-acc="align">Alignment</button>
+    <button class="acc" data-acc="anim">Animation</button>
+    <button id="addLine">+ Add Line</button>
+  </div>
+  <div class="panel" id="acc-font">
+    <label>Family
+      <select id="fontFamily">
+        <option value="Monospace">Monospace</option>
+        <option value="Sans">Sans-serif</option>
+        <option value="Serif">Serif</option>
+        <option value="DotGothic">DotGothic16 (stub)</option>
+        <option value="PressStart">Press Start 2P (stub)</option>
+        <option value="VT323">VT323 (stub)</option>
+      </select>
+    </label>
+    <label>Size <input id="fontSize" type="number" min="6" max="80" value="22"/></label>
+    <label><input id="autoSize" type="checkbox" checked/> Auto-size (per line)</label>
+  </div>
+  <div class="panel" id="acc-color">
+    <div class="color-row">
+      <input type="color" id="colorPicker" value="#ffffff"/>
+      <div id="swatches" class="swatches"></div>
+      <button id="addSwatch">+ Swatch</button>
+    </div>
+  </div>
+  <div class="panel" id="acc-spacing">
+    <label>Line Gap <input id="lineGap" type="number" min="0" max="20" value="2"/></label>
+    <label>Word Spacing <input id="wordSpacing" type="number" min="0" max="20" value="8"/></label>
+    <label><input id="preventCutoff" type="checkbox" checked/> Prevent cutoff</label>
+  </div>
+  <div class="panel" id="acc-align">
+    <div class="align-row">
+      <button class="alignBtn" data-align="left">Left</button>
+      <button class="alignBtn" data-align="center">Center</button>
+      <button class="alignBtn" data-align="right">Right</button>
+      <button class="alignBtn" data-align="manual">Manual (drag)</button>
+      <button id="resetAlign">Reset</button>
+    </div>
+    <div id="manualPopup" class="modal hidden">
+      <div class="modal-content">
+        <h3>Switch to Manual Drag?</h3>
+        <p>This turns off centering/auto alignment for the selected line.</p>
+        <label><input type="checkbox" id="dontShowManual"/> Don’t show again (this session)</label>
+        <div class="row"><button id="confirmManual">OK</button><button id="closeManual">Close</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel" id="acc-anim">
+    <label class="row"><input type="checkbox" class="anim-toggle" data-key="scroll"/> Scroll</label>
+    <div class="anim-settings" data-for="scroll"><label>Speed <input type="range" id="scrollSpeed" min="1" max="8" value="3"/></label><button class="reset" data-reset="scroll">Default</button></div>
+    <label class="row"><input type="checkbox" class="anim-toggle" data-key="pulse"/> Pulse</label>
+    <div class="anim-settings" data-for="pulse"><label>Amount <input type="range" id="pulseAmt" min="0" max="100" value="60"/></label><button class="reset" data-reset="pulse">Default</button></div>
+    <label class="row"><input type="checkbox" class="anim-toggle" data-key="flicker"/> Flicker</label>
+    <div class="anim-settings" data-for="flicker"><label>Amount <input type="range" id="flickerAmt" min="0" max="100" value="40"/></label><button class="reset" data-reset="flicker">Default</button></div>
+    <label class="row"><input type="checkbox" class="anim-toggle" data-key="bounce"/> Bounce</label>
+    <div class="anim-settings" data-for="bounce"><label>Height <input type="range" id="bounceAmt" min="0" max="20" value="6"/></label><button class="reset" data-reset="bounce">Default</button></div>
+    <label class="row"><input type="checkbox" class="anim-toggle" data-key="wave"/> Wave</label>
+    <div class="anim-settings" data-for="wave"><label>Amplitude <input type="range" id="waveAmp" min="0" max="20" value="6"/></label><label>Wavelength <input type="range" id="waveLen" min="4" max="40" value="16"/></label><button class="reset" data-reset="wave">Default</button></div>
+    <label class="row"><input type="checkbox" class="anim-toggle" data-key="type"/> Typewriter</label>
+    <div class="anim-settings" data-for="type"><label>Speed <input type="range" id="typeSpeed" min="1" max="10" value="5"/></label><button class="reset" data-reset="type">Default</button></div>
+    <label class="row applyall"><input type="checkbox" id="applyAll" checked/> Apply to all words</label>
+  </div>
+</section>
+</main>
+<script src="app.js"></script>
+</body></html>
