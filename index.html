@@ -161,8 +161,16 @@
         <button id="dragEnable">Enable</button>
       </div>
     </div>
+  
+  <div class="inspectorRow" id="gifRenderRow">
+    <h3>Render GIF</h3>
+    <label>FPS <input id="gifFps" type="number" min="2" max="30" value="12" style="width:72px"/></label>
+    <label>Seconds <input id="gifSecs" type="number" min="1" max="10" value="3" style="width:72px"/></label>
+    <label>Filename <input id="gifName" type="text" value="animation" style="width:160px"/></label>
+    <button id="btnRenderGif">Download GIF</button>
   </div>
+</div>
 
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
