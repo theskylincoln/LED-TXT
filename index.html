@@ -26,7 +26,8 @@
       </div>
       <div class="tool-group">
         <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="1" max="6" step="0.1" value="1" />
+        <input type="range" id="zoom" min="0.5" max="10" step="0.05" value="1" />
+        <button id="fitBtn" class="button tiny">Fit</button>
       </div>
       <div class="tool-group">
         <button id="undoBtn" title="Undo">↶ Undo</button>
@@ -52,7 +53,7 @@
         <div id="bgThumbs" class="thumbs"></div>
       </div>
       <div class="bg-actions">
-        <button id="bgSolidBtn">Solid Color</button>
+        <button id="bgSolidBtn" class="button tiny">Solid Color</button>
         <div class="row two">
           <label>Color</label><input type="color" id="bgSolidColor" value="#000000" />
         </div>
@@ -83,6 +84,7 @@
   <footer class="inspector-bar">
     <button id="toggleInspector" aria-expanded="false" title="Toggle Inspector">Inspector ▴</button>
     <div id="inspectorBody" class="inspector-body">
+      <!-- Font -->
       <details class="acc" id="accFont">
         <summary>Font</summary>
         <div class="acc-body">
@@ -103,30 +105,25 @@
           </select>
           <input type="number" id="fontSize" min="6" max="64" value="22" />
           <label class="chk small"><input type="checkbox" id="autoSize" checked /> <span>Auto-size</span></label>
+          <div class="color-controls">
+            <div id="swatches" class="swatches"></div>
+            <input type="color" id="fontColor" value="#FFFFFF" />
+            <button id="addSwatchBtn" class="button tiny">+ Add</button>
+            <button id="clearSwatchesBtn" class="button tiny">Clear</button>
+          </div>
         </div>
       </details>
 
-      <details class="acc" id="accColor">
-        <summary>Color</summary>
+      <!-- Spacing + Alignment combined -->
+      <details class="acc" id="accLayout">
+        <summary>Spacing & Alignment</summary>
         <div class="acc-body">
-          <div id="swatches" class="swatches"></div>
-          <input type="color" id="fontColor" value="#FFFFFF" />
-          <button id="addSwatchBtn" class="button tiny">+ Add</button>
-          <button id="clearSwatchesBtn" class="button tiny">Clear</button>
-        </div>
-      </details>
-
-      <details class="acc" id="accSpacing">
-        <summary>Spacing</summary>
-        <div class="acc-body">
-          <span>Line</span><input type="number" id="lineGap" min="0" max="16" value="4" />
-          <span>Word</span><input type="number" id="wordGap" min="0" max="20" value="6" />
-        </div>
-      </details>
-
-      <details class="acc" id="accAlign">
-        <summary>Align</summary>
-        <div class="acc-body">
+          <div class="subhead">Spacing</div>
+          <div class="row two">
+            <label>Line</label><input type="number" id="lineGap" min="0" max="16" value="4" />
+            <label>Word</label><input type="number" id="wordGap" min="0" max="20" value="6" />
+          </div>
+          <div class="subhead">Alignment</div>
           <div class="seg">
             <button class="seg-btn" data-align="left">Left</button>
             <button class="seg-btn active" data-align="center">Center</button>
@@ -142,52 +139,12 @@
         </div>
       </details>
 
+      <!-- Animations: single column, JS builds items inside animList -->
       <details class="acc" id="accAnim">
         <summary>Animations</summary>
-        <div class="acc-body anim-col">
-          <div class="anim-item" data-type="pulse">
-            <label class="chk"><input type="checkbox" data-anim="pulse" /> Pulse</label>
-            <div class="anim-settings">
-              <label>Intensity</label><input type="number" data-anim-int="pulse" value="1" step="0.1" />
-            </div>
-          </div>
-          <div class="anim-item" data-type="flicker">
-            <label class="chk"><input type="checkbox" data-anim="flicker" /> Flicker</label>
-            <div class="anim-settings">
-              <label>Intensity</label><input type="number" data-anim-int="flicker" value="1" step="0.1" />
-            </div>
-          </div>
-          <div class="anim-item" data-type="slideX">
-            <label class="chk"><input type="checkbox" data-anim="slideX" /> Slide X</label>
-            <div class="anim-settings">
-              <label>X</label><input type="number" data-anim-x="slideX" value="5" />
-              <label>Intensity</label><input type="number" data-anim-int="slideX" value="1" step="0.1" />
-            </div>
-          </div>
-          <div class="anim-item" data-type="slideY">
-            <label class="chk"><input type="checkbox" data-anim="slideY" /> Slide Y</label>
-            <div class="anim-settings">
-              <label>Y</label><input type="number" data-anim-y="slideY" value="4" />
-              <label>Intensity</label><input type="number" data-anim-int="slideY" value="1" step="0.1" />
-            </div>
-          </div>
-          <div class="anim-item" data-type="bounce">
-            <label class="chk"><input type="checkbox" data-anim="bounce" /> Bounce</label>
-            <div class="anim-settings">
-              <label>Y</label><input type="number" data-anim-y="bounce" value="4" />
-              <label>Intensity</label><input type="number" data-anim-int="bounce" value="1" step="0.1" />
-            </div>
-          </div>
-          <div class="anim-item" data-type="wave">
-            <label class="chk"><input type="checkbox" data-anim="wave" /> Wave</label>
-            <div class="anim-settings">
-              <label>Intensity</label><input type="number" data-anim-int="wave" value="1" step="0.1" />
-            </div>
-          </div>
-          <div class="row">
-            <button id="animDefault" class="button tiny">Default</button>
-            <button id="animApplyAll" class="button tiny">Apply to All</button>
-          </div>
+        <div class="acc-body">
+          <div id="animList"></div>
+          <button id="animHelpBtn" class="button tiny">Help</button>
         </div>
       </details>
 
@@ -195,15 +152,13 @@
     </div>
   </footer>
 
-  <!-- Config and Render pinned AT THE BOTTOM in flow (not overlaying anything) -->
+  <!-- Config and Render pinned at the bottom in flow -->
   <section class="bottom-panels">
     <div class="card">
       <h3>Config</h3>
-      <div class="row">
-        <button id="saveJsonBtn">Download Config</button>
-      </div>
-      <div class="row">
-        <label class="upload-btn small">
+      <div class="row two-eq">
+        <button id="saveJsonBtn" class="button block center">Download Config</button>
+        <label class="upload-btn block center">
           <input type="file" id="loadJsonInput" accept="application/json" hidden />
           <span>Import Config</span>
         </label>
@@ -216,12 +171,12 @@
         <label>Filename</label><input id="fileName" value="animation.gif" />
       </div>
       <div class="row two">
-        <label>FPS</label><input type="number" id="fps" value="8" min="1" max="30" />
-        <label>Length (s)</label><input type="number" id="seconds" value="4" min="1" max="20" />
+        <label>FPS</label><input type="number" id="fps" value="15" min="1" max="30" />
+        <label>Length (s)</label><input type="number" id="seconds" value="8" min="1" max="20" />
       </div>
-      <div class="row">
-        <button id="renderGifBtn">Render GIF</button>
-        <a id="downloadLink" download="animation.gif" class="button">Download</a>
+      <div class="row two-eq">
+        <button id="renderGifBtn" class="button block center">Render GIF</button>
+        <a id="downloadLink" download="animation.gif" class="button block center">Download</a>
       </div>
     </div>
   </section>
@@ -231,6 +186,7 @@
 
   <!-- Modals -->
   <div id="clearWarn" class="modal hidden">
+    <div class="modal-backdrop"></div>
     <div class="modal-card">
       <h3>Clear All?</h3>
       <p>This will remove all lines and words. Are you sure?</p>
@@ -243,16 +199,10 @@
   </div>
 
   <div id="aboutModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
     <div class="modal-card">
       <h3>About</h3>
-      <p><strong>LED Backpack Animator v2.6</strong></p>
-      <ul>
-        <li>Inspector options open below; scrollable</li>
-        <li>Auto-fit zoom to preview area</li>
-        <li>Enter = new line</li>
-        <li>BG: black swatch + add button</li>
-        <li>Config & Render at bottom</li>
-      </ul>
+      <p>LED Backpack Animator — text composer & GIF renderer for LED backpacks.</p>
       <div class="modal-actions">
         <button id="aboutClose" class="primary">Close</button>
       </div>
