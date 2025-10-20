@@ -10,9 +10,14 @@
 </head>
 <body>
   <header class="page-header">
-    <h1 class="app-title">LED Backpack Animator</h1>
-    <button id="aboutBtn" class="linklike">About</button>
-    <div class="toolbar">
+    <div class="header-row">
+      <h1 class="app-title">LED Backpack Animator</h1>
+      <div class="header-actions">
+        <button id="aboutBtn" class="linklike">About</button>
+        <button id="toolsToggle" class="button">Tools ▾</button>
+      </div>
+    </div>
+    <div id="toolsDrawer" class="tools-drawer hidden">
       <div class="tool-group">
         <label>Mode</label>
         <div class="seg">
@@ -33,6 +38,7 @@
   </header>
 
   <main class="layout">
+    <!-- Left: Resolution & Background -->
     <aside class="left-panel">
       <h3>Resolution & Background</h3>
       <div class="row">
@@ -57,6 +63,7 @@
       </div>
     </aside>
 
+    <!-- Center: Stage / Preview -->
     <section class="stage">
       <div class="canvas-wrap">
         <canvas id="led" width="128" height="128"></canvas>
@@ -67,6 +74,7 @@
       </div>
     </section>
 
+    <!-- Right: Config + Render -->
     <aside class="right-panel">
       <div class="card">
         <h3>Config</h3>
@@ -98,8 +106,9 @@
     </aside>
   </main>
 
+  <!-- Bottom Inspector Toolbar: single bar with accordions opening above it -->
   <footer class="inspector-bar">
-    <button id="toggleInspector" aria-expanded="false" title="Toggle Inspector">▸</button>
+    <button id="toggleInspector" aria-expanded="false" title="Toggle Inspector">Inspector ▴</button>
     <div id="inspectorBody" class="inspector-body collapsed">
       <details class="acc" id="accFont">
         <summary>Font</summary>
@@ -213,8 +222,10 @@
     </div>
   </footer>
 
+  <!-- Truly hidden keyboard helper for mobile (no flash, no visible box) -->
   <input id="mobileInput" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
 
+  <!-- Modals -->
   <div id="clearWarn" class="modal hidden">
     <div class="modal-card">
       <h3>Clear All?</h3>
@@ -239,15 +250,16 @@
     </div>
   </div>
 
+  <!-- About -->
   <div id="aboutModal" class="modal hidden">
     <div class="modal-card">
       <h3>About</h3>
-      <p><strong>LED Backpack Animator v2.3</strong><br/>by TheSkyLincoln / instax.moto</p>
+      <p><strong>LED Backpack Animator v2.4</strong><br/>by TheSkyLincoln / instax.moto</p>
       <ul>
-        <li>Mobile-friendly stacked layout</li>
-        <li>Per-word caret editing & floating delete</li>
-        <li>Accordions in inspector, single-line toolbar</li>
-        <li>Stackable animations with per-effect controls</li>
+        <li>Compact header Tools drawer</li>
+        <li>Preset swatches protected; delete only custom</li>
+        <li>Floating swatch delete × outside corner</li>
+        <li>Better mobile keyboard trigger</li>
       </ul>
       <div class="modal-actions">
         <button id="aboutClose" class="primary">Close</button>

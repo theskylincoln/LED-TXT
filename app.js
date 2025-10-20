@@ -1,11 +1,21 @@
-/* LED Backpack Animator v2.3 — app.js
- * New: background swatches mirror text swatches; swatch X top-right;
- * mobile keyboard helper; floating delete X; stacked mobile order;
- * animations as single column with per-effect settings; inspector accordions.
+/* LED Backpack Animator v2.4 — changes:
+ * - Default swatches protected (no delete 'x'); custom only.
+ * - Swatch delete 'x' floats outside corner for easier tapping.
+ * - Header toolbar collapses into Tools drawer.
+ * - Mobile keyboard reliably opens on selection (pointerdown/touchstart), helper input is truly hidden.
+ * - Inspector remains bottom bar with accordions.
  */
 (() => {
   const $ = (sel, p=document) => p.querySelector(sel);
   const $$ = (sel, p=document) => Array.from(p.querySelectorAll(sel));
+
+  // Header tools
+  const toolsToggle = $("#toolsToggle");
+  const toolsDrawer = $("#toolsDrawer");
+  toolsToggle.addEventListener("click", ()=>{
+    toolsDrawer.classList.toggle("hidden");
+    toolsToggle.textContent = toolsDrawer.classList.contains("hidden") ? "Tools ▾" : "Tools ▴";
+  });
 
   const canvas = $("#led");
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -59,7 +69,7 @@
   const addSwatchBtn = $("#addSwatchBtn");
   const clearSwatchesBtn = $("#clearSwatchesBtn");
 
-  // Animation controls (per-effect)
+  // Animation controls
   const animItems = $$(".anim-item");
   const animDefault = $("#animDefault");
   const animApplyAll = $("#animApplyAll");
@@ -74,8 +84,7 @@
       { words: [ { text: "HELLO", color: "#FFFFFF", font: "Orbitron", size: 22, align: "center", x: 0, y: 0, manual:false, caret:5, animations:[] } ], align: "center" }
     ],
     selection: { line: 0, word: 0 },
-    undo: [],
-    redo: [],
+    undo: [], redo: [],
     autoSize: true,
     spacing: { lineGap: 4, word: 6 },
     customSwatches: [],
@@ -93,6 +102,7 @@
 
   const PRESET_COLORS = ["#FFFFFF","#FFD700","#FF7F50","#FF3B3B","#00FFAA","#00BFFF","#1E90FF","#8A2BE2","#FF00FF","#00FF00","#FFA500","#C0C0C0"];
 
+  // ---- Utilities & layout ----
   function pushUndo() {
     state.undo.push(JSON.stringify({
       lines: state.lines,
@@ -104,26 +114,11 @@
     if (state.undo.length > 100) state.undo.shift();
     state.redo.length = 0;
   }
-
-  function loadFromJSON(obj) {
-    pushUndo();
-    state.lines = obj.lines || state.lines;
-    state.background = { ...(obj.background||state.background), image: null };
-    state.spacing = obj.spacing || state.spacing;
-    state.vAlign = obj.vAlign || "middle";
-    state.customSwatches = Array.isArray(obj.customSwatches) ? obj.customSwatches.slice(0,48) : [];
-    state.selection = { line: 0, word: 0 };
-    buildColorSwatches();
-    buildBgSwatches();
-    render();
-  }
-
   function selectedWord() {
     if (!state.selection) return null;
     const L = state.lines[state.selection.line]; if (!L) return null;
     return L.words[state.selection.word] || null;
   }
-
   function applyZoom() { canvas.style.transform = `translate(-50%,-50%) scale(${state.zoom})`; }
   function setCanvasResolution() { const { w, h } = state.res; canvas.width=w; canvas.height=h; applyZoom(); }
   function setMode(m) { state.mode=m; modeEditBtn.classList.toggle("active", m==="edit"); modePrevBtn.classList.toggle("active", m==="preview"); }
@@ -183,11 +178,8 @@
     else { ctx.drawImage(image, 0, 0, canvas.width, canvas.height); }
   }
 
-  function getAnimSpec(w) {
-    const map = new Map();
-    (w.animations||[]).forEach(a=> map.set(a.type, {...a}));
-    return map;
-  }
+  // ---- Animations ----
+  function getAnimSpec(w) { const map=new Map(); (w.animations||[]).forEach(a=> map.set(a.type, {...a})); return map; }
   function setAnimSpec(w, map) { w.animations = Array.from(map.values()); }
   function combineAnimations(w, tSec) {
     let dx=0, dy=0, scale=1, alpha=1;
@@ -201,6 +193,7 @@
     return {dx,dy,scale,alpha};
   }
 
+  // ---- Auto-size ----
   function autosizeIfNeeded() {
     if (!state.autoSize) return;
     const pad = 6;
@@ -216,6 +209,7 @@
     }
   }
 
+  // ---- Render ----
   function render(timestamp=0) {
     autosizeIfNeeded();
     layoutContent();
@@ -241,14 +235,15 @@
         ctx.fillText(w.text, 0, 0);
         ctx.restore();
 
+        // floating delete per word (edit mode)
         if (state.mode==="edit") {
           const wrapRect = canvas.getBoundingClientRect();
           const scale = state.zoom;
           const fx = document.createElement("div");
           fx.className = "word-fx";
           fx.textContent = "×";
-          const screenX = wrapRect.left + (w.x + m.w + 2) * scale - 8;
-          const screenY = wrapRect.top + (w.y - m.h - 10) * scale - 8;
+          const screenX = wrapRect.left + (w.x + m.w + 2) * scale - 9;
+          const screenY = wrapRect.top + (w.y - m.h - 10) * scale - 9;
           fx.style.left = Math.round(screenX) + "px";
           fx.style.top  = Math.round(screenY) + "px";
           fx.style.position = "fixed";
@@ -263,6 +258,7 @@
           document.body.appendChild(fx);
         }
 
+        // selection outline + caret
         if (state.mode==="edit" && state.selection && state.selection.line===li && state.selection.word===wi) {
           const padX=2, padY=1;
           const left = w.x - padX;
@@ -276,19 +272,19 @@
           ctx.restore();
 
           const caretIdx = Math.max(0, Math.min((w.caret??(w.text||"").length), (w.text||"").length));
-          ctx.save();
-          ctx.font = `${w.size}px ${w.font}`;
+          const c2 = document.createElement("canvas").getContext("2d");
+          c2.font = `${w.size}px ${w.font}`;
           const sub = (w.text||"").slice(0, caretIdx);
-          const cx = ctx.measureText(sub).width;
+          const cx = c2.measureText(sub).width;
           const blink = ((performance.now()/500)|0)%2===0;
           if (blink) { ctx.fillStyle="#fff"; ctx.fillRect(w.x + cx, w.y - m.h, 1, m.h); }
-          ctx.restore();
         }
       }
     }
     requestAnimationFrame(render);
   }
 
+  // ---- Events ----
   function setZoomFromUI() { state.zoom = parseFloat(zoomRange.value); applyZoom(); }
 
   resSelect.addEventListener("change", () => {
@@ -306,22 +302,26 @@
   aboutClose.addEventListener("click", ()=> aboutModal.classList.add("hidden"));
   $("#aboutModal").addEventListener("click", (e)=>{ if (e.target.id==="aboutModal") aboutModal.classList.add("hidden"); });
 
+  // Inspector drawer behavior
   toggleInspector.addEventListener("click", () => {
-    const nowCollapsed = inspectorBody.classList.toggle("collapsed");
-    toggleInspector.setAttribute("aria-expanded", (!nowCollapsed).toString());
+    const expanded = inspectorBody.classList.toggle("expanded");
+    toggleInspector.setAttribute("aria-expanded", expanded.toString());
+    toggleInspector.textContent = expanded ? "Inspector ▾" : "Inspector ▴";
   });
 
   function refreshInspectorFromSelection() {
     const w = selectedWord();
     if (!w) return;
-    if ($("#autoOpenInspector")?.checked) {
-      inspectorBody.classList.remove("collapsed");
-      toggleInspector.setAttribute("aria-expanded", "true");
-    }
+    // auto-open
+    inspectorBody.classList.add("expanded");
+    toggleInspector.setAttribute("aria-expanded", "true");
+    toggleInspector.textContent = "Inspector ▾";
+
     fontSelect.value = w.font || "monospace";
     fontSize.value = w.size || 22;
     fontColor.value = w.color || "#FFFFFF";
 
+    // update anim UI
     const spec = getAnimSpec(w);
     animItems.forEach(item=>{
       const type = item.getAttribute("data-type");
@@ -341,12 +341,19 @@
 
   function getActive() { return selectedWord(); }
 
+  // Mobile keyboard helper: no visible input, focus on selection
   function focusMobileKeyboard() {
-    const i = document.getElementById("mobileInput");
-    i.value = "";
-    i.style.left = "0"; i.style.top = "0";
-    i.focus({ preventScroll: true });
-    setTimeout(()=>{ i.style.left="-9999px"; i.style.top="-9999px"; }, 80);
+    // keep input invisible and offscreen; on iOS focusing offscreen sometimes fails,
+    // so temporarily move near bottom with 1px size but opacity:0
+    mobileInput.style.left = "50%";
+    mobileInput.style.top = "calc(100% - 30px)";
+    mobileInput.style.width = "1px";
+    mobileInput.style.height = "1px";
+    mobileInput.focus({ preventScroll: true });
+    setTimeout(()=>{
+      mobileInput.style.left = "-9999px";
+      mobileInput.style.top = "-9999px";
+    }, 120);
   }
 
   fontSelect.addEventListener("change", ()=>{ const w=getActive(); if(!w)return; pushUndo(); w.font=fontSelect.value; });
@@ -371,29 +378,37 @@
     vAlignBtns.forEach(b=>b.classList.toggle("active", b.getAttribute("data-valign")===valign));
   }));
 
+  // ---- Swatches (default protected) ----
   function buildColorSwatches() {
     const wrap = document.getElementById("swatches");
     if (!wrap) return;
     wrap.innerHTML = "";
     const all = PRESET_COLORS.concat(state.customSwatches || []);
     all.slice(0, 48).forEach(col => {
+      const sw = document.createElement("div");
+      sw.className = "swatch-wrap";
       const btn = document.createElement("button");
       btn.className = "swatch";
       btn.style.background = col;
       btn.title = col;
-      const x = document.createElement("span");
-      x.className = "x"; x.textContent = "×";
-      btn.appendChild(x);
-      btn.addEventListener("click", (ev)=>{
-        if (ev.target===x) {
+      btn.addEventListener("click", () => {
+        const w = selectedWord(); if (!w) return;
+        pushUndo(); w.color = col; if (fontColor) fontColor.value = col;
+      });
+      sw.appendChild(btn);
+      // show delete only for custom colors
+      if (state.customSwatches.includes(col)) {
+        const x = document.createElement("span");
+        x.className = "x"; x.textContent = "×";
+        x.title = "Remove swatch";
+        x.addEventListener("click", (ev)=>{
+          ev.stopPropagation();
           const i = state.customSwatches.indexOf(col);
           if (i>=0){ state.customSwatches.splice(i,1); buildColorSwatches(); buildBgSwatches(); }
-        } else {
-          const w = selectedWord(); if (!w) return;
-          pushUndo(); w.color = col; if (fontColor) fontColor.value = col;
-        }
-      });
-      wrap.appendChild(btn);
+        });
+        sw.appendChild(x);
+      }
+      wrap.appendChild(sw);
     });
   }
   addSwatchBtn?.addEventListener("click", ()=>{
@@ -409,26 +424,34 @@
     buildColorSwatches(); buildBgSwatches();
   });
 
+  // Background swatches mirror text swatches; default protected
   function buildBgSwatches() {
     bgSwatches.innerHTML = "";
     const all = PRESET_COLORS.concat(state.customSwatches || []);
     all.slice(0,48).forEach(col=>{
+      const wrap = document.createElement("div");
+      wrap.className = "swatch-wrap";
       const b = document.createElement("button");
       b.className="swatch"; b.style.background=col; b.title=col;
-      const x = document.createElement("span"); x.className="x"; x.textContent="×"; b.appendChild(x);
-      b.addEventListener("click", (ev)=>{
-        if (ev.target===x){
+      b.addEventListener("click", ()=>{
+        state.background = { type:"solid", color:col, image:null, name:"solid" };
+        bgSolidColor.value = col;
+      });
+      wrap.appendChild(b);
+      if (state.customSwatches.includes(col)) {
+        const x = document.createElement("span"); x.className="x"; x.textContent="×"; x.title="Remove swatch";
+        x.addEventListener("click", (ev)=>{
+          ev.stopPropagation();
           const i = state.customSwatches.indexOf(col);
           if (i>=0){ state.customSwatches.splice(i,1); buildColorSwatches(); buildBgSwatches(); }
-        } else {
-          state.background = { type:"solid", color:col, image:null, name:"solid" };
-          bgSolidColor.value = col;
-        }
-      });
-      bgSwatches.appendChild(b);
+        });
+        wrap.appendChild(x);
+      }
+      bgSwatches.appendChild(wrap);
     });
   }
 
+  // ---- Animations wiring ----
   animItems.forEach(item=>{
     const type = item.getAttribute("data-type");
     const cb = item.querySelector('input[type="checkbox"][data-anim="'+type+'"]');
@@ -481,6 +504,7 @@
     }));
   });
 
+  // ---- Background thumbs ----
   function buildBgThumbs() {
     const key = `${state.res.w}x${state.res.h}`;
     const list = state.bgImages[key] || [];
@@ -501,7 +525,7 @@
           state.background = { type:"image", color:"#000000", image:imgEl, name:item.key };
         } catch (e) {
           console.warn("Preset load failed:", item.preset, e);
-          alert("Could not load preset image:\n" + item.preset + "\nCheck filename/path and case.");
+          alert("Could not load preset image:\\n" + item.preset + "\\nCheck filename/path and case.");
         }
       });
       bgThumbs.appendChild(div);
@@ -509,12 +533,18 @@
   }
   function loadImage(src) { return new Promise((resolve, reject)=>{ const img = new Image(); img.onload = ()=> resolve(img); img.onerror = reject; img.src = src; }); }
 
-  canvas.addEventListener("mousedown", (e)=>{
+  // ---- Canvas interactions ----
+  function handlePointerDown(e){
     const rect = canvas.getBoundingClientRect();
     const scale = state.zoom;
     const cx = Math.floor((e.clientX - rect.left)/scale);
     const cy = Math.floor((e.clientY - rect.top)/scale);
-    if (/Mobi|Android/i.test(navigator.userAgent)) focusMobileKeyboard();
+
+    // If on mobile, trigger keyboard
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      focusMobileKeyboard();
+    }
+
     const hit = hitTest(cx, cy);
     if (hit){
       if (state.mode==="preview") setMode("edit");
@@ -532,10 +562,15 @@
       refreshInspectorFromSelection();
     } else {
       state.selection = null;
-      inspectorBody.classList.add("collapsed");
+      inspectorBody.classList.remove("expanded");
       toggleInspector.setAttribute("aria-expanded", "false");
+      toggleInspector.textContent = "Inspector ▴";
     }
-  });
+  }
+  canvas.addEventListener("pointerdown", handlePointerDown);
+  canvas.addEventListener("touchstart", (e)=>{ if (e.touches && e.touches[0]) handlePointerDown(e.touches[0]); }, {passive:true});
+  canvas.addEventListener("click", (e)=>{ /* fallback */ handlePointerDown(e); });
+
   function hitTest(cx, cy) {
     for (let li=0; li<state.lines.length; li++){
       const L = state.lines[li];
@@ -553,6 +588,7 @@
     return null;
   }
 
+  // ---- Keyboard typing ----
   window.addEventListener("keydown", (e)=>{
     if (state.mode!=="edit") return;
     const w = selectedWord();
@@ -626,6 +662,7 @@
     }
   });
 
+  // ---- Word ops ----
   addWordBtn.addEventListener("click", ()=>{
     pushUndo();
     const L = state.lines[state.selection?.line || 0] || (state.lines[0] = {words:[], align:"center"});
@@ -641,6 +678,7 @@
     refreshInspectorFromSelection();
   });
 
+  // ---- Undo/Redo/Clear ----
   undoBtn.addEventListener("click", ()=>{
     if (!state.undo.length) return;
     const snap = state.undo.pop();
@@ -686,6 +724,7 @@
   });
   function doClearAll(){ pushUndo(); state.lines = []; state.selection = null; }
 
+  // ---- Save / Load JSON ----
   saveJsonBtn.addEventListener("click", ()=>{
     const payload = {
       lines: state.lines,
@@ -703,16 +742,29 @@
   loadJsonInput.addEventListener("change", async (e)=>{
     const file = e.target.files[0]; if(!file) return;
     const text = await file.text();
-    try { loadFromJSON(JSON.parse(text)); } catch(err){ alert("Invalid JSON."); }
+    try { const obj = JSON.parse(text); loadFromJSON(obj); } catch(err){ alert("Invalid JSON."); }
   });
 
+  function loadFromJSON(obj) {
+    pushUndo();
+    state.lines = obj.lines || state.lines;
+    state.background = { ...(obj.background||state.background), image: null };
+    state.spacing = obj.spacing || state.spacing;
+    state.vAlign = obj.vAlign || "middle";
+    state.customSwatches = Array.isArray(obj.customSwatches) ? obj.customSwatches.slice(0,48) : [];
+    state.selection = { line: 0, word: 0 };
+    buildColorSwatches();
+    buildBgSwatches();
+  }
+
+  // ---- GIF render ----
   function GifWriter() { this.parts = []; }
   GifWriter.prototype.write = function(u8){ this.parts.push(u8); };
   GifWriter.prototype.concat = function(){ let len=this.parts.reduce((s,a)=>s+a.length,0); let out=new Uint8Array(len); let off=0; for(const a of this.parts){ out.set(a,off); off+=a.length; } return out; };
   function num(n){ return new Uint8Array([n&255]); }
   function word(n){ return new Uint8Array([n&255,(n>>8)&255]); }
   function colorTable(p){ const u=new Uint8Array(p.length*3); for(let i=0;i<p.length;i++){ const c=p[i]; u[i*3]=c[0];u[i*3+1]=c[1];u[i*3+2]=c[2]; } return u; }
-  function nearestIndex(p, r,g,b){ let best=0,bd=1e9; for(let i=0;i<p.length;i++){ const pr=p[i][0],pg=p[i][1],pb=p[i][2]; const d=(r-pr)*(r-pr)+(g-pg)*(g-pb)*(g-pb); if(d<bd){bd=d;best=i;} } return best; }
+  function nearestIndex(p, r,g,b){ let best=0,bd=1e9; for(let i=0;i<p.length;i++){ const pr=p[i][0],pg=p[i][1],pb=p[i][2]; const d=(r-pr)*(r-pr)+(g-pg)*(g-pg)+(b-pb)*(b-pb); if(d<bd){bd=d;best=i;} } return best; }
   function buildPalette(imgData){ const set=new Map(); const d=imgData.data; for(let i=0;i<d.length;i+=4){ const a=d[i+3]; if(a<10) continue; const key=(d[i]<<16)|(d[i+1]<<8)|(d[i+2]); set.set(key,true); if(set.size>=256) break; } const arr=Array.from(set.keys()).map(k=>[(k>>16)&255,(k>>8)&255,k&255]); if(arr.length===0) arr.push([0,0,0]); while(arr.length&(arr.length-1)) arr.push(arr[arr.length-1]); if(arr.length>256) arr.length=256; return arr; }
   function lzwEncode(indices, minCodeSize){ const CLEAR=1<<minCodeSize, END=CLEAR+1; let dict=new Map(); let codeSize=minCodeSize+1; let next=END+1; const out=[]; let cur=0,curBits=0; function write(code){ cur |= code<<curBits; curBits += codeSize; while(curBits>=8){ out.push(cur&255); cur>>=8; curBits-=8; } } function reset(){ dict=new Map(); codeSize=minCodeSize+1; next=END+1; write(CLEAR);} reset(); let w=indices[0]; for(let i=1;i<indices.length;i++){ const k=indices[i]; const wk=(w<<8)|k; if(dict.has(wk)){ w=dict.get(wk);} else { write(w); dict.set(wk,next++); if(next===(1<<codeSize) && codeSize<12) codeSize++; w=k; } } write(w); write(END); if(curBits>0) out.push(cur&255); return new Uint8Array(out); }
 
