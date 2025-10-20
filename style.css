@@ -35,3 +35,9 @@
 .modal-actions{display:flex;justify-content:flex-end;gap:8px}
 .primary{background:#1f2b45;border:1px solid #314e86}
 /* selection glow shown by canvas drawing, not CSS */
+.swatches { display:flex; flex-wrap:wrap; gap:6px; }
+.swatch {
+  width:22px; height:22px; border-radius:6px; border:1px solid #2a2c31;
+  cursor:pointer; position:relative;
+}
+.swatch:focus { outline:2px solid #314e86; }
