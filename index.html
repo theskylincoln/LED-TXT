@@ -1,167 +1,168 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LED Backpack Animator v2.1 (STABLE)</title>
-<link rel="stylesheet" href="style.css"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>LED Backpack Animator</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-<header>
-  <h1>LED Backpack Animator <span class="tag">v2.1-STABLE</span></h1>
-  <div class="controls">
-    <label>Mode:
-      <select id="mode">
-        <option value="edit">Edit Mode</option>
-        <option value="preview">Preview Mode</option>
-      </select>
-    </label>
-    <label>Resolution:
-      <select id="resolution">
-        <option value="96x128" selected>96×128 (portrait)</option>
-        <option value="64x64">64×64 (square)</option>
-      </select>
-    </label>
-    <button id="btnAddWord">+ Word</button>
-    <button id="btnAddLine">+ Line</button>
-    <button id="btnClear">Clear All Text</button>
-    <button id="btnUndo">Undo</button>
-    <button id="btnRedo">Redo</button>
-    <button id="btnToggleInspector">Show Inspector</button>
-    <button id="btnDownloadCfg">Download Config</button>
-  </div>
-</header>
-
-<div class="container">
-  <aside class="sidebar">
-    <div>
-      <h3 style="margin:6px 0">Backgrounds</h3>
-      <div class="toggle small">
-        <label><input type="radio" name="bgmode" value="preset" checked/> Preset</label>
-        <label><input type="radio" name="bgmode" value="solid"/> Solid</label>
-        <label><input type="radio" name="bgmode" value="custom"/> Custom Upload</label>
+  <header class="topbar">
+    <h1>LED Backpack Animator <span id="version">v1.9.3-sandbox</span></h1>
+    <div class="toolbar">
+      <button id="btnPreview">Preview Animation</button>
+      <button id="btnEdit">Edit Mode</button>
+      <button id="btnUndo">Undo</button>
+      <button id="btnRedo">Redo</button>
+      <button id="btnClear">Clear All Text</button>
+      <div class="zoom">
+        <button id="btnZoomOut">-</button>
+        <span id="zoomLabel">100%</span>
+        <button id="btnZoomIn">+</button>
       </div>
-
-      <div id="presetGrid" class="preset-grid" style="margin-top:8px"></div>
-
-      <div id="solidPicker" style="display:none;margin-top:8px">
-        <input id="solidColor" type="color" value="#000000"/>
-      </div>
-
-      <div id="customUpload" style="display:none;margin-top:8px">
-        <input id="fileInput" type="file" accept="image/png,image/jpeg"/>
-      </div>
+      <button id="btnToggleInspector">Show/Hide Inspector</button>
+      <button id="btnDownloadConfig">Download Config</button>
+      <input type="file" id="uploadConfig" accept="application/json" hidden/>
+      <button id="btnUploadConfig">Upload Config</button>
     </div>
-    <hr class="sep"/>
-    <div class="small">
-      <p><b>Tips</b></p>
-      <p><kbd>Space</kbd> new word · <kbd>Enter</kbd> new line · Click background to deselect.</p>
-    </div>
-  </aside>
+  </header>
 
-  <main class="canvas-wrap">
-    <div class="canvas-stage">
-      <canvas id="canvas" width="96" height="128"></canvas>
-      <div id="deleteWord" class="delete-word">✕</div>
-      <div id="selectionOverlay" class="stage-overlay" style="display:none"></div>
-    </div>
-    <div class="small">Pixel preview is auto-scaled for clarity. Rendering is preview-only in v2.1.</div>
-  </main>
-</div>
-
-<div class="bottom-bar">
-  <div class="controls">
-    <span class="small">Inspector</span>
-    <button id="btnInspectorOpenClose">Open / Close</button>
-  </div>
-  <div id="inspector" class="inspector">
-    <div class="section">
-      <h3>Font & Size</h3>
-      <div class="grid">
-        <label>Font
-          <select id="fontSelect">
-            <option value="Arial, sans-serif">Arial</option>
-            <option value="'Courier New', monospace">Courier New</option>
-            <option value="Georgia, serif">Georgia</option>
-            <option value="Impact, fantasy">Impact</option>
-            <option value="Verdana, sans-serif">Verdana</option>
-            <option value="Monaco, monospace">Monaco</option>
+  <main class="layout">
+    <section class="left">
+      <div class="bgResRow">
+        <div class="resolution">
+          <select id="resolution">
+            <option value="96x128" selected>96×128</option>
+            <option value="64x64">64×64</option>
           </select>
-        </label>
-        <label>Size
-          <input id="fontSize" type="number" min="6" max="64" value="16"/>
-        </label>
-        <label><input type="checkbox" id="autoSize" checked/> Auto Size</label>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Color & Swatches</h3>
-      <div class="grid">
-        <label>Color <input id="fontColor" type="color" value="#ffffff"/></label>
-        <div>
-          <button id="btnAddSwatch">+ Swatch</button>
-          <button id="btnDelSwatch">- Swatch</button>
+        </div>
+        <div class="bgThumbs" id="bgThumbs">
+          <div class="thumb" data-type="preset" data-name="Preset_A" data-for="96x128" title="Preset A">
+            <img src="assets/presets/Preset_A.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
+          </div>
+          <div class="thumb" data-type="preset" data-name="Preset_B" data-for="96x128" title="Preset B">
+            <img src="assets/presets/Preset_B.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
+          </div>
+          <div class="thumb" data-type="preset" data-name="Preset_C" data-for="64x64" title="Preset C">
+            <img src="assets/presets/Preset_C.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
+          </div>
+          <div class="thumb" data-type="preset" data-name="Preset_D" data-for="64x64" title="Preset D">
+            <img src="assets/presets/Preset_D.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
+          </div>
+          <div class="thumb solid" data-type="solid" title="Solid Color">
+            <span>Solid</span>
+          </div>
+          <div class="thumb upload" data-type="upload" title="Custom Upload">
+            <span>Upload</span>
+            <input type="file" id="bgUpload" accept="image/*" hidden/>
+          </div>
+          <input type="color" id="solidPicker" value="#000000" class="solidPicker" />
         </div>
       </div>
-      <div id="swatches" class="swatches"></div>
-    </div>
 
-    <div class="section">
-      <h3>Spacing</h3>
-      <div class="grid">
-        <label>Line Spacing <input id="lineSpacing" type="range" min="0" max="20" value="6"/></label>
-        <label>Word Spacing <input id="wordSpacing" type="range" min="0" max="20" value="4"/></label>
-        <label>Padding <input id="padding" type="range" min="0" max="12" value="2"/></label>
+      <div class="canvasWrap">
+        <canvas id="canvas" width="384" height="512"></canvas>
+        <button id="btnDeleteWord" class="deleteWord hidden">× Delete</button>
       </div>
-    </div>
 
-    <div class="section">
-      <h3>Alignment</h3>
-      <div class="grid">
-        <label>Horizontal
-          <select id="hAlign">
-            <option value="center">Center</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-            <option value="manual">Manual</option>
-          </select>
-        </label>
-        <label>Vertical
-          <select id="vAlign">
-            <option value="middle">Middle</option>
-            <option value="top">Top</option>
-            <option value="bottom">Bottom</option>
-            <option value="manual">Manual</option>
-          </select>
-        </label>
-        <button id="btnResetAlign">Reset</button>
+      <div class="inspector hidden" id="inspector">
+        <div class="inspector-bar">
+          <button class="tab" data-tab="font">Font</button>
+          <button class="tab" data-tab="color">Color</button>
+          <button class="tab" data-tab="spacing">Spacing</button>
+          <button class="tab" data-tab="align">Alignment</button>
+          <button class="tab" data-tab="anim">Animation</button>
+          <button id="btnAddLine" class="tab addline">+ Add Line</button>
+        </div>
+        <div class="panel" id="panel-font">
+          <label>Family
+            <select id="fontFamily">
+              <option value="monospace" selected>Monospace</option>
+              <option value="sans-serif">Sans-serif</option>
+              <option value="serif">Serif</option>
+              <option value="'DotGothic16', sans-serif">DotGothic16</option>
+              <option value="'VT323', monospace">VT323</option>
+              <option value="'Press Start 2P', cursive">Press Start 2P</option>
+            </select>
+          </label>
+          <label>Size <input type="number" id="fontSize" value="22" min="6" max="96"/></label>
+          <label><input type="checkbox" id="autoSize" checked/> Auto-size (per line)</label>
+        </div>
+        <div class="panel" id="panel-color">
+          <div class="swatches" id="swatches">
+            <button class="sw" data-color="#00C2FF" style="--c:#00C2FF"></button>
+            <button class="sw" data-color="#2EE55D" style="--c:#2EE55D"></button>
+            <button class="sw" data-color="#FFE045" style="--c:#FFE045"></button>
+            <button class="sw" data-color="#FF67CF" style="--c:#FF67CF"></button>
+            <button class="sw" data-color="#FF5A5A" style="--c:#FF5A5A"></button>
+            <button class="sw" data-color="#FFFFFF" style="--c:#FFFFFF"></button>
+            <button class="sw" data-color="#111111" style="--c:#111111"></button>
+          </div>
+          <div class="custom-swatches">
+            <input type="color" id="customColor" value="#FFFFFF"/>
+            <button id="btnAddSwatch">+ Add Swatch</button>
+            <button id="btnDelSwatch">Delete Last</button>
+          </div>
+        </div>
+        <div class="panel" id="panel-spacing">
+          <label>Line Gap <input type="number" id="lineGap" value="2" min="0" max="20"/></label>
+          <label>Word Spacing <input type="number" id="wordSpacing" value="8" min="0" max="30"/></label>
+          <label><input type="checkbox" id="preventCutoff" checked/> Prevent cutoff</label>
+        </div>
+        <div class="panel" id="panel-align">
+          <div class="alignRow">
+            <button class="alignBtn" data-align="left">Left</button>
+            <button class="alignBtn" data-align="center">Center</button>
+            <button class="alignBtn" data-align="right">Right</button>
+            <button class="alignBtn" data-align="manual">Manual (drag)</button>
+            <button id="btnResetAlign">Reset</button>
+          </div>
+        </div>
+        <div class="panel" id="panel-anim">
+          <div class="animList">
+            <div class="animItem">
+              <label><input type="checkbox" class="animCheck" data-anim="pulse"/> Pulse</label>
+              <div class="animCfg" data-for="pulse">
+                Amount <input type="range" min="0" max="1" step="0.01" value="0.4" class="animSlider" data-anim="pulse"/>
+                <button class="resetAnim" data-anim="pulse">Reset</button>
+              </div>
+            </div>
+            <div class="animItem">
+              <label><input type="checkbox" class="animCheck" data-anim="flicker"/> Flicker</label>
+              <div class="animCfg" data-for="flicker">
+                Amount <input type="range" min="0" max="1" step="0.01" value="0.3" class="animSlider" data-anim="flicker"/>
+                <button class="resetAnim" data-anim="flicker">Reset</button>
+              </div>
+            </div>
+            <div class="animItem">
+              <label><input type="checkbox" class="animCheck" data-anim="bounce"/> Bounce</label>
+              <div class="animCfg" data-for="bounce">
+                Height <input type="range" min="0" max="10" step="1" value="3" class="animSlider" data-anim="bounce"/>
+                <button class="resetAnim" data-anim="bounce">Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
+    <section class="right">
+      <!-- Reserved for future (about / render) -->
+    </section>
+  </main>
 
-    <div class="section">
-      <h3>Animations (Preview only)</h3>
-      <div class="grid">
-        <label><input type="checkbox" class="anim" data-name="pulse"/> Pulse <input type="range" class="animRange" data-name="pulse" min="0" max="100" value="50"/></label>
-        <label><input type="checkbox" class="anim" data-name="flicker"/> Flicker <input type="range" class="animRange" data-name="flicker" min="0" max="100" value="50"/></label>
-        <label><input type="checkbox" class="anim" data-name="bounce"/> Bounce <input type="range" class="animRange" data-name="bounce" min="0" max="100" value="50"/></label>
-        <label><input type="checkbox" class="anim" data-name="wave"/> Wave <input type="range" class="animRange" data-name="wave" min="0" max="100" value="50"/></label>
-        <label><input type="checkbox" class="anim" data-name="scroll"/> Scroll <input type="range" class="animRange" data-name="scroll" min="0" max="100" value="50"/></label>
-        <label><input type="checkbox" class="anim" data-name="bubble"/> Bubble <input type="range" class="animRange" data-name="bubble" min="0" max="100" value="50"/></label>
-        <button id="btnAnimReset">Return to default</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Manual Drag</h3>
-      <label><input type="checkbox" id="manualDrag"/> Enable manual drag</label>
-      <div id="dragWarning" class="small" style="display:none;margin-top:6px">
-        ⚠️ Manual drag overrides auto centering. <label><input type="checkbox" id="disableDragWarning"/> Don’t show again this session</label>
+  <div class="modal hidden" id="dragModal">
+    <div class="modalCard">
+      <h3>Enable Manual Drag</h3>
+      <p>Manual drag turns off automatic centering and alignment for this word.</p>
+      <label><input type="checkbox" id="noDragPrompt"/> Don't show again this session</label>
+      <div class="modalRow">
+        <button id="dragCancel">Cancel</button>
+        <button id="dragEnable">Enable</button>
       </div>
     </div>
   </div>
-</div>
 
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
