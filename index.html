@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LED Backpack Animator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">LED Backpack Animator</div>
+    <div class="controls-row">
+      <div class="group">
+        <label>Resolution</label>
+        <select id="resSelect">
+          <option value="96x128">96×128</option>
+          <option value="64x64">64×64</option>
+        </select>
+      </div>
+      <div class="group">
+        <label>Mode</label>
+        <div class="seg">
+          <button id="modeEdit" class="seg-btn active">✏️ Edit</button>
+          <button id="modePreview" class="seg-btn">▶️ Preview</button>
+        </div>
+      </div>
+      <div class="group">
+        <label for="zoom">Zoom</label>
+        <input type="range" id="zoom" min="1" max="6" step="1" value="3" />
+      </div>
+      <div class="group">
+        <button id="undoBtn" title="Undo">↶ Undo</button>
+        <button id="redoBtn" title="Redo">↷ Redo</button>
+      </div>
+      <div class="group">
+        <button id="aboutBtn">About</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="left-panel">
+      <h3>Backgrounds</h3>
+      <div id="bgThumbs" class="thumbs"></div>
+      <div class="bg-actions">
+        <button id="bgSolidBtn">Solid Color</button>
+        <input type="color" id="bgSolidColor" value="#000000" />
+        <label class="upload-btn">
+          <input type="file" id="bgUpload" accept="image/*" hidden />
+          <span>Custom Upload</span>
+        </label>
+      </div>
+      <div class="legend-note">Only presets for the selected resolution appear.</div>
+    </aside>
+
+    <section class="stage">
+      <div class="canvas-wrap">
+        <canvas id="led" width="128" height="128"></canvas>
+      </div>
+      <div class="stage-actions">
+        <button id="addWordBtn">+ Word</button>
+        <button id="addLineBtn">+ Line</button>
+        <button id="delWordBtn" class="danger">× Delete Word</button>
+        <label class="chk">
+          <input type="checkbox" id="manualDragChk" />
+          <span>Manual drag</span>
+        </label>
+      </div>
+
+      <div class="render-actions">
+        <div class="group">
+          <label>FPS</label>
+          <input type="number" id="fps" value="8" min="1" max="30" />
+        </div>
+        <div class="group">
+          <label>Seconds</label>
+          <input type="number" id="seconds" value="4" min="1" max="20" />
+        </div>
+        <button id="renderGifBtn">Render GIF</button>
+        <a id="downloadLink" download="animation.gif" class="button">Download</a>
+        <button id="saveJsonBtn">Download Config</button>
+        <label class="upload-btn small">
+          <input type="file" id="loadJsonInput" accept="application/json" hidden />
+          <span>Import Config</span>
+        </label>
+      </div>
+    </section>
+
+    <aside class="right-panel">
+      <div class="inspector">
+        <div class="inspector-header">
+          <h3>Inspector</h3>
+          <button id="toggleInspector" aria-expanded="false">▸</button>
+        </div>
+        <div id="inspectorBody" class="inspector-body collapsed">
+          <div class="row">
+            <label>Font</label>
+            <select id="fontSelect">
+              <option value="monospace">Monospace</option>
+              <option value="sans-serif">Sans</option>
+              <option value="serif">Serif</option>
+              <option value="Courier New">Courier New</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Arial Black">Arial Black</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Size</label>
+            <input type="number" id="fontSize" min="6" max="64" value="22" />
+            <label class="chk small"><input type="checkbox" id="autoSize" checked /> <span>Auto-size</span></label>
+          </div>
+          <div class="row">
+            <label>Color</label>
+            <input type="color" id="fontColor" value="#FFFFFF" />
+          </div>
+          <div class="row">
+            <label>Spacing</label>
+            <div class="dual">
+              <span>Line</span><input type="number" id="lineGap" min="0" max="16" value="2" />
+              <span>Word</span><input type="number" id="wordGap" min="0" max="20" value="8" />
+            </div>
+          </div>
+          <div class="row">
+            <label>Align</label>
+            <div class="seg">
+              <button class="seg-btn" data-align="left">Left</button>
+              <button class="seg-btn active" data-align="center">Center</button>
+              <button class="seg-btn" data-align="right">Right</button>
+              <button id="alignReset" class="seg-btn">Reset</button>
+            </div>
+          </div>
+          <div class="row">
+            <label>Animation</label>
+            <select id="animSelect">
+              <option value="none">None</option>
+              <option value="pulse">Pulse</option>
+              <option value="flicker">Flicker</option>
+              <option value="slide">Slide In</option>
+              <option value="bounce">Bounce</option>
+              <option value="wave">Wave</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="note">Tip: Click canvas background to deselect. Space = new word. Enter = new line.</div>
+    </aside>
+  </main>
+
+  <!-- Manual drag warning -->
+  <div id="dragWarn" class="modal hidden">
+    <div class="modal-card">
+      <h3>Manual Drag Mode</h3>
+      <p>Dragging words lets you position them anywhere. This can break perfect centering. Continue?</p>
+      <label class="chk"><input type="checkbox" id="suppressDragWarn" /> <span>Don’t show again this session</span></label>
+      <div class="modal-actions">
+        <button id="dragWarnCancel">Cancel</button>
+        <button id="dragWarnOk" class="primary">Enable</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About modal -->
+  <div id="aboutModal" class="modal hidden">
+    <div class="modal-card">
+      <h3>About</h3>
+      <p><strong>LED Backpack Animator v2.0</strong><br/>by TheSkyLincoln / instax.moto</p>
+      <ul>
+        <li>Supports 96×128 and 64×64 presets</li>
+        <li>Canvas typing with per-word editing</li>
+        <li>Full-word selection outline (magenta dotted glow)</li>
+        <li>Render GIF, Download/Import JSON</li>
+      </ul>
+      <div class="modal-actions">
+        <button id="aboutClose" class="primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
