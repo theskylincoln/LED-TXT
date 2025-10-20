@@ -1,189 +1,131 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator</title>
+  <title>LED Backpack Animator v1.9.3-sandbox</title>
   <link rel="stylesheet" href="styles.css"/>
+  <style>
+    body{background:#0f1b2a;color:#e6eefc;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0}
+    header, .toolbar{display:flex;gap:8px;align-items:center}
+    header{padding:10px 12px}
+    .toolbar button,.toolbar select{background:#162235;border:1px solid #22324e;border-radius:10px;color:#e6eefc;padding:8px 10px;cursor:pointer}
+    .toolbar button:hover{border-color:#4a6fb8}
+    .wrap{display:grid;grid-template-columns:420px 1fr;gap:16px;padding:12px}
+    .left{display:grid;grid-template-rows:auto 1fr;gap:10px}
+    .thumbs{display:grid;grid-template-columns:repeat(5,72px);gap:8px}
+    .thumb{width:72px;height:72px;border:1px dashed #3a4c70;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#000;cursor:pointer}
+    .thumb.selected{outline:2px solid #61dafb}
+    .stage{background:#0b1422;border:1px solid #22324e;border-radius:12px;padding:10px;height:560px}
+    canvas{image-rendering:pixelated;background:#000;border-radius:8px}
+    .inspector{position:sticky;top:10px;background:#0b1422;border:1px solid #22324e;border-radius:12px;padding:10px}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+    .grow{flex:1}
+    .muted{color:#9fb0d4;font-size:12px}
+    kbd{background:#101c30;border:1px solid #28406e;border-bottom-color:#20365a;border-radius:6px;padding:2px 6px}
+  </style>
 </head>
 <body>
-  <header class="topbar">
-    <h1>LED Backpack Animator <span id="version">v1.9.3-sandbox</span></h1>
-    <div class="toolbar">
-      <button id="btnPreview">Preview Animation</button>
-      <button id="btnEdit">Edit Mode</button>
-      <button id="btnUndo">Undo</button>
-      <button id="btnRedo">Redo</button>
-      <button id="btnClear">Clear All Text</button>
-      <div class="zoom">
-        <button id="btnZoomOut">-</button>
-        <span id="zoomLabel">100%</span>
-        <button id="btnZoomIn">+</button>
-      </div>
+  <header class="toolbar">
+    <button id="btnPreview">Preview Animation</button>
+    <button id="btnEdit">Edit Mode</button>
+    <button id="btnUndo">Undo</button>
+    <button id="btnRedo">Redo</button>
+    <button id="btnClear">Clear All Text</button>
+
+    <select id="resolution">
+      <option value="96x128" selected>96×128</option>
+      <option value="64x64">64×64</option>
+    </select>
+
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <button id="btnZoomOut">-</button>
+      <span id="zoomLabel">100%</span>
+      <button id="btnZoomIn">+</button>
       <button id="btnToggleInspector">Show/Hide Inspector</button>
       <button id="btnDownloadConfig">Download Config</button>
-      <input type="file" id="uploadConfig" accept="application/json" hidden/>
       <button id="btnUploadConfig">Upload Config</button>
     </div>
   </header>
 
-  <main class="layout">
+  <main class="wrap">
     <section class="left">
-      <div class="bgResRow">
-        <div class="resolution">
-          <select id="resolution">
-            <option value="96x128" selected>96×128</option>
-            <option value="64x64">64×64</option>
-          </select>
+      <!-- BACKGROUND PICKER (TOP LEFT, like your original) -->
+      <div>
+        <div class="row"><strong>Backgrounds</strong> <span class="muted">(thumbnails change with resolution)</span></div>
+        <div class="thumbs" id="thumbs">
+          <div class="thumb" data-kind="preset" data-id="A"><img src="assets/thumbs/Preset_A_thumb.png" alt="Preset A"/></div>
+          <div class="thumb" data-kind="preset" data-id="B"><img src="assets/thumbs/Preset_B_thumb.png" alt="Preset B"/></div>
+          <div class="thumb" data-kind="preset" data-id="C"><img src="assets/thumbs/Preset_C_thumb.png" alt="Preset C"/></div>
+          <div class="thumb" data-kind="preset" data-id="D"><img src="assets/thumbs/Preset_D_thumb.png" alt="Preset D"/></div>
+          <div class="thumb" data-kind="solid"><img src="assets/thumbs/Solid_thumb.png" alt="Solid"/></div>
+          <div class="thumb" data-kind="upload"><img src="assets/thumbs/Upload_thumb.png" alt="Upload"/></div>
         </div>
-        <div class="bgThumbs" id="bgThumbs">
-          <div class="thumb" data-type="preset" data-name="Preset_A" data-for="96x128" title="Preset A">
-            <img src="assets/presets/Preset_A.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
-          </div>
-          <div class="thumb" data-type="preset" data-name="Preset_B" data-for="96x128" title="Preset B">
-            <img src="assets/presets/Preset_B.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
-          </div>
-          <div class="thumb" data-type="preset" data-name="Preset_C" data-for="64x64" title="Preset C">
-            <img src="assets/presets/Preset_C.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
-          </div>
-          <div class="thumb" data-type="preset" data-name="Preset_D" data-for="64x64" title="Preset D">
-            <img src="assets/presets/Preset_D.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
-          </div>
-          <div class="thumb solid" data-type="solid" title="Solid Color">
-            <span>Solid</span>
-          </div>
-          <div class="thumb upload" data-type="upload" title="Custom Upload">
-            <span>Upload</span>
-            <input type="file" id="bgUpload" accept="image/*" hidden/>
-          </div>
-          <input type="color" id="solidPicker" value="#000000" class="solidPicker" />
+        <input id="uploadBg" type="file" accept="image/*" style="display:none"/>
+      </div>
+
+      <!-- PREVIEW CANVAS -->
+      <div class="stage">
+        <canvas id="canvas" width="96" height="128" style="width:288px;height:384px"></canvas>
+        <div class="muted">Scaled preview • Click blank area to deselect • <kbd>Space</kbd>=new word, <kbd>Enter</kbd>=new line</div>
+      </div>
+    </section>
+
+    <!-- INSPECTOR -->
+    <aside class="inspector" id="inspector">
+      <div class="row">
+        <label>Font</label>
+        <select id="fontFamily" class="grow">
+          <option value="Inter, Arial">Inter</option>
+          <option value="Arial, Helvetica">Arial</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Tahoma">Tahoma</option>
+          <option value="'Courier New', monospace">Courier</option>
+          <option value="Georgia">Georgia</option>
+        </select>
+        <label>Size</label>
+        <input id="fontSize" type="number" value="22" min="6" max="64" style="width:80px"/>
+        <label><input type="checkbox" id="autoSize" checked/> Auto Size</label>
+      </div>
+
+      <div class="row">
+        <label>Spacing</label>
+        <span>Line</span><input id="lineGap" type="range" min="0" max="20" value="2"/>
+        <span>Word</span><input id="wordSpacing" type="range" min="0" max="20" value="8"/>
+      </div>
+
+      <div class="row">
+        <label>Alignment</label>
+        <div id="alignGroup">
+          <button data-align="left">Left</button>
+          <button data-align="center">Center</button>
+          <button data-align="right">Right</button>
+          <button id="alignReset">Reset</button>
         </div>
       </div>
 
-      <div class="canvasWrap">
-        <canvas id="canvas" width="384" height="512"></canvas>
-        <button id="btnDeleteWord" class="deleteWord hidden">× Delete</button>
+      <hr/>
+
+      <div class="row">
+        <strong>Animation</strong>
+        <label style="display:inline-flex;gap:6px;align-items:center;margin-left:8px">
+          <input type="checkbox" id="animBookTok" checked/> BookTok Flicker
+        </label>
+        <label style="margin-left:14px;">Speed
+          <input type="number" id="animSpeed" value="1.0" min="0.2" max="3" step="0.1" style="width:70px"/>
+        </label>
       </div>
 
-      <div class="inspector hidden" id="inspector">
-        <div class="inspector-bar">
-          <button class="tab" data-tab="font">Font</button>
-          <button class="tab" data-tab="color">Color</button>
-          <button class="tab" data-tab="spacing">Spacing</button>
-          <button class="tab" data-tab="align">Alignment</button>
-          <button class="tab" data-tab="anim">Animation</button>
-          <button id="btnAddLine" class="tab addline">+ Add Line</button>
-        </div>
-        <div class="panel" id="panel-font">
-          <label>Family
-            <select id="fontFamily">
-              <option value="monospace" selected>Monospace</option>
-              <option value="sans-serif">Sans-serif</option>
-              <option value="serif">Serif</option>
-              <option value="'DotGothic16', sans-serif">DotGothic16</option>
-              <option value="'VT323', monospace">VT323</option>
-              <option value="'Press Start 2P', cursive">Press Start 2P</option>
-            </select>
-          </label>
-          <label>Size <input type="number" id="fontSize" value="22" min="6" max="96"/></label>
-          <label><input type="checkbox" id="autoSize" checked/> Auto-size (per line)</label>
-        </div>
-        <div class="panel" id="panel-color">
-          <div class="swatches" id="swatches">
-            <button class="sw" data-color="#00C2FF" style="--c:#00C2FF"></button>
-            <button class="sw" data-color="#2EE55D" style="--c:#2EE55D"></button>
-            <button class="sw" data-color="#FFE045" style="--c:#FFE045"></button>
-            <button class="sw" data-color="#FF67CF" style="--c:#FF67CF"></button>
-            <button class="sw" data-color="#FF5A5A" style="--c:#FF5A5A"></button>
-            <button class="sw" data-color="#FFFFFF" style="--c:#FFFFFF"></button>
-            <button class="sw" data-color="#111111" style="--c:#111111"></button>
-          </div>
-          <div class="custom-swatches">
-            <input type="color" id="customColor" value="#FFFFFF"/>
-            <button id="btnAddSwatch">+ Add Swatch</button>
-            <button id="btnDelSwatch">Delete Last</button>
-          </div>
-        </div>
-        <div class="panel" id="panel-spacing">
-          <label>Line Gap <input type="number" id="lineGap" value="2" min="0" max="20"/></label>
-          <label>Word Spacing <input type="number" id="wordSpacing" value="8" min="0" max="30"/></label>
-          <label><input type="checkbox" id="preventCutoff" checked/> Prevent cutoff</label>
-        </div>
-        <div class="panel" id="panel-align">
-          <div class="alignRow">
-            <button class="alignBtn" data-align="left">Left</button>
-            <button class="alignBtn" data-align="center">Center</button>
-            <button class="alignBtn" data-align="right">Right</button>
-            <button class="alignBtn" data-align="manual">Manual (drag)</button>
-            <button id="btnResetAlign">Reset</button>
-          </div>
-        </div>
-        <div class="panel" id="panel-anim">
-          <div class="animList">
-            <div class="animItem">
-              <label><input type="checkbox" class="animCheck" data-anim="pulse"/> Pulse</label>
-              <div class="animCfg" data-for="pulse">
-                Amount <input type="range" min="0" max="1" step="0.01" value="0.4" class="animSlider" data-anim="pulse"/>
-                <button class="resetAnim" data-anim="pulse">Reset</button>
-              </div>
-            </div>
-            <div class="animItem">
-              <label><input type="checkbox" class="animCheck" data-anim="flicker"/> Flicker</label>
-              <div class="animCfg" data-for="flicker">
-                Amount <input type="range" min="0" max="1" step="0.01" value="0.3" class="animSlider" data-anim="flicker"/>
-                <button class="resetAnim" data-anim="flicker">Reset</button>
-              </div>
-            </div>
-            <div class="animItem">
-              <label><input type="checkbox" class="animCheck" data-anim="bounce"/> Bounce</label>
-              <div class="animCfg" data-for="bounce">
-                Height <input type="range" min="0" max="10" step="1" value="3" class="animSlider" data-anim="bounce"/>
-                <button class="resetAnim" data-anim="bounce">Reset</button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="row">
+        <strong>Render GIF</strong>
+        <span>FPS</span><input id="gifFps" type="number" value="12" min="2" max="30" style="width:72px"/>
+        <span>Seconds</span><input id="gifSecs" type="number" value="3" min="1" max="10" style="width:72px"/>
+        <span>File</span><input id="gifName" type="text" value="animation" style="width:160px"/>
+        <button id="btnRenderGif">Download GIF</button>
       </div>
-    </section>
-    <section class="right">
-      <!-- Reserved for future (about / render) -->
-    </section>
+    </aside>
   </main>
 
-  <div class="modal hidden" id="dragModal">
-    <div class="modalCard">
-      <h3>Enable Manual Drag</h3>
-      <p>Manual drag turns off automatic centering and alignment for this word.</p>
-      <label><input type="checkbox" id="noDragPrompt"/> Don't show again this session</label>
-      <div class="modalRow">
-        <button id="dragCancel">Cancel</button>
-        <button id="dragEnable">Enable</button>
-      </div>
-    </div>
-  
-  <div class="inspectorRow" id="gifRenderRow">
-    <h3>Render GIF</h3>
-    <label>FPS <input id="gifFps" type="number" min="2" max="30" value="12" style="width:72px"/></label>
-    <label>Seconds <input id="gifSecs" type="number" min="1" max="10" value="3" style="width:72px"/></label>
-    <label>Filename <input id="gifName" type="text" value="animation" style="width:160px"/></label>
-    <button id="btnRenderGif">Download GIF</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
-    <section class="bgPicker">
-      <div class="thumbs" id="thumbs">
-        <!-- A–D preset thumbs will show here; Solid/Upload too -->
-        <div class="thumb" data-kind="preset" data-id="A"><img src="assets/thumbs/Preset_A_thumb.png" alt="Preset A"/></div>
-        <div class="thumb" data-kind="preset" data-id="B"><img src="assets/thumbs/Preset_B_thumb.png" alt="Preset B"/></div>
-        <div class="thumb" data-kind="preset" data-id="C"><img src="assets/thumbs/Preset_C_thumb.png" alt="Preset C"/></div>
-        <div class="thumb" data-kind="preset" data-id="D"><img src="assets/thumbs/Preset_D_thumb.png" alt="Preset D"/></div>
-        <div class="thumb" data-kind="solid"><img src="assets/thumbs/Solid_thumb.png" alt="Solid"/></div>
-        <div class="thumb" data-kind="upload"><img src="assets/thumbs/Upload_thumb.png" alt="Upload"/></div>
-      </div>
-      <input id="uploadBg" type="file" accept="image/*" style="display:none"/>
-    </section>
-

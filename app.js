@@ -107,10 +107,10 @@ function filterPresetThumbs(){
     t.style.display = (showFor===resVal) ? 'flex' : 'none';
   });
 }
-resolutionSel.addEventListener('change', e=>setResolution(e.target.value));
+if(resolutionSel).addEventListener('change', e=>setResolution(e.target.value));
 
 // Background selection
-bgThumbsWrap.addEventListener('click', (e)=>{
+if(bgThumbsWrap).addEventListener('click', (e)=>{
   const t = e.target.closest('.thumb');
   if(!t) return;
   [...bgThumbsWrap.querySelectorAll('.thumb')].forEach(n=>n.classList.remove('active'));
@@ -128,14 +128,14 @@ bgThumbsWrap.addEventListener('click', (e)=>{
   }
   draw();
 });
-bgUploadInput.addEventListener('change', (e)=>{
+if(bgUploadInput).addEventListener('change', (e)=>{
   const file = e.target.files[0];
   if(!file) return;
   const url = URL.createObjectURL(file);
   state.background = {type:'upload', image:url};
   draw();
 });
-solidPicker.addEventListener('input', e=>{
+if(solidPicker).addEventListener('input', e=>{
   if(state.background.type==='solid'){
     state.background.color = e.target.value;
     draw();
@@ -144,13 +144,13 @@ solidPicker.addEventListener('input', e=>{
 
 // Inspector tabs toggle (collapse by default)
 tabs.forEach(tab=>{
-  tab.addEventListener('click', ()=>{
+  if(tab).addEventListener('click', ()=>{
     const key = tab.dataset.tab;
     Object.values(panels).forEach(p=>p.classList.remove('active'));
     if(key) panels[key].classList.add('active');
   });
 });
-btnToggleInspector.addEventListener('click', ()=>{
+if(btnToggleInspector).addEventListener('click', ()=>{
   inspector.classList.toggle('hidden');
 });
 
@@ -173,33 +173,33 @@ function applyWordChange(){
   draw();
 }
 
-fontFamily.addEventListener('change', applyWordChange);
-fontSize.addEventListener('change', applyWordChange);
-lineGap.addEventListener('change', applyWordChange);
-wordSpacing.addEventListener('change', applyWordChange);
-preventCutoff.addEventListener('change', applyWordChange);
-autoSize.addEventListener('change', ()=>{ layoutAll(); draw(); });
+if(fontFamily).addEventListener('change', applyWordChange);
+if(fontSize).addEventListener('change', applyWordChange);
+if(lineGap).addEventListener('change', applyWordChange);
+if(wordSpacing).addEventListener('change', applyWordChange);
+if(preventCutoff).addEventListener('change', applyWordChange);
+if(autoSize).addEventListener('change', ()=>{ layoutAll(); draw(); });
 
 // Color swatches
-swatches.addEventListener('click', (e)=>{
+if(swatches).addEventListener('click', (e)=>{
   const b = e.target.closest('.sw'); if(!b) return;
   const w = selectedWord(); if(!w) return;
   w.color = b.dataset.color;
   draw();
 });
-btnAddSwatch.addEventListener('click', ()=>{
+if(btnAddSwatch).addEventListener('click', ()=>{
   const c = customColorInput.value;
   const el = document.createElement('button');
   el.className='sw'; el.dataset.color=c; el.style.setProperty('--c', c);
   swatches.appendChild(el);
 });
-btnDelSwatch.addEventListener('click', ()=>{
+if(btnDelSwatch).addEventListener('click', ()=>{
   const els = swatches.querySelectorAll('.sw');
   if(els.length>0) els[els.length-1].remove();
 });
 
 // Alignment
-alignButtons.forEach(btn=>btn.addEventListener('click', ()=>{
+alignButtons.forEach(btn=if(>btn).addEventListener('click', ()=>{
   const mode = btn.dataset.align;
   const ln = state.lines[state.selection?.line ?? 0];
   if(!ln) return;
@@ -215,14 +215,14 @@ alignButtons.forEach(btn=>btn.addEventListener('click', ()=>{
   layoutAll();
   draw();
 }));
-btnResetAlign.addEventListener('click', ()=>{
+if(btnResetAlign).addEventListener('click', ()=>{
   const ln = state.lines[state.selection?.line ?? 0];
   if(!ln) return;
   ln.align='center';
   layoutAll(); draw();
 });
-dragCancel.addEventListener('click', ()=> dragModal.classList.add('hidden'));
-dragEnable.addEventListener('click', ()=>{
+if(dragCancel).addEventListener('click', ()=> dragModal.classList.add('hidden'));
+if(dragEnable).addEventListener('click', ()=>{
   state.lines[state.selection?.line ?? 0].align='manual';
   if(noDragPrompt.checked) state.dragPromptDismissed = true;
   dragModal.classList.add('hidden');
@@ -237,20 +237,20 @@ function syncAnimUIFromWord(){
     document.querySelector(`.animCfg[data-for="${ch.dataset.anim}"]`).style.display = ch.checked ? 'block':'none';
   });
 }
-animChecks.forEach(ch=>ch.addEventListener('change', ()=>{
+animChecks.forEach(ch=if(>ch).addEventListener('change', ()=>{
   const w = selectedWord(); if(!w) return;
   if(ch.checked){ w.anim[ch.dataset.anim] = {amount: parseFloat(document.querySelector(`.animCfg [data-anim="${ch.dataset.anim}"]`).value)}; }
   else { delete w.anim[ch.dataset.anim]; }
   syncAnimUIFromWord();
   draw();
 }));
-animSliders.forEach(sl=>sl.addEventListener('input', ()=>{
+animSliders.forEach(sl=if(>sl).addEventListener('input', ()=>{
   const w = selectedWord(); if(!w) return;
   const a = w.anim[sl.dataset.anim]; if(!a) return;
   a.amount = parseFloat(sl.value);
   draw();
 }));
-document.querySelectorAll('.resetAnim').forEach(btn=>btn.addEventListener('click', ()=>{
+document.querySelectorAll('.resetAnim').forEach(btn=if(>btn).addEventListener('click', ()=>{
   const w = selectedWord(); if(!w) return;
   const anim = btn.dataset.anim;
   const defaultVal = (anim==='bounce')?3: (anim==='flicker'?0.3:0.4);
@@ -262,9 +262,9 @@ document.querySelectorAll('.resetAnim').forEach(btn=>btn.addEventListener('click
 }));
 
 // Undo/Redo/Clear
-btnUndo.addEventListener('click', ()=>{ if(!state.undo.length) return; state.redo.push(clone(state)); Object.assign(state, state.undo.pop()); setCanvasSizeFromRes(); layoutAll(); draw(); });
-btnRedo.addEventListener('click', ()=>{ if(!state.redo.length) return; state.undo.push(clone(state)); Object.assign(state, state.redo.pop()); setCanvasSizeFromRes(); layoutAll(); draw(); });
-btnClear.addEventListener('click', ()=>{
+if(btnUndo).addEventListener('click', ()=>{ if(!state.undo.length) return; state.redo.push(clone(state)); Object.assign(state, state.undo.pop()); setCanvasSizeFromRes(); layoutAll(); draw(); });
+if(btnRedo).addEventListener('click', ()=>{ if(!state.redo.length) return; state.undo.push(clone(state)); Object.assign(state, state.redo.pop()); setCanvasSizeFromRes(); layoutAll(); draw(); });
+if(btnClear).addEventListener('click', ()=>{
   pushHistory();
   state.lines = [{words:[], align:'center'}];
   state.selection = null;
@@ -272,23 +272,23 @@ btnClear.addEventListener('click', ()=>{
 });
 
 // Zoom
-btnZoomIn.addEventListener('click', ()=>{ state.zoom = Math.min(3, state.zoom+0.1); zoomLabel.textContent = Math.round(state.zoom*100)+'%'; draw(); });
-btnZoomOut.addEventListener('click', ()=>{ state.zoom = Math.max(0.25, state.zoom-0.1); zoomLabel.textContent = Math.round(state.zoom*100)+'%'; draw(); });
+if(btnZoomIn).addEventListener('click', ()=>{ state.zoom = Math.min(3, state.zoom+0.1); zoomLabel.textContent = Math.round(state.zoom*100)+'%'; draw(); });
+if(btnZoomOut).addEventListener('click', ()=>{ state.zoom = Math.max(0.25, state.zoom-0.1); zoomLabel.textContent = Math.round(state.zoom*100)+'%'; draw(); });
 
 // Modes
-btnPreview.addEventListener('click', ()=>{ state.mode='preview'; draw(); });
-btnEdit.addEventListener('click', ()=>{ state.mode='edit'; draw(); });
+if(btnPreview).addEventListener('click', ()=>{ state.mode='preview'; draw(); });
+if(btnEdit).addEventListener('click', ()=>{ state.mode='edit'; draw(); });
 
 // Config download/upload
-btnDownloadConfig.addEventListener('click', ()=>{
+if(btnDownloadConfig).addEventListener('click', ()=>{
   const blob = new Blob([JSON.stringify(state)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'led_animator_config.json';
   a.click();
 });
-btnUploadConfig.addEventListener('click', ()=> uploadConfig.click());
-uploadConfig.addEventListener('change', e=>{
+if(btnUploadConfig).addEventListener('click', ()=> uploadConfig.click());
+if(uploadConfig).addEventListener('change', e=>{
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
   r.onload = ()=>{
@@ -304,7 +304,7 @@ uploadConfig.addEventListener('change', e=>{
 
 // Interaction
 let drag = null;
-canvas.addEventListener('mousedown', (e)=>{
+if(canvas).addEventListener('mousedown', (e)=>{
   const pos = canvasPos(e);
   // select word if hit
   const hit = hitTest(pos.x, pos.y);
@@ -323,8 +323,8 @@ canvas.addEventListener('mousedown', (e)=>{
     draw();
   }
 });
-window.addEventListener('mouseup', ()=> drag = null);
-window.addEventListener('mousemove', (e)=>{
+if(window).addEventListener('mouseup', ()=> drag = null);
+if(window).addEventListener('mousemove', (e)=>{
   if(!drag) return;
   const pos = canvasPos(e);
   const dx = (pos.x - drag.offset.x);
@@ -336,7 +336,7 @@ window.addEventListener('mousemove', (e)=>{
 });
 
 // Double click to create a new word at click
-canvas.addEventListener('dblclick', (e)=>{
+if(canvas).addEventListener('dblclick', (e)=>{
   const p = canvasPos(e);
   ensureAtLeastOneLine();
   const ln = state.lines[state.lines.length-1];
@@ -348,7 +348,7 @@ canvas.addEventListener('dblclick', (e)=>{
 });
 
 // Keyboard typing -> edit selected word; space = new word; Enter = new line
-window.addEventListener('keydown', (e)=>{
+if(window).addEventListener('keydown', (e)=>{
   if(state.mode!=='edit') return;
   // typing requires selection
   if(!state.selection){
@@ -524,7 +524,7 @@ function placeDeleteButton(p){
   deleteBtn.style.top = (rect.top + p.y - 12) + 'px';
   deleteBtn.classList.remove('hidden');
 }
-deleteBtn.addEventListener('click', ()=>{
+if(deleteBtn).addEventListener('click', ()=>{
   if(!state.selection) return;
   const ln = state.lines[state.selection.line];
   ln.words.splice(state.selection.word,1);
@@ -654,7 +654,7 @@ class TinyGif {
   const name = document.getElementById('gifName');
   const canvas = document.getElementById('canvas') || document.getElementById('previewCanvas') || document.querySelector('canvas');
   if(btn && fps && secs && name && canvas){
-    btn.addEventListener('click', async ()=>{
+    if(btn).addEventListener('click', async ()=>{
       const f = Math.max(2, parseInt(fps.value||'12',10));
       const s = Math.max(1, parseInt(secs.value||'3',10));
       const frames = f*s;
@@ -851,8 +851,8 @@ requestAnimationFrame(tick);
 (function(){
   const cb = document.getElementById('animBookTok');
   const sp = document.getElementById('animSpeed');
-  if(cb){ cb.addEventListener('change', ()=>{ state.anim.booktok = cb.checked; if(state.mode!=='edit') render(); }); }
-  if(sp){ sp.addEventListener('input', ()=>{ state.anim.speed = Math.max(0.2, Math.min(3, parseFloat(sp.value)||1.0)); }); }
+  if(cb){ if(cb).addEventListener('change', ()=>{ state.anim.booktok = cb.checked; if(state.mode!=='edit') render(); }); }
+  if(sp){ if(sp).addEventListener('input', ()=>{ state.anim.speed = Math.max(0.2, Math.min(3, parseFloat(sp.value)||1.0)); }); }
 })();    
 
 
