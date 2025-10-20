@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LED Backpack Animator</title>
+  <!-- Web fonts (app runs online) -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bebas+Neue&family=Press+Start+2P&family=Anton&family=Bangers&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -24,6 +26,7 @@
       </div>
       <div class="tool-group">
         <button id="undoBtn" title="Undo">↶ Undo</button>
+        <button id="clearAllBtn" title="Clear All">🧹 Clear</button>
         <button id="redoBtn" title="Redo">↷ Redo</button>
       </div>
     </div>
@@ -47,12 +50,13 @@
       <div class="bg-actions">
         <button id="bgSolidBtn">Solid Color</button>
         <input type="color" id="bgSolidColor" value="#000000" />
+        <div id="bgSwatches" class="swatches mt6"></div>
         <label class="upload-btn">
           <input type="file" id="bgUpload" accept="image/*" hidden />
           <span>Custom Upload</span>
         </label>
       </div>
-      <div class="legend-note">Only presets for the selected resolution appear.</div>
+      <div class="legend-note">Thumbs must live at <code>assets/thumbs/</code> (lowercase).</div>
     </aside>
 
     <!-- Center: Stage -->
@@ -63,32 +67,11 @@
       <div class="stage-actions">
         <button id="addWordBtn">+ Word</button>
         <button id="addLineBtn">+ Line</button>
-        <button id="delWordBtn" class="danger">× Delete Word</button>
       </div>
     </section>
 
-    <!-- Right: Render & Config -->
+    <!-- Right: Config then Render -->
     <aside class="right-panel">
-      <div class="card">
-        <h3>Render & Download</h3>
-        <div class="row">
-          <label>FPS</label>
-          <input type="number" id="fps" value="8" min="1" max="30" />
-        </div>
-        <div class="row">
-          <label>Seconds</label>
-          <input type="number" id="seconds" value="4" min="1" max="20" />
-        </div>
-        <div class="row">
-          <label>Filename</label>
-          <input id="fileName" value="animation.gif" />
-        </div>
-        <div class="row">
-          <button id="renderGifBtn">Render GIF</button>
-          <a id="downloadLink" download="animation.gif" class="button">Download</a>
-        </div>
-      </div>
-
       <div class="card">
         <h3>Config</h3>
         <div class="row">
@@ -103,28 +86,17 @@
       </div>
 
       <div class="card">
-        <h3>Alignments</h3>
-        <div class="row">
-          <label>Horizontal</label>
-          <div class="seg">
-            <button class="seg-btn" data-align="left">Left</button>
-            <button class="seg-btn active" data-align="center">Center</button>
-            <button class="seg-btn" data-align="right">Right</button>
-          </div>
+        <h3>Render & Download</h3>
+        <div class="row two">
+          <label>Filename</label><input id="fileName" value="animation.gif" />
+        </div>
+        <div class="row two">
+          <label>FPS</label><input type="number" id="fps" value="8" min="1" max="30" />
+          <label>Length (s)</label><input type="number" id="seconds" value="4" min="1" max="20" />
         </div>
         <div class="row">
-          <label>Vertical</label>
-          <div class="seg">
-            <button class="seg-btn" data-valign="top">Top</button>
-            <button class="seg-btn active" data-valign="middle">Middle</button>
-            <button class="seg-btn" data-valign="bottom">Bottom</button>
-          </div>
-        </div>
-        <div class="row">
-          <label class="chk"><input type="checkbox" id="applyAllAlign" /> <span>Apply to all lines</span></label>
-        </div>
-        <div class="row">
-          <label class="chk"><input type="checkbox" id="manualDragChk" /> <span>Manual drag</span></label>
+          <button id="renderGifBtn">Render GIF</button>
+          <a id="downloadLink" download="animation.gif" class="button">Download</a>
         </div>
       </div>
     </aside>
@@ -134,7 +106,7 @@
   <footer class="inspector-bar">
     <button id="toggleInspector" aria-expanded="false" title="Toggle Inspector">▸</button>
     <div id="inspectorBody" class="inspector-body collapsed">
-      <div class="row">
+      <div class="group">
         <label>Font</label>
         <select id="fontSelect">
           <option value="monospace">Monospace</option>
@@ -143,35 +115,87 @@
           <option value="Courier New">Courier New</option>
           <option value="Verdana">Verdana</option>
           <option value="Arial Black">Arial Black</option>
+          <option value="Roboto Mono">Roboto Mono</option>
+          <option value="Orbitron">Orbitron</option>
+          <option value="Bebas Neue">Bebas Neue</option>
+          <option value="Press Start 2P">Press Start 2P</option>
+          <option value="Anton">Anton</option>
+          <option value="Bangers">Bangers</option>
+          <option value="Montserrat">Montserrat</option>
         </select>
-      </div>
-      <div class="row">
-        <label>Size</label>
         <input type="number" id="fontSize" min="6" max="64" value="22" />
         <label class="chk small"><input type="checkbox" id="autoSize" checked /> <span>Auto-size</span></label>
       </div>
-      <div class="row">
+
+      <div class="group">
         <label>Color</label>
-        <input type="color" id="fontColor" value="#FFFFFF" />
-      </div>
-      <div class="row" id="colorSwatchesRow">
-        <label>Swatches</label>
         <div id="swatches" class="swatches"></div>
+        <input type="color" id="fontColor" value="#FFFFFF" />
         <button id="addSwatchBtn" class="button tiny">+ Add</button>
         <button id="clearSwatchesBtn" class="button tiny">Clear</button>
       </div>
-      <div class="row">
+
+      <div class="group">
         <label>Spacing</label>
-        <div class="dual">
-          <span>Line</span><input type="number" id="lineGap" min="0" max="16" value="4" />
-          <span>Word</span><input type="number" id="wordGap" min="0" max="20" value="6" />
+        <span>Line</span><input type="number" id="lineGap" min="0" max="16" value="4" />
+        <span>Word</span><input type="number" id="wordGap" min="0" max="20" value="6" />
+      </div>
+
+      <div class="group">
+        <label>Align</label>
+        <div class="seg">
+          <button class="seg-btn" data-align="left">Left</button>
+          <button class="seg-btn active" data-align="center">Center</button>
+          <button class="seg-btn" data-align="right">Right</button>
+        </div>
+        <div class="seg">
+          <button class="seg-btn" data-valign="top">Top</button>
+          <button class="seg-btn active" data-valign="middle">Middle</button>
+          <button class="seg-btn" data-valign="bottom">Bottom</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="applyAllAlign" /> <span>Apply to all</span></label>
+        <label class="chk"><input type="checkbox" id="manualDragChk" /> <span>Manual drag</span></label>
+      </div>
+
+      <div class="group">
+        <label>Animations</label>
+        <div class="anim-grid">
+          <label class="chk"><input type="checkbox" data-anim="pulse" /> Pulse</label>
+          <label class="chk"><input type="checkbox" data-anim="flicker" /> Flicker</label>
+          <label class="chk"><input type="checkbox" data-anim="slideX" /> Slide X</label>
+          <label class="chk"><input type="checkbox" data-anim="slideY" /> Slide Y</label>
+          <label class="chk"><input type="checkbox" data-anim="bounce" /> Bounce</label>
+          <label class="chk"><input type="checkbox" data-anim="wave" /> Wave</label>
+        </div>
+        <div class="row two">
+          <label>X</label><input id="animX" type="number" value="5" />
+          <label>Y</label><input id="animY" type="number" value="4" />
+        </div>
+        <div class="row two">
+          <label>Intensity</label><input id="animInt" type="number" value="1" step="0.1" />
+          <button id="animDefault" class="button tiny">Default</button>
+          <button id="animApplyAll" class="button tiny">Apply to All</button>
         </div>
       </div>
-      <div class="row">
+
+      <div class="group">
         <label class="chk small"><input type="checkbox" id="autoOpenInspector" checked /> <span>Auto-open on select</span></label>
       </div>
     </div>
   </footer>
+
+  <!-- Clear All warning -->
+  <div id="clearWarn" class="modal hidden">
+    <div class="modal-card">
+      <h3>Clear All?</h3>
+      <p>This will remove all lines and words. Are you sure?</p>
+      <label class="chk"><input type="checkbox" id="suppressClearWarn" /> <span>Don’t show again this session</span></label>
+      <div class="modal-actions">
+        <button id="clearCancel">Cancel</button>
+        <button id="clearConfirm" class="primary">Clear</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Manual drag warning -->
   <div id="dragWarn" class="modal hidden">
@@ -190,11 +214,12 @@
   <div id="aboutModal" class="modal hidden">
     <div class="modal-card">
       <h3>About</h3>
-      <p><strong>LED Backpack Animator v2.1</strong><br/>by TheSkyLincoln / instax.moto</p>
+      <p><strong>LED Backpack Animator v2.2</strong><br/>by TheSkyLincoln / instax.moto</p>
       <ul>
         <li>96×128 and 64×64 presets</li>
-        <li>Canvas typing with per-word editing</li>
+        <li>Canvas typing with per-word editing + caret index</li>
         <li>Full-word selection outline (magenta dotted glow)</li>
+        <li>Stackable animations with intensity controls</li>
         <li>Render GIF, Download/Import JSON</li>
       </ul>
       <div class="modal-actions">
