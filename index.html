@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>LED Backpack Animator</title>
-  <!-- Web fonts (app runs online) -->
+  <!-- Web fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bebas+Neue&family=Press+Start+2P&family=Anton&family=Bangers&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -33,7 +33,6 @@
   </header>
 
   <main class="layout">
-    <!-- Left: Resolution & Backgrounds -->
     <aside class="left-panel">
       <h3>Resolution & Background</h3>
       <div class="row">
@@ -56,10 +55,8 @@
           <span>Custom Upload</span>
         </label>
       </div>
-      <div class="legend-note">Thumbs must live at <code>assets/thumbs/</code> (lowercase).</div>
     </aside>
 
-    <!-- Center: Stage -->
     <section class="stage">
       <div class="canvas-wrap">
         <canvas id="led" width="128" height="128"></canvas>
@@ -70,7 +67,6 @@
       </div>
     </section>
 
-    <!-- Right: Config then Render -->
     <aside class="right-panel">
       <div class="card">
         <h3>Config</h3>
@@ -102,89 +98,123 @@
     </aside>
   </main>
 
-  <!-- Bottom Inspector Toolbar -->
   <footer class="inspector-bar">
     <button id="toggleInspector" aria-expanded="false" title="Toggle Inspector">▸</button>
     <div id="inspectorBody" class="inspector-body collapsed">
-      <div class="group">
-        <label>Font</label>
-        <select id="fontSelect">
-          <option value="monospace">Monospace</option>
-          <option value="sans-serif">Sans</option>
-          <option value="serif">Serif</option>
-          <option value="Courier New">Courier New</option>
-          <option value="Verdana">Verdana</option>
-          <option value="Arial Black">Arial Black</option>
-          <option value="Roboto Mono">Roboto Mono</option>
-          <option value="Orbitron">Orbitron</option>
-          <option value="Bebas Neue">Bebas Neue</option>
-          <option value="Press Start 2P">Press Start 2P</option>
-          <option value="Anton">Anton</option>
-          <option value="Bangers">Bangers</option>
-          <option value="Montserrat">Montserrat</option>
-        </select>
-        <input type="number" id="fontSize" min="6" max="64" value="22" />
-        <label class="chk small"><input type="checkbox" id="autoSize" checked /> <span>Auto-size</span></label>
-      </div>
-
-      <div class="group">
-        <label>Color</label>
-        <div id="swatches" class="swatches"></div>
-        <input type="color" id="fontColor" value="#FFFFFF" />
-        <button id="addSwatchBtn" class="button tiny">+ Add</button>
-        <button id="clearSwatchesBtn" class="button tiny">Clear</button>
-      </div>
-
-      <div class="group">
-        <label>Spacing</label>
-        <span>Line</span><input type="number" id="lineGap" min="0" max="16" value="4" />
-        <span>Word</span><input type="number" id="wordGap" min="0" max="20" value="6" />
-      </div>
-
-      <div class="group">
-        <label>Align</label>
-        <div class="seg">
-          <button class="seg-btn" data-align="left">Left</button>
-          <button class="seg-btn active" data-align="center">Center</button>
-          <button class="seg-btn" data-align="right">Right</button>
+      <details class="acc" id="accFont">
+        <summary>Font</summary>
+        <div class="acc-body">
+          <select id="fontSelect">
+            <option value="monospace">Monospace</option>
+            <option value="sans-serif">Sans</option>
+            <option value="serif">Serif</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Arial Black">Arial Black</option>
+            <option value="Roboto Mono">Roboto Mono</option>
+            <option value="Orbitron">Orbitron</option>
+            <option value="Bebas Neue">Bebas Neue</option>
+            <option value="Press Start 2P">Press Start 2P</option>
+            <option value="Anton">Anton</option>
+            <option value="Bangers">Bangers</option>
+            <option value="Montserrat">Montserrat</option>
+          </select>
+          <input type="number" id="fontSize" min="6" max="64" value="22" />
+          <label class="chk small"><input type="checkbox" id="autoSize" checked /> <span>Auto-size</span></label>
         </div>
-        <div class="seg">
-          <button class="seg-btn" data-valign="top">Top</button>
-          <button class="seg-btn active" data-valign="middle">Middle</button>
-          <button class="seg-btn" data-valign="bottom">Bottom</button>
-        </div>
-        <label class="chk"><input type="checkbox" id="applyAllAlign" /> <span>Apply to all</span></label>
-        <label class="chk"><input type="checkbox" id="manualDragChk" /> <span>Manual drag</span></label>
-      </div>
+      </details>
 
-      <div class="group">
-        <label>Animations</label>
-        <div class="anim-grid">
-          <label class="chk"><input type="checkbox" data-anim="pulse" /> Pulse</label>
-          <label class="chk"><input type="checkbox" data-anim="flicker" /> Flicker</label>
-          <label class="chk"><input type="checkbox" data-anim="slideX" /> Slide X</label>
-          <label class="chk"><input type="checkbox" data-anim="slideY" /> Slide Y</label>
-          <label class="chk"><input type="checkbox" data-anim="bounce" /> Bounce</label>
-          <label class="chk"><input type="checkbox" data-anim="wave" /> Wave</label>
+      <details class="acc" id="accColor">
+        <summary>Color</summary>
+        <div class="acc-body">
+          <div id="swatches" class="swatches"></div>
+          <input type="color" id="fontColor" value="#FFFFFF" />
+          <button id="addSwatchBtn" class="button tiny">+ Add</button>
+          <button id="clearSwatchesBtn" class="button tiny">Clear</button>
         </div>
-        <div class="row two">
-          <label>X</label><input id="animX" type="number" value="5" />
-          <label>Y</label><input id="animY" type="number" value="4" />
-        </div>
-        <div class="row two">
-          <label>Intensity</label><input id="animInt" type="number" value="1" step="0.1" />
-          <button id="animDefault" class="button tiny">Default</button>
-          <button id="animApplyAll" class="button tiny">Apply to All</button>
-        </div>
-      </div>
+      </details>
 
-      <div class="group">
-        <label class="chk small"><input type="checkbox" id="autoOpenInspector" checked /> <span>Auto-open on select</span></label>
-      </div>
+      <details class="acc" id="accSpacing">
+        <summary>Spacing</summary>
+        <div class="acc-body">
+          <span>Line</span><input type="number" id="lineGap" min="0" max="16" value="4" />
+          <span>Word</span><input type="number" id="wordGap" min="0" max="20" value="6" />
+        </div>
+      </details>
+
+      <details class="acc" id="accAlign">
+        <summary>Align</summary>
+        <div class="acc-body">
+          <div class="seg">
+            <button class="seg-btn" data-align="left">Left</button>
+            <button class="seg-btn active" data-align="center">Center</button>
+            <button class="seg-btn" data-align="right">Right</button>
+          </div>
+          <div class="seg">
+            <button class="seg-btn" data-valign="top">Top</button>
+            <button class="seg-btn active" data-valign="middle">Middle</button>
+            <button class="seg-btn" data-valign="bottom">Bottom</button>
+          </div>
+          <label class="chk"><input type="checkbox" id="applyAllAlign" /> <span>Apply to all</span></label>
+          <label class="chk"><input type="checkbox" id="manualDragChk" /> <span>Manual drag</span></label>
+        </div>
+      </details>
+
+      <details class="acc" id="accAnim">
+        <summary>Animations</summary>
+        <div class="acc-body anim-col">
+          <div class="anim-item" data-type="pulse">
+            <label class="chk"><input type="checkbox" data-anim="pulse" /> Pulse</label>
+            <div class="anim-settings">
+              <label>Intensity</label><input type="number" data-anim-int="pulse" value="1" step="0.1" />
+            </div>
+          </div>
+          <div class="anim-item" data-type="flicker">
+            <label class="chk"><input type="checkbox" data-anim="flicker" /> Flicker</label>
+            <div class="anim-settings">
+              <label>Intensity</label><input type="number" data-anim-int="flicker" value="1" step="0.1" />
+            </div>
+          </div>
+          <div class="anim-item" data-type="slideX">
+            <label class="chk"><input type="checkbox" data-anim="slideX" /> Slide X</label>
+            <div class="anim-settings">
+              <label>X</label><input type="number" data-anim-x="slideX" value="5" />
+              <label>Intensity</label><input type="number" data-anim-int="slideX" value="1" step="0.1" />
+            </div>
+          </div>
+          <div class="anim-item" data-type="slideY">
+            <label class="chk"><input type="checkbox" data-anim="slideY" /> Slide Y</label>
+            <div class="anim-settings">
+              <label>Y</label><input type="number" data-anim-y="slideY" value="4" />
+              <label>Intensity</label><input type="number" data-anim-int="slideY" value="1" step="0.1" />
+            </div>
+          </div>
+          <div class="anim-item" data-type="bounce">
+            <label class="chk"><input type="checkbox" data-anim="bounce" /> Bounce</label>
+            <div class="anim-settings">
+              <label>Y</label><input type="number" data-anim-y="bounce" value="4" />
+              <label>Intensity</label><input type="number" data-anim-int="bounce" value="1" step="0.1" />
+            </div>
+          </div>
+          <div class="anim-item" data-type="wave">
+            <label class="chk"><input type="checkbox" data-anim="wave" /> Wave</label>
+            <div class="anim-settings">
+              <label>Intensity</label><input type="number" data-anim-int="wave" value="1" step="0.1" />
+            </div>
+          </div>
+          <div class="row">
+            <button id="animDefault" class="button tiny">Default</button>
+            <button id="animApplyAll" class="button tiny">Apply to All</button>
+          </div>
+        </div>
+      </details>
+
+      <label class="chk small"><input type="checkbox" id="autoOpenInspector" checked /> <span>Auto-open on select</span></label>
     </div>
   </footer>
 
-  <!-- Clear All warning -->
+  <input id="mobileInput" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+
   <div id="clearWarn" class="modal hidden">
     <div class="modal-card">
       <h3>Clear All?</h3>
@@ -197,7 +227,6 @@
     </div>
   </div>
 
-  <!-- Manual drag warning -->
   <div id="dragWarn" class="modal hidden">
     <div class="modal-card">
       <h3>Manual Drag Mode</h3>
@@ -210,17 +239,15 @@
     </div>
   </div>
 
-  <!-- About modal -->
   <div id="aboutModal" class="modal hidden">
     <div class="modal-card">
       <h3>About</h3>
-      <p><strong>LED Backpack Animator v2.2</strong><br/>by TheSkyLincoln / instax.moto</p>
+      <p><strong>LED Backpack Animator v2.3</strong><br/>by TheSkyLincoln / instax.moto</p>
       <ul>
-        <li>96×128 and 64×64 presets</li>
-        <li>Canvas typing with per-word editing + caret index</li>
-        <li>Full-word selection outline (magenta dotted glow)</li>
-        <li>Stackable animations with intensity controls</li>
-        <li>Render GIF, Download/Import JSON</li>
+        <li>Mobile-friendly stacked layout</li>
+        <li>Per-word caret editing & floating delete</li>
+        <li>Accordions in inspector, single-line toolbar</li>
+        <li>Stackable animations with per-effect controls</li>
       </ul>
       <div class="modal-actions">
         <button id="aboutClose" class="primary">Close</button>
