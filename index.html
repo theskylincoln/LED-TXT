@@ -1,168 +1,105 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator</title>
+  <title>LED Backpack Animator v2.1-STABLE</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <header class="topbar">
-    <h1>LED Backpack Animator <span id="version">v1.9.3-sandbox</span></h1>
-    <div class="toolbar">
-      <button id="btnPreview">Preview Animation</button>
-      <button id="btnEdit">Edit Mode</button>
-      <button id="btnUndo">Undo</button>
-      <button id="btnRedo">Redo</button>
-      <button id="btnClear">Clear All Text</button>
-      <div class="zoom">
-        <button id="btnZoomOut">-</button>
-        <span id="zoomLabel">100%</span>
-        <button id="btnZoomIn">+</button>
+  <div class="app">
+    <div class="topbar">
+      <div class="controls">
+        <h1>LED BACKPACK ANIMATOR</h1>
+        <button id="res96">96×128</button>
+        <button id="res64">64×64</button>
+        <button id="modeEdit">Edit Mode ✏️</button>
+        <button id="modePreview">Preview Mode ▶️</button>
+        <button id="undo">Undo</button>
+        <button id="redo">Redo</button>
+        <button id="clear" class="danger">Clear All</button>
       </div>
-      <button id="btnToggleInspector">Show/Hide Inspector</button>
-      <button id="btnDownloadConfig">Download Config</button>
-      <input type="file" id="uploadConfig" accept="application/json" hidden/>
-      <button id="btnUploadConfig">Upload Config</button>
-    </div>
-  </header>
-
-  <main class="layout">
-    <section class="left">
-      <div class="bgResRow">
-        <div class="resolution">
-          <select id="resolution">
-            <option value="96x128" selected>96×128</option>
-            <option value="64x64">64×64</option>
-          </select>
-        </div>
-        <div class="bgThumbs" id="bgThumbs">
-          <div class="thumb" data-type="preset" data-name="Preset_A" data-for="96x128" title="Preset A">
-            <img src="assets/presets/Preset_A.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
-          </div>
-          <div class="thumb" data-type="preset" data-name="Preset_B" data-for="96x128" title="Preset B">
-            <img src="assets/presets/Preset_B.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
-          </div>
-          <div class="thumb" data-type="preset" data-name="Preset_C" data-for="64x64" title="Preset C">
-            <img src="assets/presets/Preset_C.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
-          </div>
-          <div class="thumb" data-type="preset" data-name="Preset_D" data-for="64x64" title="Preset D">
-            <img src="assets/presets/Preset_D.png" onerror="this.style.display='none'; this.parentElement.classList.add('thumb-solid');" />
-          </div>
-          <div class="thumb solid" data-type="solid" title="Solid Color">
-            <span>Solid</span>
-          </div>
-          <div class="thumb upload" data-type="upload" title="Custom Upload">
-            <span>Upload</span>
-            <input type="file" id="bgUpload" accept="image/*" hidden/>
-          </div>
-          <input type="color" id="solidPicker" value="#000000" class="solidPicker" />
-        </div>
-      </div>
-
-      <div class="canvasWrap">
-        <canvas id="canvas" width="384" height="512"></canvas>
-        <button id="btnDeleteWord" class="deleteWord hidden">× Delete</button>
-      </div>
-
-      <div class="inspector hidden" id="inspector">
-        <div class="inspector-bar">
-          <button class="tab" data-tab="font">Font</button>
-          <button class="tab" data-tab="color">Color</button>
-          <button class="tab" data-tab="spacing">Spacing</button>
-          <button class="tab" data-tab="align">Alignment</button>
-          <button class="tab" data-tab="anim">Animation</button>
-          <button id="btnAddLine" class="tab addline">+ Add Line</button>
-        </div>
-        <div class="panel" id="panel-font">
-          <label>Family
-            <select id="fontFamily">
-              <option value="monospace" selected>Monospace</option>
-              <option value="sans-serif">Sans-serif</option>
-              <option value="serif">Serif</option>
-              <option value="'DotGothic16', sans-serif">DotGothic16</option>
-              <option value="'VT323', monospace">VT323</option>
-              <option value="'Press Start 2P', cursive">Press Start 2P</option>
-            </select>
-          </label>
-          <label>Size <input type="number" id="fontSize" value="22" min="6" max="96"/></label>
-          <label><input type="checkbox" id="autoSize" checked/> Auto-size (per line)</label>
-        </div>
-        <div class="panel" id="panel-color">
-          <div class="swatches" id="swatches">
-            <button class="sw" data-color="#00C2FF" style="--c:#00C2FF"></button>
-            <button class="sw" data-color="#2EE55D" style="--c:#2EE55D"></button>
-            <button class="sw" data-color="#FFE045" style="--c:#FFE045"></button>
-            <button class="sw" data-color="#FF67CF" style="--c:#FF67CF"></button>
-            <button class="sw" data-color="#FF5A5A" style="--c:#FF5A5A"></button>
-            <button class="sw" data-color="#FFFFFF" style="--c:#FFFFFF"></button>
-            <button class="sw" data-color="#111111" style="--c:#111111"></button>
-          </div>
-          <div class="custom-swatches">
-            <input type="color" id="customColor" value="#FFFFFF"/>
-            <button id="btnAddSwatch">+ Add Swatch</button>
-            <button id="btnDelSwatch">Delete Last</button>
-          </div>
-        </div>
-        <div class="panel" id="panel-spacing">
-          <label>Line Gap <input type="number" id="lineGap" value="2" min="0" max="20"/></label>
-          <label>Word Spacing <input type="number" id="wordSpacing" value="8" min="0" max="30"/></label>
-          <label><input type="checkbox" id="preventCutoff" checked/> Prevent cutoff</label>
-        </div>
-        <div class="panel" id="panel-align">
-          <div class="alignRow">
-            <button class="alignBtn" data-align="left">Left</button>
-            <button class="alignBtn" data-align="center">Center</button>
-            <button class="alignBtn" data-align="right">Right</button>
-            <button class="alignBtn" data-align="manual">Manual (drag)</button>
-            <button id="btnResetAlign">Reset</button>
-          </div>
-        </div>
-        <div class="panel" id="panel-anim">
-          <div class="animList">
-            <div class="animItem">
-              <label><input type="checkbox" class="animCheck" data-anim="pulse"/> Pulse</label>
-              <div class="animCfg" data-for="pulse">
-                Amount <input type="range" min="0" max="1" step="0.01" value="0.4" class="animSlider" data-anim="pulse"/>
-                <button class="resetAnim" data-anim="pulse">Reset</button>
-              </div>
-            </div>
-            <div class="animItem">
-              <label><input type="checkbox" class="animCheck" data-anim="flicker"/> Flicker</label>
-              <div class="animCfg" data-for="flicker">
-                Amount <input type="range" min="0" max="1" step="0.01" value="0.3" class="animSlider" data-anim="flicker"/>
-                <button class="resetAnim" data-anim="flicker">Reset</button>
-              </div>
-            </div>
-            <div class="animItem">
-              <label><input type="checkbox" class="animCheck" data-anim="bounce"/> Bounce</label>
-              <div class="animCfg" data-for="bounce">
-                Height <input type="range" min="0" max="10" step="1" value="3" class="animSlider" data-anim="bounce"/>
-                <button class="resetAnim" data-anim="bounce">Reset</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section class="right">
-      <!-- Reserved for future (about / render) -->
-    </section>
-  </main>
-
-  <div class="modal hidden" id="dragModal">
-    <div class="modalCard">
-      <h3>Enable Manual Drag</h3>
-      <p>Manual drag turns off automatic centering and alignment for this word.</p>
-      <label><input type="checkbox" id="noDragPrompt"/> Don't show again this session</label>
-      <div class="modalRow">
-        <button id="dragCancel">Cancel</button>
-        <button id="dragEnable">Enable</button>
+      <div class="controls">
+        <button id="aboutBtn">About</button>
       </div>
     </div>
+
+    <div class="main">
+      <div class="left">
+        <div class="row"><strong>Backgrounds</strong> <span class="badge">(thumbnails change with resolution)</span></div>
+        <div id="thumbgrid" class="grid"></div>
+        <div class="row">
+          <label>Solid</label>
+          <input type="color" id="solidColor" value="#000000"/>
+          <input type="file" id="uploadBg" class="hidden" accept="image/*"/>
+        </div>
+        <hr/>
+        <div class="row"><strong>Type Words</strong> <span class="badge">(Space → new word, Enter → new line)</span></div>
+        <div class="row">
+          <input id="typebox" class="select" placeholder="Type here… Space=new word, Enter=new line" style="flex:1"/>
+          <button id="addWord">+ Word</button>
+          <button id="addLine">+ Line</button>
+        </div>
+        <div id="chips"></div>
+      </div>
+
+      <div class="canvaswrap">
+        <div class="preview-area">
+          <canvas id="screen" width="96" height="128"></canvas>
+        </div>
+        <div class="badge">Scaled preview • Click blank area to deselect</div>
+
+        <div class="toolbar">
+          <button id="toggleInspector">Show/Hide Inspector</button>
+          <div id="inspector" class="inspector open">
+            <div class="row">
+              <label>Font</label>
+              <select id="fontFamily" class="select">
+                <option value="Inter, Arial">Inter</option>
+                <option value="Arial, Helvetica">Arial</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Tahoma">Tahoma</option>
+                <option value="'Courier New', monospace">Courier</option>
+                <option value="Georgia">Georgia</option>
+              </select>
+              <label>Size</label>
+              <input id="fontSize" type="number" class="select" value="12" min="6" max="64" style="width:80px"/>
+              <label><input type="checkbox" id="autoSize" checked/> Auto Size</label>
+            </div>
+            <div class="row">
+              <label>Spacing</label>
+              <span>Line</span><input id="lineSpace" type="range" min="0" max="20" value="6"/>
+              <span>Word</span><input id="wordSpace" type="range" min="0" max="20" value="6"/>
+            </div>
+            <div class="row">
+              <label>Alignment</label>
+              <button id="alignLeft">Left</button>
+              <button id="alignCenter">Center</button>
+              <button id="alignRight">Right</button>
+              <button id="alignReset">Reset</button>
+            </div>
+            <div class="row">
+              <label>Manual Drag</label>
+              <label><input type="checkbox" id="manualDrag"/> Enable (shows one-time warning)</label>
+            </div>
+            <hr/>
+            <div class="row">
+              <label>Render GIF</label>
+              <span>FPS</span><input id="fps" class="select" type="number" value="12" min="2" max="30" style="width:72px"/>
+              <span>Seconds</span><input id="seconds" class="select" type="number" value="3" min="1" max="10" style="width:72px"/>
+              <span>File</span><input id="filename" class="select" value="animation" style="width:160px"/>
+              <button id="renderGIF" class="primary">⬇️ Download GIF</button>
+              <button id="saveCfg">⬇️ Download Config</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="small" style="opacity:.7">Keyboard: <kbd>Space</kbd>=new word, <kbd>Enter</kbd>=new line.</div>
   </div>
-
+  <script src="assets/lib/tinygif.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
