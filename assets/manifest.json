@@ -1,0 +1,38 @@
+{
+  "96x128": [
+    {
+      "name": "Preset_A",
+      "thumb": "assets/thumbs/Preset_A_thumb.png",
+      "path": "assets/presets/96x128/Preset_A.png"
+    },
+    {
+      "name": "Preset_B",
+      "thumb": "assets/thumbs/Preset_B_thumb.png",
+      "path": "assets/presets/96x128/Preset_B.png"
+    }
+  ],
+  "64x64": [
+    {
+      "name": "Preset_C",
+      "thumb": "assets/thumbs/Preset_C_thumb.png",
+      "path": "assets/presets/64x64/Preset_C.png"
+    },
+    {
+      "name": "Preset_D",
+      "thumb": "assets/thumbs/Preset_D_thumb.png",
+      "path": "assets/presets/64x64/Preset_D.png"
+    }
+  ],
+  "special": [
+    {
+      "name": "Solid",
+      "thumb": "assets/thumbs/Solid_thumb.png",
+      "mode": "solid"
+    },
+    {
+      "name": "Upload",
+      "thumb": "assets/thumbs/Upload_thumb.png",
+      "mode": "custom"
+    }
+  ]
+}
