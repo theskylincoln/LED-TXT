@@ -71,17 +71,17 @@
     dragActive: false,
     bgImages: {
       "96x128": [
-        { key:"Preset_A", preset:"/assets/Presets/96x128/Preset_A.png", thumb:"/assets/Thumbs/Preset_A_thumb.png" },
-        { key:"Preset_B", preset:"/assets/Presets/96x128/Preset_B.png", thumb:"/assets/Thumbs/Preset_B_thumb.png" },
+        { key:"Preset_A", preset:"assets/Presets/96x128/Preset_A.png", thumb:"assets/Thumbs/Preset_A_thumb.png" },
+        { key:"Preset_B", preset:"assets/Presets/96x128/Preset_B.png", thumb:"assets/Thumbs/Preset_B_thumb.png" },
       ],
       "64x64": [
-        { key:"Preset_C", preset:"/assets/Presets/64x64/Preset_C.png", thumb:"/assets/Thumbs/Preset_C_thumb.png" },
-        { key:"Preset_D", preset:"/assets/Presets/64x64/Preset_D.png", thumb:"/assets/Thumbs/Preset_D_thumb.png" },
+        { key:"Preset_C", preset:"assets/Presets/64x64/Preset_C.png", thumb:"assets/Thumbs/Preset_C_thumb.png" },
+        { key:"Preset_D", preset:"assets/Presets/64x64/Preset_D.png", thumb:"assets/Thumbs/Preset_D_thumb.png" },
       ],
       // Always available thumbs:
       miscThumbs: [
-        { key:"Solid", thumb:"/assets/Thumbs/Solid_thumb.png" },
-        { key:"Upload", thumb:"/assets/Thumbs/Upload_thumb.png" }
+        { key:"Solid", thumb:"assets/Thumbs/Solid_thumb.png" },
+        { key:"Upload", thumb:"assets/Thumbs/Upload_thumb.png" }
       ],
     }
   };
