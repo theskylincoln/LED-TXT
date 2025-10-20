@@ -1,546 +1,367 @@
 
-// LED Backpack Animator — minimal but stable build
-// State
-const state = {
-  mode: 'edit', // 'edit' or 'preview'
-  zoom: 1,
-  res: {w:96, h:128},
-  background: {type:'solid', color:'#000000', image:null, name:'solid'},
-  lines: [
-    {words: [{text:'Hello', color:'#FFFFFF', font:'monospace', size:22, anim:{}, align:'center', manual:false, x:0,y:0}], align:'center'}
-  ],
-  selection: {line:0, word:0},
-  undo: [],
-  redo: [],
-  preventCutoff: true,
-  spacing: {lineGap:2, word:8},
-  dragPromptDismissed: false
-};
+// LED Backpack Animator v2.1 (STABLE)
 
-// Canvas
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const selectionOverlay = document.getElementById('selectionOverlay');
+const deleteWordBtn = document.getElementById('deleteWord');
 
-// UI refs
-const btnPreview = document.getElementById('btnPreview');
-const btnEdit = document.getElementById('btnEdit');
+const modeSel = document.getElementById('mode');
+const resSel = document.getElementById('resolution');
+const btnAddWord = document.getElementById('btnAddWord');
+const btnAddLine = document.getElementById('btnAddLine');
+const btnClear = document.getElementById('btnClear');
 const btnUndo = document.getElementById('btnUndo');
 const btnRedo = document.getElementById('btnRedo');
-const btnClear = document.getElementById('btnClear');
-const btnZoomIn = document.getElementById('btnZoomIn');
-const btnZoomOut = document.getElementById('btnZoomOut');
-const zoomLabel = document.getElementById('zoomLabel');
 const btnToggleInspector = document.getElementById('btnToggleInspector');
-const inspector = document.getElementById('inspector');
-const deleteBtn = document.getElementById('btnDeleteWord');
+const btnDownloadCfg = document.getElementById('btnDownloadCfg');
 
-// Inspector controls
-const tabs = document.querySelectorAll('.inspector .tab');
-const panels = {
-  font: document.getElementById('panel-font'),
-  color: document.getElementById('panel-color'),
-  spacing: document.getElementById('panel-spacing'),
-  align: document.getElementById('panel-align'),
-  anim: document.getElementById('panel-anim'),
-};
-const fontFamily = document.getElementById('fontFamily');
+const bgRadios = document.querySelectorAll('input[name="bgmode"]');
+const presetGrid = document.getElementById('presetGrid');
+const solidPicker = document.getElementById('solidPicker');
+const customUpload = document.getElementById('customUpload');
+const solidColor = document.getElementById('solidColor');
+const fileInput = document.getElementById('fileInput');
+
+const inspector = document.getElementById('inspector');
+const btnInspectorOpenClose = document.getElementById('btnInspectorOpenClose');
+
+const fontSelect = document.getElementById('fontSelect');
 const fontSize = document.getElementById('fontSize');
 const autoSize = document.getElementById('autoSize');
-const lineGap = document.getElementById('lineGap');
-const wordSpacing = document.getElementById('wordSpacing');
-const preventCutoff = document.getElementById('preventCutoff');
-const alignButtons = document.querySelectorAll('.alignBtn');
-const btnResetAlign = document.getElementById('btnResetAlign');
-const swatches = document.getElementById('swatches');
-const customColorInput = document.getElementById('customColor');
+const fontColor = document.getElementById('fontColor');
 const btnAddSwatch = document.getElementById('btnAddSwatch');
 const btnDelSwatch = document.getElementById('btnDelSwatch');
-const animChecks = document.querySelectorAll('.animCheck');
-const animCfgs = document.querySelectorAll('.animCfg');
-const animSliders = document.querySelectorAll('.animSlider');
-const btnAddLine = document.getElementById('btnAddLine');
+const swatches = document.getElementById('swatches');
 
-// Background UI
-const resolutionSel = document.getElementById('resolution');
-const bgThumbsWrap = document.getElementById('bgThumbs');
-const solidPicker = document.getElementById('solidPicker');
-const bgUploadInput = document.getElementById('bgUpload');
-const btnUploadConfig = document.getElementById('btnUploadConfig');
-const uploadConfig = document.getElementById('uploadConfig');
-const btnDownloadConfig = document.getElementById('btnDownloadConfig');
+const lineSpacing = document.getElementById('lineSpacing');
+const wordSpacing = document.getElementById('wordSpacing');
+const paddingRange = document.getElementById('padding');
 
-// Modal
-const dragModal = document.getElementById('dragModal');
-const dragCancel = document.getElementById('dragCancel');
-const dragEnable = document.getElementById('dragEnable');
-const noDragPrompt = document.getElementById('noDragPrompt');
+const hAlign = document.getElementById('hAlign');
+const vAlign = document.getElementById('vAlign');
+const btnResetAlign = document.getElementById('btnResetAlign');
 
-// Utils
-const clone = v => JSON.parse(JSON.stringify(v));
-const pushHistory = () => { state.undo.push(clone(state)); state.redo.length=0; };
+const animToggles = document.querySelectorAll('.anim');
+const animRanges = document.querySelectorAll('.animRange');
+const btnAnimReset = document.getElementById('btnAnimReset');
 
-// Layout
-function setCanvasSizeFromRes(){
-  const {w,h} = state.res;
-  canvas.width = w*4;
-  canvas.height = h*4;
-  draw();
-}
-function setResolution(val){
-  if(val==='96x128'){ state.res={w:96,h:128}; }
-  else { state.res={w:64,h:64}; }
-  setCanvasSizeFromRes();
-  filterPresetThumbs();
-  layoutAll();
-}
-// Filter presets by res
-function filterPresetThumbs(){
-  const resVal = `${state.res.w}x${state.res.h}`;
-  [...bgThumbsWrap.querySelectorAll('.thumb[data-type="preset"]')].forEach(t => {
-    const showFor = t.getAttribute('data-for');
-    t.style.display = (showFor===resVal) ? 'flex' : 'none';
-  });
-}
-resolutionSel.addEventListener('change', e=>setResolution(e.target.value));
+const manualDrag = document.getElementById('manualDrag');
+const dragWarning = document.getElementById('dragWarning');
+const disableDragWarning = document.getElementById('disableDragWarning');
 
-// Background selection
-bgThumbsWrap.addEventListener('click', (e)=>{
-  const t = e.target.closest('.thumb');
-  if(!t) return;
-  [...bgThumbsWrap.querySelectorAll('.thumb')].forEach(n=>n.classList.remove('active'));
-  t.classList.add('active');
-  const type = t.getAttribute('data-type');
-  if(type==='preset'){
-    const name = t.getAttribute('data-name');
-    state.background = {type:'preset', name, image:`assets/presets/${name}.png`};
-    solidPicker.style.display='none';
-  } else if(type==='solid'){
-    state.background = {type:'solid', color:solidPicker.value};
-    solidPicker.style.display='inline-block';
-  } else if(type==='upload'){
-    bgUploadInput.click();
-  }
-  draw();
-});
-bgUploadInput.addEventListener('change', (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const url = URL.createObjectURL(file);
-  state.background = {type:'upload', image:url};
-  draw();
-});
-solidPicker.addEventListener('input', e=>{
-  if(state.background.type==='solid'){
-    state.background.color = e.target.value;
-    draw();
-  }
-});
+// State
+let state = {
+  resolution: "96x128",
+  bgMode: "preset",
+  bgSolid: "#000000",
+  bgPreset: "A",
+  bgCustom: null, // Image bitmap
+  words: [], // [{text, x, y, color, font, size}]
+  selection: { line: 0, word: 0 },
+  history: [],
+  future: [],
+  swatches: ["#ffffff", "#ff007f", "#00e5ff", "#00ff7f", "#ffd000"],
+  spacing: { line: 6, word: 4, padding: 2 },
+  align: { h: "center", v: "middle", manualX: 0, manualY: 0 },
+  animations: {
+    pulse: { on:false, val:50 },
+    flicker: { on:false, val:50 },
+    bounce: { on:false, val:50 },
+    wave:   { on:false, val:50 },
+    scroll: { on:false, val:50 },
+    bubble: { on:false, val:50 },
+  },
+  mode: "edit",
+  showDragWarn: true
+};
 
-// Inspector tabs toggle (collapse by default)
-tabs.forEach(tab=>{
-  tab.addEventListener('click', ()=>{
-    const key = tab.dataset.tab;
-    Object.values(panels).forEach(p=>p.classList.remove('active'));
-    if(key) panels[key].classList.add('active');
-  });
-});
-btnToggleInspector.addEventListener('click', ()=>{
-  inspector.classList.toggle('hidden');
-});
-
-// Apply inspector changes
-function selectedWord(){
-  if(state.selection==null) return null;
-  const line = state.lines[state.selection.line];
-  if(!line) return null;
-  return line.words[state.selection.word] || null;
+// Helpers
+function pushHistory() {
+  const clone = JSON.parse(JSON.stringify(state));
+  // avoid cloning heavy images
+  clone.bgCustom = !!state.bgCustom;
+  state.history.push(clone);
+  if (state.history.length > 20) state.history.shift();
+  state.future = [];
 }
 
-function applyWordChange(){
-  const w = selectedWord(); if(!w) return;
-  w.font = fontFamily.value;
-  w.size = parseInt(fontSize.value,10);
-  state.spacing.lineGap = parseInt(lineGap.value,10);
-  state.spacing.word = parseInt(wordSpacing.value,10);
-  state.preventCutoff = preventCutoff.checked;
-  layoutAll();
-  draw();
+function undo() {
+  if (!state.history.length) return;
+  state.future.push(JSON.parse(JSON.stringify(state)));
+  const prev = state.history.pop();
+  // restore shallow, ignoring bgCustom bitmap
+  prev.bgCustom = state.bgCustom;
+  state = prev;
+  render();
+}
+function redo() {
+  if (!state.future.length) return;
+  state.history.push(JSON.parse(JSON.stringify(state)));
+  const next = state.future.pop();
+  next.bgCustom = state.bgCustom;
+  state = next;
+  render();
 }
 
-fontFamily.addEventListener('change', applyWordChange);
-fontSize.addEventListener('change', applyWordChange);
-lineGap.addEventListener('change', applyWordChange);
-wordSpacing.addEventListener('change', applyWordChange);
-preventCutoff.addEventListener('change', applyWordChange);
-autoSize.addEventListener('change', ()=>{ layoutAll(); draw(); });
-
-// Color swatches
-swatches.addEventListener('click', (e)=>{
-  const b = e.target.closest('.sw'); if(!b) return;
-  const w = selectedWord(); if(!w) return;
-  w.color = b.dataset.color;
-  draw();
-});
-btnAddSwatch.addEventListener('click', ()=>{
-  const c = customColorInput.value;
-  const el = document.createElement('button');
-  el.className='sw'; el.dataset.color=c; el.style.setProperty('--c', c);
-  swatches.appendChild(el);
-});
-btnDelSwatch.addEventListener('click', ()=>{
-  const els = swatches.querySelectorAll('.sw');
-  if(els.length>0) els[els.length-1].remove();
-});
-
-// Alignment
-alignButtons.forEach(btn=>btn.addEventListener('click', ()=>{
-  const mode = btn.dataset.align;
-  const ln = state.lines[state.selection?.line ?? 0];
-  if(!ln) return;
-  if(mode==='manual'){
-    if(!state.dragPromptDismissed){
-      dragModal.classList.remove('hidden');
-      return;
-    }
-    ln.align='manual';
-  } else {
-    ln.align = mode;
-  }
-  layoutAll();
-  draw();
-}));
-btnResetAlign.addEventListener('click', ()=>{
-  const ln = state.lines[state.selection?.line ?? 0];
-  if(!ln) return;
-  ln.align='center';
-  layoutAll(); draw();
-});
-dragCancel.addEventListener('click', ()=> dragModal.classList.add('hidden'));
-dragEnable.addEventListener('click', ()=>{
-  state.lines[state.selection?.line ?? 0].align='manual';
-  if(noDragPrompt.checked) state.dragPromptDismissed = true;
-  dragModal.classList.add('hidden');
-  layoutAll(); draw();
-});
-
-// Animations toggle (per-word)
-function syncAnimUIFromWord(){
-  const w = selectedWord(); if(!w) return;
-  animChecks.forEach(ch=>{
-    ch.checked = !!w.anim[ch.dataset.anim];
-    document.querySelector(`.animCfg[data-for="${ch.dataset.anim}"]`).style.display = ch.checked ? 'block':'none';
-  });
-}
-animChecks.forEach(ch=>ch.addEventListener('change', ()=>{
-  const w = selectedWord(); if(!w) return;
-  if(ch.checked){ w.anim[ch.dataset.anim] = {amount: parseFloat(document.querySelector(`.animCfg [data-anim="${ch.dataset.anim}"]`).value)}; }
-  else { delete w.anim[ch.dataset.anim]; }
-  syncAnimUIFromWord();
-  draw();
-}));
-animSliders.forEach(sl=>sl.addEventListener('input', ()=>{
-  const w = selectedWord(); if(!w) return;
-  const a = w.anim[sl.dataset.anim]; if(!a) return;
-  a.amount = parseFloat(sl.value);
-  draw();
-}));
-document.querySelectorAll('.resetAnim').forEach(btn=>btn.addEventListener('click', ()=>{
-  const w = selectedWord(); if(!w) return;
-  const anim = btn.dataset.anim;
-  const defaultVal = (anim==='bounce')?3: (anim==='flicker'?0.3:0.4);
-  const slider = document.querySelector(`.animSlider[data-anim="${anim}"]`);
-  slider.value = defaultVal;
-  if(!w.anim[anim]) w.anim[anim] = {};
-  w.anim[anim].amount = defaultVal;
-  draw();
-}));
-
-// Undo/Redo/Clear
-btnUndo.addEventListener('click', ()=>{ if(!state.undo.length) return; state.redo.push(clone(state)); Object.assign(state, state.undo.pop()); setCanvasSizeFromRes(); layoutAll(); draw(); });
-btnRedo.addEventListener('click', ()=>{ if(!state.redo.length) return; state.undo.push(clone(state)); Object.assign(state, state.redo.pop()); setCanvasSizeFromRes(); layoutAll(); draw(); });
-btnClear.addEventListener('click', ()=>{
-  pushHistory();
-  state.lines = [{words:[], align:'center'}];
-  state.selection = null;
-  layoutAll(); draw();
-});
-
-// Zoom
-btnZoomIn.addEventListener('click', ()=>{ state.zoom = Math.min(3, state.zoom+0.1); zoomLabel.textContent = Math.round(state.zoom*100)+'%'; draw(); });
-btnZoomOut.addEventListener('click', ()=>{ state.zoom = Math.max(0.25, state.zoom-0.1); zoomLabel.textContent = Math.round(state.zoom*100)+'%'; draw(); });
-
-// Modes
-btnPreview.addEventListener('click', ()=>{ state.mode='preview'; draw(); });
-btnEdit.addEventListener('click', ()=>{ state.mode='edit'; draw(); });
-
-// Config download/upload
-btnDownloadConfig.addEventListener('click', ()=>{
-  const blob = new Blob([JSON.stringify(state)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'led_animator_config.json';
-  a.click();
-});
-btnUploadConfig.addEventListener('click', ()=> uploadConfig.click());
-uploadConfig.addEventListener('change', e=>{
-  const f = e.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = ()=>{
-    try {
-      const s = JSON.parse(r.result);
-      Object.assign(state, s);
-      setCanvasSizeFromRes();
-      layoutAll(); draw();
-    } catch(err){ alert('Invalid config'); }
-  };
-  r.readAsText(f);
-});
-
-// Interaction
-let drag = null;
-canvas.addEventListener('mousedown', (e)=>{
-  const pos = canvasPos(e);
-  // select word if hit
-  const hit = hitTest(pos.x, pos.y);
-  if(hit){
-    state.selection = hit;
-    syncInspectorFromSelection();
-    draw();
-    // drag when manual & in edit
-    const ln = state.lines[hit.line];
-    if(state.mode==='edit' && ln.align==='manual'){
-      drag = {offset: pos, start: {x:selectedWord().x, y:selectedWord().y}};
-    }
-  } else {
-    // click background -> deselect
-    state.selection = null;
-    draw();
-  }
-});
-window.addEventListener('mouseup', ()=> drag = null);
-window.addEventListener('mousemove', (e)=>{
-  if(!drag) return;
-  const pos = canvasPos(e);
-  const dx = (pos.x - drag.offset.x);
-  const dy = (pos.y - drag.offset.y);
-  const w = selectedWord(); if(!w) return;
-  w.x = drag.start.x + dx;
-  w.y = drag.start.y + dy;
-  draw();
-});
-
-// Double click to create a new word at click
-canvas.addEventListener('dblclick', (e)=>{
-  const p = canvasPos(e);
-  ensureAtLeastOneLine();
-  const ln = state.lines[state.lines.length-1];
-  const w = {text:'', color:'#FFFFFF', font: fontFamily.value, size:parseInt(fontSize.value,10), anim:{}, align: ln.align || 'center', manual:false, x:p.x, y:p.y};
-  ln.words.push(w);
-  state.selection = {line: state.lines.length-1, word: ln.words.length-1};
-  layoutAll(); draw();
-  startEditing();
-});
-
-// Keyboard typing -> edit selected word; space = new word; Enter = new line
-window.addEventListener('keydown', (e)=>{
-  if(state.mode!=='edit') return;
-  // typing requires selection
-  if(!state.selection){
-    // hitting any character should create first word
-    if(e.key.length===1 || e.key==='Enter' || e.key===' '){
-      ensureAtLeastOneLine();
-      const ln = state.lines[state.lines.length-1];
-      const w = {text:'', color:'#FFFFFF', font: fontFamily.value, size:parseInt(fontSize.value,10), anim:{}, align: ln.align || 'center', manual:false, x:0, y:0};
-      ln.words.push(w);
-      state.selection = {line: state.lines.length-1, word: ln.words.length-1};
-    } else { return; }
-  }
-  const ln = state.lines[state.selection.line];
-  const w = ln.words[state.selection.word];
-  if(!w) return;
-  if(e.key==='Backspace'){ w.text = w.text.slice(0,-1); e.preventDefault(); }
-  else if(e.key==='Enter'){ // new line
-    state.lines.push({words:[], align: ln.align});
-    state.selection = {line: state.lines.length-1, word:0};
-    e.preventDefault();
-  }
-  else if(e.key===' '){ // new word on same line
-    ln.words.splice(state.selection.word+1, 0, {text:'', color:w.color, font:w.font, size:w.size, anim:clone(w.anim), align:ln.align, manual:false, x:0, y:0});
-    state.selection.word++;
-    e.preventDefault();
-  }
-  else if(e.key.length===1){
-    w.text += e.key;
-  }
-  layoutAll(); draw();
-});
-
-function ensureAtLeastOneLine(){
-  if(state.lines.length===0) state.lines=[{words:[],align:'center'}];
+function setResolution(res) {
+  const [w,h] = res.split('x').map(Number);
+  canvas.width = w; canvas.height = h;
+  state.resolution = res;
+  buildPresetGrid(); // filter by resolution
+  render();
 }
 
-// Selection & Inspector sync
-function syncInspectorFromSelection(){
-  inspector.classList.toggle('hidden', !state.selection);
-  if(!state.selection) return;
-  const w = selectedWord();
-  fontFamily.value = w.font; fontSize.value = w.size;
-  lineGap.value = state.spacing.lineGap; wordSpacing.value = state.spacing.word; preventCutoff.checked = state.preventCutoff;
-  syncAnimUIFromWord();
-  // open nothing by default
-  Object.values(panels).forEach(p=>p.classList.remove('active'));
-}
-
-function layoutAll(){
-  // compute sizes and positions if not manual
-  const pad = 4;
-  const scale = state.zoom;
-  const H = state.res.h;
-  let y = 12;
-  state.lines.forEach((ln, li)=>{
-    const metrics = ln.words.map(w=> measureText(w));
-    const lineWidth = metrics.reduce((a,m)=> a+m.w, 0) + Math.max(0, ln.words.length-1)*state.spacing.word;
-    const lineHeight = metrics.reduce((a,m)=> Math.max(a, m.h), 0);
-    if(ln.align!=='manual'){
-      let startX = (state.res.w - lineWidth)/2;
-      if(ln.align==='left') startX = pad;
-      if(ln.align==='right') startX = state.res.w - lineWidth - pad;
-      let x = startX;
-      ln.words.forEach((w,i)=>{
-        w.x = x; w.y = y;
-        x += metrics[i].w + state.spacing.word;
+function buildPresetGrid() {
+  presetGrid.innerHTML = "";
+  fetch('assets/manifest.json').then(r=>r.json()).then(man=>{
+    const items = man[state.resolution] || [];
+    // Add preset cards (from manifest)
+    items.forEach((item)=>{
+      const card = document.createElement('div');
+      card.className = "preset-card";
+      const img = document.createElement('img');
+      img.src = item.thumb;
+      img.alt = item.name;
+      card.appendChild(img);
+      const cap = document.createElement('div');
+      cap.className = "small";
+      cap.textContent = item.name;
+      card.appendChild(cap);
+      card.addEventListener('click', ()=>{
+        state.bgPreset = item.path; // full path to preset image
+        state.bgMode = "preset";
+        document.querySelector('input[name="bgmode"][value="preset"]').checked = true;
+        render();
       });
-    }
-    y += lineHeight + state.spacing.lineGap;
-  });
-}
-
-function measureText(w){
-  ctx.save();
-  ctx.font = `${w.size}px ${w.font}`;
-  const metrics = {w: ctx.measureText(w.text||'').width/4, h: w.size/3}; // scale to LED grid feel
-  ctx.restore();
-  // Prevent cutoff & autosize rudimentary handling
-  if(state.preventCutoff){
-    const maxW = state.res.w - 8;
-    if(metrics.w>maxW) metrics.w = maxW;
-  }
-  return metrics;
-}
-
-function canvasPos(e){
-  const r = canvas.getBoundingClientRect();
-  const x = (e.clientX - r.left) / (r.width) * state.res.w;
-  const y = (e.clientY - r.top) / (r.height) * state.res.h;
-  return {x,y};
-}
-
-function hitTest(x,y){
-  for(let li=0; li<state.lines.length; li++){
-    const ln = state.lines[li];
-    for(let wi=0; wi<ln.words.length; wi++){
-      const w = ln.words[wi];
-      const m = measureText(w);
-      if(x>=w.x && x<=w.x+m.w && y>=w.y-m.h && y<=w.y+m.h*0.8){
-        return {line:li, word:wi};
-      }
-    }
-  }
-  return null;
-}
-
-function drawBackground(){
-  const {w,h} = state.res;
-  if(state.background.type==='solid'){
-    ctx.fillStyle = state.background.color || '#000';
-    ctx.fillRect(0,0,w,h);
-  } else if(state.background.image){
-    const img = new Image();
-    img.onload = ()=>{
-      // cover
-      ctx.drawImage(img, 0,0,w,h);
-    };
-    img.src = state.background.image;
-  } else {
-    ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
-  }
-}
-
-let t0 = performance.now();
-function draw(){
-  // scale canvas CSS size based on zoom
-  canvas.style.width = (state.res.w*4*state.zoom)+'px';
-  canvas.style.height = (state.res.h*4*state.zoom)+'px';
-  // clear
-  ctx.imageSmoothingEnabled=false;
-  ctx.clearRect(0,0,canvas.width, canvas.height);
-  // LED pixel look scaling
-  ctx.save();
-  ctx.scale(4,4);
-  drawBackground();
-  // draw words
-  const time = (performance.now()-t0)/1000;
-  state.lines.forEach((ln, li)=>{
-    ln.words.forEach((w, wi)=>{
-      // animations (preview only)
-      let dy=0, amp=0;
-      if(state.mode==='preview'){
-        if(w.anim.pulse){ amp = 0.3*w.anim.pulse.amount; }
-        if(w.anim.bounce){ dy = Math.sin(time*4)*w.anim.bounce.amount; }
-        if(w.anim.flicker && Math.random()<w.anim.flicker.amount*0.1){ ctx.globalAlpha = 0.6; } else ctx.globalAlpha=1;
-      }
-      ctx.fillStyle = w.color || '#fff';
-      ctx.font = `${Math.round(w.size*(1+amp))}px ${w.font}`;
-      ctx.fillText(w.text, w.x, w.y+dy);
-      ctx.globalAlpha=1;
+      presetGrid.appendChild(card);
+    });
+    // Add "special" cards for Solid and Upload
+    man.special.forEach((sp)=>{
+      const card = document.createElement('div');
+      card.className = "preset-card";
+      const img = document.createElement('img');
+      img.src = sp.thumb;
+      img.alt = sp.name;
+      card.appendChild(img);
+      const cap = document.createElement('div');
+      cap.className = "small";
+      cap.textContent = sp.name;
+      card.appendChild(cap);
+      card.addEventListener('click', ()=>{
+        document.querySelector(`input[name="bgmode"][value="${sp.mode}"]`).checked = true;
+        setBgMode(sp.mode);
+        if (sp.mode === "solid") { /* keep current color */ }
+        if (sp.mode === "custom") { /* user will upload */ }
+        render();
+      });
+      presetGrid.appendChild(card);
     });
   });
-  // selection visuals
-  if(state.selection && state.mode==='edit'){
-    const w = selectedWord();
-    if(w){
-      const m = measureText(w);
-      // selection box & caret
-      ctx.strokeStyle = '#ff49c1';
-      ctx.lineWidth = 0.5;
-      ctx.setLineDash([1,1]);
-      ctx.strokeRect(w.x-1, w.y-m.h, m.w+2, m.h+2);
-      // caret
-      const caretX = w.x + ctx.measureText(w.text).width/4;
-      const blink = ((performance.now()/500)|0)%2===0;
-      if(blink){
-        ctx.fillStyle='#fff'; ctx.fillRect(caretX, w.y-m.h, 0.5, m.h);
-      }
-      // place Delete button
-      placeDeleteButton({x:(w.x+m.w)*4*state.zoom, y:(w.y-m.h)*4*state.zoom});
-    }
-  } else {
-    deleteBtn.classList.add('hidden');
-  }
-  ctx.restore();
-  requestAnimationFrame(()=>{ if(state.mode==='preview') draw(); });
 }
 
-function placeDeleteButton(p){
-  const rect = canvas.getBoundingClientRect();
-  deleteBtn.style.left = (rect.left + p.x + 12) + 'px';
-  deleteBtn.style.top = (rect.top + p.y - 12) + 'px';
-  deleteBtn.classList.remove('hidden');
+function tick() {
+  if (state.mode === "preview") {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawBackground();
+    if (state.bgMode!=="preset") drawText();
+  }
+  requestAnimationFrame(tick);
 }
-deleteBtn.addEventListener('click', ()=>{
-  if(!state.selection) return;
-  const ln = state.lines[state.selection.line];
-  ln.words.splice(state.selection.word,1);
-  if(ln.words.length===0){ state.lines.splice(state.selection.line,1); state.selection=null; }
-  layoutAll(); draw();
+
+// Event wiring
+window.addEventListener('resize', ()=>{ getCanvasCSSScale(); drawSelectionOverlay(computeLayout()); });
+
+btnAddWord.addEventListener('click', ()=>{ addWord("WORD"); });
+btnAddLine.addEventListener('click', ()=>{ addLine(); });
+btnClear.addEventListener('click', ()=>{ clearAll(); });
+btnUndo.addEventListener('click', ()=>{ undo(); });
+btnRedo.addEventListener('click', ()=>{ redo(); });
+
+btnToggleInspector.addEventListener('click', ()=>{
+  inspector.classList.toggle('open');
+});
+btnInspectorOpenClose.addEventListener('click', ()=>{
+  inspector.classList.toggle('open');
 });
 
-// Init
-function init(){
-  setResolution(resolutionSel.value);
-  filterPresetThumbs();
-  layoutAll();
-  draw();
-  syncInspectorFromSelection();
+btnDownloadCfg.addEventListener('click', ()=>{
+  const cfg = JSON.stringify(state, null, 2);
+  const blob = new Blob([cfg], {type:"application/json"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = "LEDAnimator_v2.1_config.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+resSel.addEventListener('change', ()=>{
+  setResolution(resSel.value);
+});
+
+modeSel.addEventListener('change', ()=>{
+  state.mode = modeSel.value;
+});
+
+bgRadios.forEach(r=>r.addEventListener('change', ()=>{
+  setBgMode(document.querySelector('input[name="bgmode"]:checked').value);
+  render();
+}));
+solidColor.addEventListener('input', ()=>{
+  state.bgSolid = solidColor.value;
+  render();
+});
+fileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      createImageBitmap(img).then(bmp=>{
+        state.bgCustom = bmp;
+        setBgMode("custom");
+        document.querySelector('input[name="bgmode"][value="custom"]').checked = true;
+        render();
+      });
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+fontSelect.addEventListener('change', ()=>{ pushHistory(); render(); });
+fontSize.addEventListener('input', ()=>{ pushHistory(); render(); });
+autoSize.addEventListener('change', ()=>{ pushHistory(); render(); });
+fontColor.addEventListener('input', ()=>{
+  if (state.selection.word>=0) {
+    // apply to selected
+    state.words[state.selection.line][state.selection.word].color = fontColor.value;
+  }
+  pushHistory(); render();
+});
+
+btnAddSwatch.addEventListener('click', ()=>{
+  state.swatches.push(fontColor.value);
+  refreshSwatches();
+});
+btnDelSwatch.addEventListener('click', ()=>{
+  state.swatches.pop();
+  refreshSwatches();
+});
+
+lineSpacing.addEventListener('input', ()=>{ state.spacing.line = Number(lineSpacing.value); render(); });
+wordSpacing.addEventListener('input', ()=>{ state.spacing.word = Number(wordSpacing.value); render(); });
+paddingRange.addEventListener('input', ()=>{ state.spacing.padding = Number(paddingRange.value); render(); });
+
+hAlign.addEventListener('change', ()=>{ state.align.h = hAlign.value; render(); });
+vAlign.addEventListener('change', ()=>{ state.align.v = vAlign.value; render(); });
+btnResetAlign.addEventListener('click', ()=>{ state.align = {h:"center", v:"middle", manualX:0, manualY:0}; hAlign.value="center"; vAlign.value="middle"; render(); });
+
+animToggles.forEach(t=>t.addEventListener('change', ()=>{
+  const name = t.dataset.name; state.animations[name].on = t.checked; render();
+}));
+animRanges.forEach(r=>r.addEventListener('input', ()=>{
+  const name = r.dataset.name; state.animations[name].val = Number(r.value);
+}));
+btnAnimReset.addEventListener('click', ()=>{
+  Object.keys(state.animations).forEach(k=>{ state.animations[k]={on:false,val:50}; });
+  animToggles.forEach(t=>t.checked=false);
+  animRanges.forEach(r=>r.value=50);
+  render();
+});
+
+manualDrag.addEventListener('change', ()=>{
+  if (manualDrag.checked && state.showDragWarn) {
+    dragWarning.style.display = "block";
+  } else {
+    dragWarning.style.display = "none";
+  }
+});
+
+disableDragWarning.addEventListener('change', ()=>{
+  state.showDragWarn = !disableDragWarning.checked;
+});
+
+// Canvas interactions
+document.querySelector('.canvas-stage').addEventListener('mousedown', (e)=>{
+  const rect = canvas.getBoundingClientRect();
+  const scale = getCanvasCSSScale();
+  const x = (e.clientX - rect.left)/scale;
+  const y = (e.clientY - rect.top)/scale;
+
+  // hit test
+  const lines = computeLayout();
+  let hit = null;
+  lines.forEach((L, li)=>{
+    L.elements.forEach((E, wi)=>{
+      const box = {x:E.x, y:E.y - E.height, w:E.width, h:E.height};
+      if (x>=box.x && x<=box.x+box.w && y>=box.y && y<=box.y+box.h) hit = {li, wi};
+    });
+  });
+  if (hit) {
+    state.selection = { line: hit.li, word: hit.wi };
+    render();
+  } else {
+    // deselect
+    state.selection = { line: -1, word: -1 };
+    render();
+  }
+});
+
+deleteWordBtn.addEventListener('click', ()=>{
+  const {line, word} = state.selection;
+  if (line>=0 && word>=0 && state.words[line]) {
+    state.words[line].splice(word,1);
+    if (!state.words[line].length) state.words.splice(line,1);
+    state.selection = {line:-1, word:-1};
+    pushHistory();
+    render();
+  }
+});
+
+// Typing/editing
+document.addEventListener('keydown', (e)=>{
+  if (e.key === " "){ e.preventDefault(); addWord("WORD"); return; }
+  if (e.key === "Enter"){ e.preventDefault(); addLine(); return; }
+
+  const {line, word} = state.selection;
+  if (line>=0 && word>=0) {
+    if (e.key === "Backspace") {
+      state.words[line][word].text = state.words[line][word].text.slice(0,-1);
+      pushHistory(); render(); return;
+    }
+    if (e.key.length === 1) {
+      state.words[line][word].text += e.key;
+      pushHistory(); render(); return;
+    }
+  }
+});
+
+function refreshSwatches() {
+  swatches.innerHTML = "";
+  state.swatches.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = "swatch";
+    div.style.background = c;
+    div.addEventListener('click', ()=>{
+      fontColor.value = c;
+      if (state.selection.word>=0) {
+        state.words[state.selection.line][state.selection.word].color = c;
+      }
+      render();
+    });
+    swatches.appendChild(div);
+  });
 }
+
+function init() {
+  setResolution(state.resolution);
+  buildPresetGrid();
+  refreshSwatches();
+  getCanvasCSSScale();
+  render();
+  requestAnimationFrame(tick);
+}
+
 init();
