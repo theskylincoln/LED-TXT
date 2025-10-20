@@ -2,6 +2,7 @@
 // LED Backpack Animator — minimal but stable build
 // State
 const state = {
+  anim: { booktok: true, speed: 1.0 },
   mode: 'edit', // 'edit' or 'preview'
   zoom: 1,
   res: {w:96, h:128},
@@ -93,7 +94,12 @@ function setResolution(val){
   filterPresetThumbs();
   layoutAll();
 }
+// ====== CONFIG THAT AFFECTS LAYOUT ======
+const PADDING = { x: 6, y: 6 };        // safe margins so text won't hit edges
+const MAX_UNDO = 20;
+
 // Filter presets by res
+
 function filterPresetThumbs(){
   const resVal = `${state.res.w}x${state.res.h}`;
   [...bgThumbsWrap.querySelectorAll('.thumb[data-type="preset"]')].forEach(t => {
@@ -391,25 +397,7 @@ function syncInspectorFromSelection(){
   Object.values(panels).forEach(p=>p.classList.remove('active'));
 }
 
-function layoutAll(){
-  // compute sizes and positions if not manual
-  const pad = 4;
-  const scale = state.zoom;
-  const H = state.res.h;
-  let y = 12;
-  state.lines.forEach((ln, li)=>{
-    const metrics = ln.words.map(w=> measureText(w));
-    const lineWidth = metrics.reduce((a,m)=> a+m.w, 0) + Math.max(0, ln.words.length-1)*state.spacing.word;
-    const lineHeight = metrics.reduce((a,m)=> Math.max(a, m.h), 0);
-    if(ln.align!=='manual'){
-      let startX = (state.res.w - lineWidth)/2;
-      if(ln.align==='left') startX = pad;
-      if(ln.align==='right') startX = state.res.w - lineWidth - pad;
-      let x = startX;
-      ln.words.forEach((w,i)=>{
-        w.x = x; w.y = y;
-        x += metrics[i].w + state.spacing.word;
-      });
+function layoutAll(){ layoutDocument(); });
     }
     y += lineHeight + state.spacing.lineGap;
   });
@@ -418,6 +406,15 @@ function layoutAll(){
 function measureText(w){
   ctx.save();
   ctx.font = `${w.size}px ${w.font}`;
+  const m = ctx.measureText(w.text || '');
+  const width = Math.ceil(m.width);
+  const ascent = Math.ceil(m.actualBoundingBoxAscent || (w.size*0.8));
+  const descent = Math.ceil(m.actualBoundingBoxDescent || (w.size*0.2));
+  const height = ascent + descent;
+  ctx.restore();
+  return {w:width, h:height, ascent, descent};
+}
+px ${w.font}`;
   const metrics = {w: ctx.measureText(w.text||'').width/4, h: w.size/3}; // scale to LED grid feel
   ctx.restore();
   // Prevent cutoff & autosize rudimentary handling
@@ -689,3 +686,171 @@ class TinyGif {
     });
   }
 })();
+
+// ====== DOCUMENT LAYOUT ======
+// Vert + horiz centering with per-line autosize and safe padding
+function layoutDocument(){
+  const W = canvas.width;
+  const H = canvas.height;
+  const safeW = W - PADDING.x * 2;
+  const safeH = H - PADDING.y * 2;
+
+  const lineBoxes = [];
+  let totalBlockH = 0;
+
+  state.lines.forEach((ln, li)=>{
+    const words = ln.words || [];
+    if (!words.length){ lineBoxes.push({width:0,height:0,measures:[],words:[]}); return; }
+
+    // optional autosize: shrink line until it fits inside safeW
+    if (state.font?.autoSize || (typeof autoSize !== 'undefined' && autoSize.checked)) {
+      let guard = 0;
+      while (guard++ < 64){
+        const ms = words.map(w => measureText(w));
+        const spacing = state.spacing?.word ?? 8;
+        const lineW = ms.reduce((a,m)=>a+m.w,0) + Math.max(0, words.length-1)*spacing;
+        if (lineW <= safeW) break;
+        words.forEach(w => w.size = Math.max(6, (w.size||22)-1));
+      }
+    }
+
+    const ms = words.map(w => measureText(w));
+    const spacing = state.spacing?.word ?? 8;
+    const lineW = ms.reduce((a,m)=>a+m.w,0) + Math.max(0, words.length-1)*spacing;
+    const lineH = ms.reduce((a,m)=>Math.max(a,m.h),0) || 16;
+
+    totalBlockH += lineH + (li ? (state.spacing?.lineGap ?? 2) : 0);
+    lineBoxes.push({ width:lineW, height:lineH, measures:ms, words:[] });
+  });
+
+  let y = Math.floor((safeH - totalBlockH)/2) + PADDING.y;
+
+  state.lines.forEach((ln, li)=>{
+    const box = lineBoxes[li];
+    const spacing = state.spacing?.word ?? 8;
+    const align = ln.align || state.align || 'center';
+
+    let startX = PADDING.x;
+    const leftover = (safeW - box.width);
+    if (align === 'center') startX += Math.floor(leftover/2);
+    else if (align === 'right') startX += leftover;
+
+    let x = startX;
+    const baseline = y + Math.ceil(box.height * 0.8);
+
+    box.words = (ln.words||[]).map((w, wi)=>{
+      const m = box.measures[wi];
+      const rect = { x, y: baseline - m.ascent, w:m.w, h:m.h, baseline };
+      // write back for hit testing when manual disabled
+      w.x = rect.x; w.y = rect.y;
+      x += m.w + spacing;
+      return rect;
+    });
+
+    y += box.height + (li < state.lines.length-1 ? (state.spacing?.lineGap ?? 2) : 0);
+  });
+
+  state._layout = { lineBoxes, totalBlockH };
+}
+
+// ====== RENDER ======
+function render(){
+  // background
+  if (state.background?.type === 'image' && state.background.image){
+    ctx.drawImage(state.background.image, 0, 0, canvas.width, canvas.height);
+  } else if (bg && bg.type === 'image' && bg.image){
+    ctx.drawImage(bg.image, 0, 0, canvas.width, canvas.height);
+  } else {
+    const c = (state.background?.color || bg?.color || '#000');
+    ctx.fillStyle = c; ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  const lb = (state._layout?.lineBoxes) || [];
+  (state.lines||[]).forEach((ln, li)=>{
+    const lineBox = lb[li]; if (!lineBox) return;
+    (ln.words||[]).forEach((w, wi)=>{
+      const rect = lineBox.words[wi]; if(!rect) return;
+      ctx.save();
+      ctx.font = `${w.size}px ${w.font}`;
+      ctx.fillStyle = w.color || '#fff';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(w.text || '', rect.x, rect.baseline);
+      ctx.restore();
+      // selection outline (magenta dotted glow)
+      if (state.selection && state.selection.line===li && state.selection.word===wi && state.mode==='edit'){
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,0,200,.9)';
+        ctx.setLineDash([2,2]);
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rect.x-1, rect.y-1, rect.w+2, rect.h+2);
+        ctx.restore();
+      }
+    });
+  });
+}
+
+function layoutAndRender(){ layoutAll(); render(); }
+
+
+// Deterministic render with timeline 't' (seconds). If t is null, use realtime.
+function renderAtTime(t){
+  const nowSec = (t!=null) ? t : (performance.now()/1000);
+  const speed = (state.anim?.speed ?? 1.0);
+  const phase = nowSec * speed; // ~1 Hz when speed=1
+  const baseAlpha = 0.85 + 0.15 * (0.5*(1+Math.sin(phase*6.28318))); // 0.85..1.0 gentle flicker
+
+  // background
+  if (state.background?.type === 'image' && state.background.image){
+    ctx.drawImage(state.background.image, 0, 0, canvas.width, canvas.height);
+  } else if (typeof bg!=='undefined' && bg?.type === 'image' && bg?.image){
+    ctx.drawImage(bg.image, 0, 0, canvas.width, canvas.height);
+  } else {
+    const c = (state.background?.color || (typeof bg!=='undefined' && bg?.color) || '#000');
+    ctx.fillStyle = c; ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  const lb = (state._layout?.lineBoxes) || [];
+  (state.lines||[]).forEach((ln, li)=>{
+    const lineBox = lb[li]; if (!lineBox) return;
+    (ln.words||[]).forEach((w, wi)=>{
+      const rect = lineBox.words[wi]; if(!rect) return;
+      ctx.save();
+      ctx.font = `${w.size}px ${w.font}`;
+      ctx.fillStyle = w.color || '#fff';
+      ctx.textBaseline = 'alphabetic';
+      // Apply global BookTok flicker in preview and during GIF capture
+      const alpha = (state.anim?.booktok && state.mode!=='edit') ? baseAlpha : 1;
+      ctx.globalAlpha = alpha;
+      ctx.fillText(w.text || '', rect.x, rect.baseline);
+      ctx.restore();
+      // selection outline
+      if (state.selection && state.selection.line===li && state.selection.word===wi && state.mode==='edit'){
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,0,200,.9)';
+        ctx.setLineDash([2,2]);
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rect.x-1, rect.y-1, rect.w+2, rect.h+2);
+        ctx.restore();
+      }
+    });
+  });
+}
+
+// Back-compat: render() calls deterministic renderAtTime(null)
+function render(){ renderAtTime(null); }
+
+
+function tick(){
+  if (state.mode==='preview'){ render(); }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+
+// Animation UI bindings
+(function(){
+  const cb = document.getElementById('animBookTok');
+  const sp = document.getElementById('animSpeed');
+  if(cb){ cb.addEventListener('change', ()=>{ state.anim.booktok = cb.checked; if(state.mode!=='edit') render(); }); }
+  if(sp){ sp.addEventListener('input', ()=>{ state.anim.speed = Math.max(0.2, Math.min(3, parseFloat(sp.value)||1.0)); }); }
+})();    
