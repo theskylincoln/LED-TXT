@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>LED Backpack Animator</title>
-  <!-- Web fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bebas+Neue&family=Press+Start+2P&family=Anton&family=Bangers&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -27,7 +26,7 @@
       </div>
       <div class="tool-group">
         <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="1" max="6" step="0.2" value="2" />
+        <input type="range" id="zoom" min="1" max="6" step="0.1" value="1" />
       </div>
       <div class="tool-group">
         <button id="undoBtn" title="Undo">↶ Undo</button>
@@ -54,7 +53,12 @@
       </div>
       <div class="bg-actions">
         <button id="bgSolidBtn">Solid Color</button>
-        <input type="color" id="bgSolidColor" value="#000000" />
+        <div class="row two">
+          <label>Color</label><input type="color" id="bgSolidColor" value="#000000" />
+        </div>
+        <div class="row">
+          <button id="addBgSwatchBtn" class="button tiny">+ Add BG Swatch</button>
+        </div>
         <div id="bgSwatches" class="swatches mt6"></div>
         <label class="upload-btn">
           <input type="file" id="bgUpload" accept="image/*" hidden />
@@ -73,43 +77,12 @@
         <button id="addLineBtn">+ Line</button>
       </div>
     </section>
-
-    <!-- Right: Config + Render -->
-    <aside class="right-panel">
-      <div class="card">
-        <h3>Config</h3>
-        <div class="row">
-          <button id="saveJsonBtn">Download Config</button>
-        </div>
-        <div class="row">
-          <label class="upload-btn small">
-            <input type="file" id="loadJsonInput" accept="application/json" hidden />
-            <span>Import Config</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Render & Download</h3>
-        <div class="row two">
-          <label>Filename</label><input id="fileName" value="animation.gif" />
-        </div>
-        <div class="row two">
-          <label>FPS</label><input type="number" id="fps" value="8" min="1" max="30" />
-          <label>Length (s)</label><input type="number" id="seconds" value="4" min="1" max="20" />
-        </div>
-        <div class="row">
-          <button id="renderGifBtn">Render GIF</button>
-          <a id="downloadLink" download="animation.gif" class="button">Download</a>
-        </div>
-      </div>
-    </aside>
   </main>
 
-  <!-- Bottom Inspector Toolbar: single bar with accordions opening above it -->
+  <!-- Bottom Inspector Toolbar: single bar with accordions -->
   <footer class="inspector-bar">
     <button id="toggleInspector" aria-expanded="false" title="Toggle Inspector">Inspector ▴</button>
-    <div id="inspectorBody" class="inspector-body collapsed">
+    <div id="inspectorBody" class="inspector-body">
       <details class="acc" id="accFont">
         <summary>Font</summary>
         <div class="acc-body">
@@ -222,7 +195,38 @@
     </div>
   </footer>
 
-  <!-- Truly hidden keyboard helper for mobile (no flash, no visible box) -->
+  <!-- Config and Render pinned AT THE BOTTOM in flow (not overlaying anything) -->
+  <section class="bottom-panels">
+    <div class="card">
+      <h3>Config</h3>
+      <div class="row">
+        <button id="saveJsonBtn">Download Config</button>
+      </div>
+      <div class="row">
+        <label class="upload-btn small">
+          <input type="file" id="loadJsonInput" accept="application/json" hidden />
+          <span>Import Config</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Render & Download</h3>
+      <div class="row two">
+        <label>Filename</label><input id="fileName" value="animation.gif" />
+      </div>
+      <div class="row two">
+        <label>FPS</label><input type="number" id="fps" value="8" min="1" max="30" />
+        <label>Length (s)</label><input type="number" id="seconds" value="4" min="1" max="20" />
+      </div>
+      <div class="row">
+        <button id="renderGifBtn">Render GIF</button>
+        <a id="downloadLink" download="animation.gif" class="button">Download</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hidden helper for mobile keyboards -->
   <input id="mobileInput" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
 
   <!-- Modals -->
@@ -238,28 +242,16 @@
     </div>
   </div>
 
-  <div id="dragWarn" class="modal hidden">
-    <div class="modal-card">
-      <h3>Manual Drag Mode</h3>
-      <p>Dragging words lets you position them anywhere. This can break perfect centering. Continue?</p>
-      <label class="chk"><input type="checkbox" id="suppressDragWarn" /> <span>Don’t show again this session</span></label>
-      <div class="modal-actions">
-        <button id="dragWarnCancel">Cancel</button>
-        <button id="dragWarnOk" class="primary">Enable</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- About -->
   <div id="aboutModal" class="modal hidden">
     <div class="modal-card">
       <h3>About</h3>
-      <p><strong>LED Backpack Animator v2.4</strong><br/>by TheSkyLincoln / instax.moto</p>
+      <p><strong>LED Backpack Animator v2.6</strong></p>
       <ul>
-        <li>Compact header Tools drawer</li>
-        <li>Preset swatches protected; delete only custom</li>
-        <li>Floating swatch delete × outside corner</li>
-        <li>Better mobile keyboard trigger</li>
+        <li>Inspector options open below; scrollable</li>
+        <li>Auto-fit zoom to preview area</li>
+        <li>Enter = new line</li>
+        <li>BG: black swatch + add button</li>
+        <li>Config & Render at bottom</li>
       </ul>
       <div class="modal-actions">
         <button id="aboutClose" class="primary">Close</button>

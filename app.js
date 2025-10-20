@@ -1,9 +1,10 @@
-/* LED Backpack Animator v2.4 — changes:
- * - Default swatches protected (no delete 'x'); custom only.
- * - Swatch delete 'x' floats outside corner for easier tapping.
- * - Header toolbar collapses into Tools drawer.
- * - Mobile keyboard reliably opens on selection (pointerdown/touchstart), helper input is truly hidden.
- * - Inspector remains bottom bar with accordions.
+/* LED Backpack Animator v2.6 — fixes per latest request.
+ * - Inspector accordions open below; no overlay; scrollable.
+ * - Auto-fit zoom to preview area; centered at all sizes.
+ * - Only selected word shows delete ×.
+ * - Config & Render at bottom in flow.
+ * - Enter = new line.
+ * - BG: black included; Add BG Swatch present.
  */
 (() => {
   const $ = (sel, p=document) => p.querySelector(sel);
@@ -15,10 +16,13 @@
   toolsToggle.addEventListener("click", ()=>{
     toolsDrawer.classList.toggle("hidden");
     toolsToggle.textContent = toolsDrawer.classList.contains("hidden") ? "Tools ▾" : "Tools ▴";
+    // after drawer toggles, refit zoom in case layout height changed
+    requestAnimationFrame(autoFitZoom);
   });
 
   const canvas = $("#led");
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const wrap = $(".canvas-wrap");
   const resSelect = $("#resSelect");
   const zoomRange = $("#zoom");
   const modeEditBtn = $("#modeEdit");
@@ -38,6 +42,7 @@
   const bgThumbs = $("#bgThumbs");
   const bgSolidBtn = $("#bgSolidBtn");
   const bgSolidColor = $("#bgSolidColor");
+  const addBgSwatchBtn = $("#addBgSwatchBtn");
   const bgUpload = $("#bgUpload");
   const bgSwatches = $("#bgSwatches");
 
@@ -69,14 +74,14 @@
   const addSwatchBtn = $("#addSwatchBtn");
   const clearSwatchesBtn = $("#clearSwatchesBtn");
 
-  // Animation controls
+  // Animations
   const animItems = $$(".anim-item");
   const animDefault = $("#animDefault");
   const animApplyAll = $("#animApplyAll");
 
   const state = {
     mode: "edit",
-    zoom: 2,
+    zoom: 1,
     res: { w: 96, h: 128 },
     vAlign: "middle",
     background: { type: "solid", color: "#000000", image: null, name: "solid" },
@@ -87,7 +92,7 @@
     undo: [], redo: [],
     autoSize: true,
     spacing: { lineGap: 4, word: 6 },
-    customSwatches: [],
+    customSwatches: ["#000000"],
     bgImages: {
       "96x128": [
         { key:"Preset_A", preset:"assets/presets/96x128/Preset_A.png", thumb:"assets/thumbs/Preset_A_thumb.png" },
@@ -102,7 +107,6 @@
 
   const PRESET_COLORS = ["#FFFFFF","#FFD700","#FF7F50","#FF3B3B","#00FFAA","#00BFFF","#1E90FF","#8A2BE2","#FF00FF","#00FF00","#FFA500","#C0C0C0"];
 
-  // ---- Utilities & layout ----
   function pushUndo() {
     state.undo.push(JSON.stringify({
       lines: state.lines,
@@ -120,7 +124,19 @@
     return L.words[state.selection.word] || null;
   }
   function applyZoom() { canvas.style.transform = `translate(-50%,-50%) scale(${state.zoom})`; }
-  function setCanvasResolution() { const { w, h } = state.res; canvas.width=w; canvas.height=h; applyZoom(); }
+  function setCanvasResolution() { canvas.width=state.res.w; canvas.height=state.res.h; applyZoom(); }
+
+  function autoFitZoom() {
+    const wrapRect = wrap.getBoundingClientRect();
+    const pad = 16;
+    const availW = Math.max(50, wrapRect.width - pad);
+    const availH = Math.max(50, wrapRect.height - pad);
+    const z = Math.max(1, Math.min(6, Math.floor(10* Math.min(availW/state.res.w, availH/state.res.h))/10 ));
+    state.zoom = z;
+    zoomRange.value = String(z);
+    applyZoom();
+  }
+
   function setMode(m) { state.mode=m; modeEditBtn.classList.toggle("active", m==="edit"); modePrevBtn.classList.toggle("active", m==="preview"); }
 
   function measureWordBounds(word) {
@@ -178,7 +194,6 @@
     else { ctx.drawImage(image, 0, 0, canvas.width, canvas.height); }
   }
 
-  // ---- Animations ----
   function getAnimSpec(w) { const map=new Map(); (w.animations||[]).forEach(a=> map.set(a.type, {...a})); return map; }
   function setAnimSpec(w, map) { w.animations = Array.from(map.values()); }
   function combineAnimations(w, tSec) {
@@ -193,7 +208,6 @@
     return {dx,dy,scale,alpha};
   }
 
-  // ---- Auto-size ----
   function autosizeIfNeeded() {
     if (!state.autoSize) return;
     const pad = 6;
@@ -209,7 +223,6 @@
     }
   }
 
-  // ---- Render ----
   function render(timestamp=0) {
     autosizeIfNeeded();
     layoutContent();
@@ -235,8 +248,8 @@
         ctx.fillText(w.text, 0, 0);
         ctx.restore();
 
-        // floating delete per word (edit mode)
-        if (state.mode==="edit") {
+        // floating delete ONLY on selected word
+        if (state.mode==="edit" && state.selection && state.selection.line===li && state.selection.word===wi) {
           const wrapRect = canvas.getBoundingClientRect();
           const scale = state.zoom;
           const fx = document.createElement("div");
@@ -284,7 +297,6 @@
     requestAnimationFrame(render);
   }
 
-  // ---- Events ----
   function setZoomFromUI() { state.zoom = parseFloat(zoomRange.value); applyZoom(); }
 
   resSelect.addEventListener("change", () => {
@@ -292,6 +304,7 @@
     state.res = (val==="96x128") ? {w:96,h:128} : {w:64,h:64};
     setCanvasResolution();
     buildBgThumbs();
+    autoFitZoom();
   });
 
   modeEditBtn.addEventListener("click", () => setMode("edit"));
@@ -302,18 +315,19 @@
   aboutClose.addEventListener("click", ()=> aboutModal.classList.add("hidden"));
   $("#aboutModal").addEventListener("click", (e)=>{ if (e.target.id==="aboutModal") aboutModal.classList.add("hidden"); });
 
-  // Inspector drawer behavior
+  // Inspector open/close
   toggleInspector.addEventListener("click", () => {
-    const expanded = inspectorBody.classList.toggle("expanded");
-    toggleInspector.setAttribute("aria-expanded", expanded.toString());
-    toggleInspector.textContent = expanded ? "Inspector ▾" : "Inspector ▴";
+    const open = !inspectorBody.classList.contains("open");
+    inspectorBody.classList.toggle("open", open);
+    toggleInspector.setAttribute("aria-expanded", open.toString());
+    toggleInspector.textContent = open ? "Inspector ▾" : "Inspector ▴";
+    requestAnimationFrame(autoFitZoom); // refit when height changes
   });
 
   function refreshInspectorFromSelection() {
     const w = selectedWord();
     if (!w) return;
-    // auto-open
-    inspectorBody.classList.add("expanded");
+    inspectorBody.classList.add("open");
     toggleInspector.setAttribute("aria-expanded", "true");
     toggleInspector.textContent = "Inspector ▾";
 
@@ -321,9 +335,8 @@
     fontSize.value = w.size || 22;
     fontColor.value = w.color || "#FFFFFF";
 
-    // update anim UI
     const spec = getAnimSpec(w);
-    animItems.forEach(item=>{
+    $$(".anim-item").forEach(item=>{
       const type = item.getAttribute("data-type");
       const cb = item.querySelector('input[type="checkbox"][data-anim="'+type+'"]');
       const settings = item.querySelector(".anim-settings");
@@ -341,10 +354,8 @@
 
   function getActive() { return selectedWord(); }
 
-  // Mobile keyboard helper: no visible input, focus on selection
+  // Mobile keyboard helper: focus on selection
   function focusMobileKeyboard() {
-    // keep input invisible and offscreen; on iOS focusing offscreen sometimes fails,
-    // so temporarily move near bottom with 1px size but opacity:0
     mobileInput.style.left = "50%";
     mobileInput.style.top = "calc(100% - 30px)";
     mobileInput.style.width = "1px";
@@ -378,7 +389,7 @@
     vAlignBtns.forEach(b=>b.classList.toggle("active", b.getAttribute("data-valign")===valign));
   }));
 
-  // ---- Swatches (default protected) ----
+  // Swatches (default protected; delete only custom)
   function buildColorSwatches() {
     const wrap = document.getElementById("swatches");
     if (!wrap) return;
@@ -396,11 +407,9 @@
         pushUndo(); w.color = col; if (fontColor) fontColor.value = col;
       });
       sw.appendChild(btn);
-      // show delete only for custom colors
       if (state.customSwatches.includes(col)) {
         const x = document.createElement("span");
-        x.className = "x"; x.textContent = "×";
-        x.title = "Remove swatch";
+        x.className = "x"; x.textContent = "×"; x.title="Remove swatch";
         x.addEventListener("click", (ev)=>{
           ev.stopPropagation();
           const i = state.customSwatches.indexOf(col);
@@ -420,11 +429,10 @@
     }
   });
   clearSwatchesBtn?.addEventListener("click", ()=>{
-    state.customSwatches = [];
+    state.customSwatches = ["#000000"]; // keep black
     buildColorSwatches(); buildBgSwatches();
   });
 
-  // Background swatches mirror text swatches; default protected
   function buildBgSwatches() {
     bgSwatches.innerHTML = "";
     const all = PRESET_COLORS.concat(state.customSwatches || []);
@@ -450,61 +458,16 @@
       bgSwatches.appendChild(wrap);
     });
   }
-
-  // ---- Animations wiring ----
-  animItems.forEach(item=>{
-    const type = item.getAttribute("data-type");
-    const cb = item.querySelector('input[type="checkbox"][data-anim="'+type+'"]');
-    const settings = item.querySelector(".anim-settings");
-    const intI = item.querySelector(`[data-anim-int="${type}"]`);
-    const xI = item.querySelector(`[data-anim-x="${type}"]`);
-    const yI = item.querySelector(`[data-anim-y="${type}"]`);
-
-    function updateWordFromUI(){
-      const w = selectedWord(); if (!w) return;
-      pushUndo();
-      const map = getAnimSpec(w);
-      if (cb.checked){
-        const rec = map.get(type) || { type };
-        if (intI) rec.int = parseFloat(intI.value)||1;
-        if (xI) rec.x = parseFloat(xI.value)||0;
-        if (yI) rec.y = parseFloat(yI.value)||0;
-        map.set(type, rec);
-      } else {
-        map.delete(type);
-      }
-      setAnimSpec(w, map);
-      settings.style.display = cb.checked ? "flex" : "none";
+  addBgSwatchBtn?.addEventListener("click", ()=>{
+    const col = bgSolidColor?.value || "#000000";
+    if (!state.customSwatches.includes(col)) {
+      state.customSwatches.push(col);
+      if (state.customSwatches.length > 48) state.customSwatches.shift();
+      buildBgSwatches(); buildColorSwatches();
     }
-
-    cb.addEventListener("change", updateWordFromUI);
-    intI?.addEventListener("change", updateWordFromUI);
-    xI?.addEventListener("change", updateWordFromUI);
-    yI?.addEventListener("change", updateWordFromUI);
   });
 
-  document.getElementById("animDefault")?.addEventListener("click", ()=>{
-    const w = selectedWord(); if(!w) return;
-    pushUndo(); w.animations = [];
-    document.querySelectorAll(".anim-item").forEach(i=>{
-      i.querySelector('input[type="checkbox"]').checked=false;
-      i.querySelector(".anim-settings").style.display="none";
-      i.querySelectorAll("input[type='number']").forEach(n=>{
-        if (n.hasAttribute("data-anim-x")) n.value = 5;
-        if (n.hasAttribute("data-anim-y")) n.value = 4;
-        if (n.hasAttribute("data-anim-int")) n.value = 1;
-      });
-    });
-  });
-  document.getElementById("animApplyAll")?.addEventListener("click", ()=>{
-    const w = selectedWord(); if(!w) return;
-    pushUndo();
-    state.lines.forEach(L=> L.words.forEach(W=>{
-      W.animations = JSON.parse(JSON.stringify(w.animations||[]));
-    }));
-  });
-
-  // ---- Background thumbs ----
+  // Background thumbs
   function buildBgThumbs() {
     const key = `${state.res.w}x${state.res.h}`;
     const list = state.bgImages[key] || [];
@@ -533,16 +496,15 @@
   }
   function loadImage(src) { return new Promise((resolve, reject)=>{ const img = new Image(); img.onload = ()=> resolve(img); img.onerror = reject; img.src = src; }); }
 
-  // ---- Canvas interactions ----
+  // Canvas interactions
   function handlePointerDown(e){
     const rect = canvas.getBoundingClientRect();
     const scale = state.zoom;
     const cx = Math.floor((e.clientX - rect.left)/scale);
     const cy = Math.floor((e.clientY - rect.top)/scale);
 
-    // If on mobile, trigger keyboard
     if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      focusMobileKeyboard();
+      mobileInput.focus();
     }
 
     const hit = hitTest(cx, cy);
@@ -562,14 +524,11 @@
       refreshInspectorFromSelection();
     } else {
       state.selection = null;
-      inspectorBody.classList.remove("expanded");
-      toggleInspector.setAttribute("aria-expanded", "false");
-      toggleInspector.textContent = "Inspector ▴";
     }
   }
   canvas.addEventListener("pointerdown", handlePointerDown);
   canvas.addEventListener("touchstart", (e)=>{ if (e.touches && e.touches[0]) handlePointerDown(e.touches[0]); }, {passive:true});
-  canvas.addEventListener("click", (e)=>{ /* fallback */ handlePointerDown(e); });
+  canvas.addEventListener("click", (e)=>{ handlePointerDown(e); });
 
   function hitTest(cx, cy) {
     for (let li=0; li<state.lines.length; li++){
@@ -588,7 +547,7 @@
     return null;
   }
 
-  // ---- Keyboard typing ----
+  // Keyboard typing
   window.addEventListener("keydown", (e)=>{
     if (state.mode!=="edit") return;
     const w = selectedWord();
@@ -606,7 +565,24 @@
     const text = w.text || "";
     const caret = Math.max(0, Math.min(w.caret ?? text.length, text.length));
 
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      pushUndo();
+      const li = state.selection.line;
+      const wi = state.selection.word;
+      const L = state.lines[li];
+      const head = text.slice(0, caret);
+      const tailText = text.slice(caret);
+      w.text = head;
+      const newLine = { words: [{ ...w, text: tailText, manual:false }], align: L.align || "center" };
+      state.lines.splice(li+1, 0, newLine);
+      state.selection = { line: li+1, word: 0 };
+      newLine.words[0].caret = 0;
+      refreshInspectorFromSelection();
+      return;
+    }
+
+    if (e.key === " ") {
       e.preventDefault();
       pushUndo();
       const li = state.selection.line;
@@ -662,7 +638,7 @@
     }
   });
 
-  // ---- Word ops ----
+  // Word ops
   addWordBtn.addEventListener("click", ()=>{
     pushUndo();
     const L = state.lines[state.selection?.line || 0] || (state.lines[0] = {words:[], align:"center"});
@@ -678,7 +654,7 @@
     refreshInspectorFromSelection();
   });
 
-  // ---- Undo/Redo/Clear ----
+  // Undo/Redo/Clear
   undoBtn.addEventListener("click", ()=>{
     if (!state.undo.length) return;
     const snap = state.undo.pop();
@@ -724,7 +700,7 @@
   });
   function doClearAll(){ pushUndo(); state.lines = []; state.selection = null; }
 
-  // ---- Save / Load JSON ----
+  // Save / Load JSON
   saveJsonBtn.addEventListener("click", ()=>{
     const payload = {
       lines: state.lines,
@@ -744,20 +720,19 @@
     const text = await file.text();
     try { const obj = JSON.parse(text); loadFromJSON(obj); } catch(err){ alert("Invalid JSON."); }
   });
-
   function loadFromJSON(obj) {
     pushUndo();
     state.lines = obj.lines || state.lines;
     state.background = { ...(obj.background||state.background), image: null };
     state.spacing = obj.spacing || state.spacing;
     state.vAlign = obj.vAlign || "middle";
-    state.customSwatches = Array.isArray(obj.customSwatches) ? obj.customSwatches.slice(0,48) : [];
+    state.customSwatches = Array.isArray(obj.customSwatches) ? obj.customSwatches.slice(0,48) : ["#000000"];
     state.selection = { line: 0, word: 0 };
     buildColorSwatches();
     buildBgSwatches();
   }
 
-  // ---- GIF render ----
+  // GIF render
   function GifWriter() { this.parts = []; }
   GifWriter.prototype.write = function(u8){ this.parts.push(u8); };
   GifWriter.prototype.concat = function(){ let len=this.parts.reduce((s,a)=>s+a.length,0); let out=new Uint8Array(len); let off=0; for(const a of this.parts){ out.set(a,off); off+=a.length; } return out; };
@@ -789,7 +764,7 @@
     gif.write(word(off.width)); gif.write(word(off.height));
     gif.write(new Uint8Array([0x80 | (gctSizePower-1), 0, 0])); gif.write(gct);
 
-    const delayCs = Math.round(100/fps);
+    const delayCs = Math.round(100/(Math.max(1,fps)));
 
     for(let f=0; f<frames; f++){
       const prevMode = state.mode; state.mode = "preview";
@@ -802,7 +777,7 @@
         octx.fillRect(0,0,off.width,off.height);
       }
       layoutContent();
-      const tSec = f/fps;
+      const tSec = f/Math.max(1,fps);
       for (const line of state.lines){
         for (const w of line.words){
           const m = measureWordBounds(w);
@@ -831,21 +806,21 @@
       gif.write(new Uint8Array([0x21,0xF9,0x04,0x04, delayCs & 255, (delayCs>>8)&255, 0, 0]));
       gif.write(new Uint8Array([0x2C, 0,0,0,0]));
       gif.write(word(off.width)); gif.write(word(off.height));
-      gif.write(num(0));
+      gif.write(new Uint8Array([0]));
       const lzwMin = Math.max(2, gctSizePower);
-      gif.write(num(lzwMin));
+      gif.write(new Uint8Array([lzwMin]));
       const lzw = lzwEncode(indices, lzwMin);
       let si=0;
       while(si<lzw.length){
         const n = Math.min(255, lzw.length-si);
-        gif.write(num(n));
+        gif.write(new Uint8Array([n]));
         gif.write(lzw.slice(si, si+n));
         si+=n;
       }
-      gif.write(num(0));
+      gif.write(new Uint8Array([0]));
     }
 
-    gif.write(num(0x3B));
+    gif.write(new Uint8Array([0x3B]));
     const u8 = gif.concat();
     const blob = new Blob([u8], {type:"image/gif"});
     const url = URL.createObjectURL(blob);
@@ -862,9 +837,8 @@
     buildBgSwatches();
     setMode("edit");
     requestAnimationFrame(render);
-    zoomRange.value = String(state.zoom);
-    applyZoom();
-    window.addEventListener("resize", applyZoom);
+    autoFitZoom();
+    window.addEventListener("resize", autoFitZoom);
   }
   init();
 })();
