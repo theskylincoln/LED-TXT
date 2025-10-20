@@ -1,6 +1,5 @@
-/* LED Backpack Animator v2.0 — Full build
- * Everything in a single vanilla JS file. No external deps.
- * Works with an /assets folder (Presets + Thumbs) that you already have.
+/* LED Backpack Animator v2.1 — app.js
+ * Implements requested layout/behavior updates.
  */
 
 (() => {
@@ -38,6 +37,7 @@
   const secInput = $("#seconds");
   const renderGifBtn = $("#renderGifBtn");
   const downloadLink = $("#downloadLink");
+  const fileNameInput = $("#fileName");
   const saveJsonBtn = $("#saveJsonBtn");
   const loadJsonInput = $("#loadJsonInput");
 
@@ -49,14 +49,21 @@
   const fontColor = $("#fontColor");
   const lineGap = $("#lineGap");
   const wordGap = $("#wordGap");
-  const alignReset = $("#alignReset");
-  const animSelect = $("#animSelect");
+  const animSelect = $("#animSelect"); // kept for API compatibility, not shown in new layout
+
+  const alignBtns = $$("[data-align]");
+  const vAlignBtns = $$("[data-valign]");
+  const applyAllAlign = $("#applyAllAlign");
+
+  const addSwatchBtn = $("#addSwatchBtn");
+  const clearSwatchesBtn = $("#clearSwatchesBtn");
 
   // ---------- STATE ----------
   const state = {
-    mode: "edit", // "edit" | "preview"
-    zoom: 3,
+    mode: "edit",
+    zoom: 2, // ~20% less than 2.5-3, good for laptop
     res: { w: 96, h: 128 },
+    vAlign: "middle", // top|middle|bottom
     background: { type: "solid", color: "#000000", image: null, name: "solid" },
     lines: [
       { words: [ { text: "HELLO", color: "#FFFFFF", font: "monospace", size: 22, align: "center", anim: "none", x: 0, y: 0, manual:false } ], align: "center" }
@@ -66,9 +73,10 @@
     redo: [],
     preventCutoff: true,
     autoSize: true,
-    spacing: { lineGap: 2, word: 8 },
+    spacing: { lineGap: 4, word: 6 },
     dragPromptDismissed: false,
     dragActive: false,
+    customSwatches: [], // persisted in config
     bgImages: {
       "96x128": [
         { key:"Preset_A", preset:"assets/Presets/96x128/Preset_A.png", thumb:"assets/Thumbs/Preset_A_thumb.png" },
@@ -78,27 +86,38 @@
         { key:"Preset_C", preset:"assets/Presets/64x64/Preset_C.png", thumb:"assets/Thumbs/Preset_C_thumb.png" },
         { key:"Preset_D", preset:"assets/Presets/64x64/Preset_D.png", thumb:"assets/Thumbs/Preset_D_thumb.png" },
       ],
-      // Always available thumbs:
-      miscThumbs: [
-        { key:"Solid", thumb:"assets/Thumbs/Solid_thumb.png" },
-        { key:"Upload", thumb:"assets/Thumbs/Upload_thumb.png" }
-      ],
     }
   };
 
+  // Built-in preset colors (still available)
+  const PRESET_COLORS = [
+    "#FFFFFF","#FFD700","#FF7F50","#FF3B3B","#00FFAA",
+    "#00BFFF","#1E90FF","#8A2BE2","#FF00FF","#00FF00",
+    "#FFA500","#C0C0C0"
+  ];
+
   // ---------- UTIL ----------
   function pushUndo() {
-    state.undo.push(JSON.stringify({ lines: state.lines, background: state.background, spacing: state.spacing }));
-    if (state.undo.length > 20) state.undo.shift();
+    state.undo.push(JSON.stringify({
+      lines: state.lines,
+      background: { ...state.background, image: undefined },
+      spacing: state.spacing,
+      vAlign: state.vAlign,
+      customSwatches: state.customSwatches
+    }));
+    if (state.undo.length > 100) state.undo.shift();
     state.redo.length = 0;
   }
 
   function loadFromJSON(obj) {
     pushUndo();
     state.lines = obj.lines || state.lines;
-    state.background = obj.background || state.background;
+    state.background = { ...(obj.background||state.background), image: null };
     state.spacing = obj.spacing || state.spacing;
+    state.vAlign = obj.vAlign || "middle";
+    state.customSwatches = Array.isArray(obj.customSwatches) ? obj.customSwatches.slice(0,48) : [];
     state.selection = { line: 0, word: 0 };
+    buildColorSwatches(); // rebuild custom swatches
     render();
   }
 
@@ -108,12 +127,16 @@
     const W = L.words[state.selection.word]; return W || null;
   }
 
-  // Convert CSS pixels to LED units (canvas logical px). We render 1:1 to canvas, then scale via CSS transform.
+  // Zoom: center the canvas via CSS; only need to set scale value
+  function applyZoom() {
+    canvas.style.transform = `translate(-50%,-50%) scale(${state.zoom})`;
+  }
+
   function setCanvasResolution() {
     const { w, h } = state.res;
     canvas.width = w;
     canvas.height = h;
-    canvas.style.transform = `scale(${state.zoom})`;
+    applyZoom();
   }
 
   function setMode(m) {
@@ -123,7 +146,6 @@
   }
 
   function measureWordBounds(word) {
-    // Measure in canvas units; use TextMetrics for accurate bounding box
     ctx.save();
     ctx.font = `${word.size}px ${word.font}`;
     const tm = ctx.measureText(word.text || "");
@@ -134,7 +156,6 @@
   }
 
   function lineWidth(line) {
-    // sum widths + word gaps
     let tot = 0;
     for (let i=0;i<line.words.length;i++){
       const m = measureWordBounds(line.words[i]);
@@ -144,15 +165,20 @@
     return tot;
   }
 
-  function layoutContent() {
-    // Vertical centering across lines; horizontal per-line depending on align (most are center)
-    const pad = 4;
-    const totalH = state.lines.reduce((sum, line, idx) => {
-      // use max ascent/descent estimation = size*0.8
+  function totalLinesHeight() {
+    return state.lines.reduce((sum, line, idx) => {
       const maxH = Math.max(...line.words.map(w=>measureWordBounds(w).h), 1);
       return sum + maxH + (idx? state.spacing.lineGap:0);
     }, 0);
-    let y = Math.round((state.res.h - totalH)/2) + pad;
+  }
+
+  function layoutContent() {
+    const pad = 4;
+    const totalH = totalLinesHeight();
+    let y;
+    if (state.vAlign === "top") y = pad + 2;
+    else if (state.vAlign === "bottom") y = Math.max(pad, state.res.h - totalH - pad);
+    else y = Math.round((state.res.h - totalH)/2) + pad; // middle
 
     for (let li=0; li<state.lines.length; li++) {
       const line = state.lines[li];
@@ -170,7 +196,6 @@
       let x = xStart;
       for (let wi=0; wi<line.words.length; wi++) {
         const w = line.words[wi];
-        // If manual-drag active for word, keep its x/y; otherwise set via layout
         if (!w.manual) {
           w.x = x;
           w.y = y + lh; // baseline
@@ -188,55 +213,62 @@
       ctx.fillStyle = color || "#000";
       ctx.fillRect(0,0,canvas.width, canvas.height);
     } else {
-      // draw preset/upload scaled-to-fit
       ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     }
   }
 
   function applyAnimationToWord(w, tSec) {
-    // Simple preview-only transforms; return {dx, dy, scale, alpha}
     switch (w.anim) {
-      case "pulse":
-        return { dx:0, dy:0, scale: 0.9 + 0.1*Math.sin(tSec*6), alpha:1 };
-      case "flicker":
-        return { dx:0, dy:0, scale:1, alpha: (Math.sin(tSec*50)>0? 1:0.6) };
-      case "slide":
-        return { dx: Math.round(5*Math.sin(tSec*4)), dy:0, scale:1, alpha:1 };
-      case "bounce":
-        return { dx:0, dy: Math.round(4*Math.abs(Math.sin(tSec*6))), scale:1, alpha:1 };
-      case "wave":
-        return { dx:0, dy: Math.round(3*Math.sin((w.x + tSec*40)/10)), scale:1, alpha:1 };
-      default:
-        return { dx:0, dy:0, scale:1, alpha:1 };
+      case "pulse":   return { dx:0, dy:0, scale: 0.9 + 0.1*Math.sin(tSec*6), alpha:1 };
+      case "flicker": return { dx:0, dy:0, scale:1, alpha: (Math.sin(tSec*50)>0? 1:0.6) };
+      case "slide":   return { dx: Math.round(5*Math.sin(tSec*4)), dy:0, scale:1, alpha:1 };
+      case "bounce":  return { dx:0, dy: Math.round(4*Math.abs(Math.sin(tSec*6))), scale:1, alpha:1 };
+      case "wave":    return { dx:0, dy: Math.round(3*Math.sin((w.x + tSec*40)/10)), scale:1, alpha:1 };
+      default:        return { dx:0, dy:0, scale:1, alpha:1 };
+    }
+  }
+
+  function autosizeIfNeeded() {
+    if (!state.autoSize) return;
+    const pad = 6;
+    const maxW = state.res.w - pad*2;
+
+    for (const line of state.lines) {
+      let tries = 0;
+      while (tries < 40) {
+        const lw = lineWidth(line);
+        if (lw <= maxW) break;
+        for (const w of line.words) {
+          w.size = Math.max(6, Math.floor(w.size * 0.96));
+        }
+        tries++;
+      }
     }
   }
 
   function render(timestamp=0) {
+    autosizeIfNeeded();
     layoutContent();
     drawBackground();
+
     const tSec = timestamp/1000;
     for (let li=0; li<state.lines.length; li++) {
       const line = state.lines[li];
       for (let wi=0; wi<line.words.length; wi++) {
         const w = line.words[wi];
         const m = measureWordBounds(w);
-
-        // Anim transform
         const { dx, dy, scale, alpha } = state.mode==="preview" ? applyAnimationToWord(w, tSec) : {dx:0,dy:0,scale:1,alpha:1};
 
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(w.x + dx, w.y + dy);
         ctx.scale(scale, scale);
-
         ctx.font = `${w.size}px ${w.font}`;
         ctx.fillStyle = w.color;
         ctx.textBaseline = "alphabetic";
         ctx.fillText(w.text, 0, 0);
-
         ctx.restore();
 
-        // Selection visuals (edit mode only)
         if (state.mode==="edit" && state.selection && state.selection.line===li && state.selection.word===wi) {
           const padX=2, padY=1;
           const left = w.x - padX;
@@ -252,7 +284,6 @@
           ctx.strokeRect(left, top, boxW, boxH);
           ctx.restore();
 
-          // blinking caret at end of word
           const blink = ((performance.now()/500)|0)%2===0;
           if (blink) {
             ctx.fillStyle="#fff";
@@ -261,14 +292,13 @@
         }
       }
     }
-
     requestAnimationFrame(render);
   }
 
   // ---------- EVENTS ----------
   function setZoomFromUI() {
-    state.zoom = parseInt(zoomRange.value, 10);
-    canvas.style.transform = `scale(${state.zoom})`;
+    state.zoom = parseFloat(zoomRange.value);
+    applyZoom();
   }
 
   resSelect.addEventListener("change", () => {
@@ -281,62 +311,119 @@
 
   modeEditBtn.addEventListener("click", () => setMode("edit"));
   modePrevBtn.addEventListener("click", () => setMode("preview"));
-
   zoomRange.addEventListener("input", setZoomFromUI);
 
   aboutBtn.addEventListener("click", ()=> aboutModal.classList.remove("hidden"));
   aboutClose.addEventListener("click", ()=> aboutModal.classList.add("hidden"));
+  $("#aboutModal").addEventListener("click", (e)=>{ if (e.target.id==="aboutModal") aboutModal.classList.add("hidden"); });
 
-  $("#aboutModal").addEventListener("click", (e)=>{
-    if (e.target.id==="aboutModal") aboutModal.classList.add("hidden");
-  });
-
+  // Inspector toggle (manual)
   toggleInspector.addEventListener("click", () => {
-    const expanded = inspectorBody.classList.toggle("collapsed");
-    toggleInspector.setAttribute("aria-expanded", (!expanded).toString());
+    const nowCollapsed = inspectorBody.classList.toggle("collapsed");
+    toggleInspector.setAttribute("aria-expanded", (!nowCollapsed).toString());
   });
 
-  // Inspector bindings (affect selected word or line/global)
+  // Keep inspector in sync with selection
+  function refreshInspectorFromSelection() {
+    const w = selectedWord();
+    if (!w) return;
+    if ($("#autoOpenInspector")?.checked) {
+      inspectorBody.classList.remove("collapsed");
+      toggleInspector.setAttribute("aria-expanded", "true");
+    }
+    fontSelect.value = w.font || "monospace";
+    fontSize.value = w.size || 22;
+    fontColor.value = w.color || "#FFFFFF";
+  }
+
   function getActive() { return selectedWord(); }
 
   fontSelect.addEventListener("change", ()=>{ const w=getActive(); if(!w)return; pushUndo(); w.font=fontSelect.value; });
   fontSize.addEventListener("change", ()=>{ const w=getActive(); if(!w)return; pushUndo(); w.size=parseInt(fontSize.value,10)||22; });
   autoSize.addEventListener("change", ()=>{ state.autoSize = autoSize.checked; });
   fontColor.addEventListener("input", ()=>{ const w=getActive(); if(!w)return; pushUndo(); w.color=fontColor.value; });
-  lineGap.addEventListener("change", ()=>{ pushUndo(); state.spacing.lineGap = parseInt(lineGap.value,10)||2; });
-  wordGap.addEventListener("change", ()=>{ pushUndo(); state.spacing.word = parseInt(wordGap.value,10)||8; });
-  $$("[data-align]").forEach(btn=>btn.addEventListener("click", (e)=>{
+  lineGap.addEventListener("change", ()=>{ pushUndo(); state.spacing.lineGap = parseInt(lineGap.value,10)||4; });
+  wordGap.addEventListener("change", ()=>{ pushUndo(); state.spacing.word = parseInt(wordGap.value,10)||6; });
+
+  // Horizontal align
+  alignBtns.forEach(btn=>btn.addEventListener("click", (e)=>{
     const align = e.currentTarget.getAttribute("data-align");
     pushUndo();
-    const L = state.lines[state.selection?.line || 0];
-    if (L){ L.align = align; }
-    $$("[data-align]").forEach(b=>b.classList.toggle("active", b.getAttribute("data-align")===align));
+    const applyAll = applyAllAlign?.checked;
+    if (applyAll) {
+      state.lines.forEach(L => L.align = align);
+    } else {
+      const L = state.lines[state.selection?.line || 0];
+      if (L){ L.align = align; }
+    }
+    alignBtns.forEach(b=>b.classList.toggle("active", b.getAttribute("data-align")===align));
   }));
-  alignReset.addEventListener("click", ()=>{
+
+  // Vertical align
+  vAlignBtns.forEach(btn=>btn.addEventListener("click", (e)=>{
+    const valign = e.currentTarget.getAttribute("data-valign"); // top/middle/bottom
     pushUndo();
-    const L = state.lines[state.selection?.line || 0];
-    if (L){ L.align="center"; }
-    $$("[data-align]").forEach(b=>b.classList.toggle("active", b.getAttribute("data-align")==="center"));
+    state.vAlign = valign;
+    vAlignBtns.forEach(b=>b.classList.toggle("active", b.getAttribute("data-valign")===valign));
+  }));
+
+  // Color Swatches (preset + custom)
+  function buildColorSwatches() {
+    const wrap = document.getElementById("swatches");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    const all = PRESET_COLORS.concat(state.customSwatches || []);
+    all.slice(0, 48).forEach(col => {
+      const btn = document.createElement("button");
+      btn.className = "swatch";
+      btn.style.background = col;
+      btn.title = col;
+      btn.addEventListener("click", ()=>{
+        const w = selectedWord(); if (!w) return;
+        pushUndo();
+        w.color = col;
+        if (fontColor) fontColor.value = col;
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  addSwatchBtn?.addEventListener("click", ()=>{
+    const col = fontColor?.value || "#FFFFFF";
+    if (!state.customSwatches.includes(col)) {
+      state.customSwatches.push(col);
+      if (state.customSwatches.length > 48) state.customSwatches.shift();
+      buildColorSwatches();
+    }
   });
-  animSelect.addEventListener("change", ()=>{
-    const w=getActive(); if(!w)return;
-    pushUndo(); w.anim = animSelect.value;
+  clearSwatchesBtn?.addEventListener("click", ()=>{
+    state.customSwatches = [];
+    buildColorSwatches();
   });
 
-  // Background handling
+  // Background thumbnails
   function buildBgThumbs() {
     const key = `${state.res.w}x${state.res.h}`;
     const list = state.bgImages[key] || [];
     bgThumbs.innerHTML = "";
-    list.forEach(item=>{
+    list.forEach(item => {
       const div = document.createElement("div");
       div.className = "thumb";
       div.title = item.key;
-      div.innerHTML = `<img src="${item.thumb}" alt="${item.key} thumb">`;
+      const img = document.createElement("img");
+      img.src = item.thumb;
+      img.alt = item.key + " thumb";
+      img.onerror = () => { img.style.opacity = '0.4'; img.alt = item.key + " (thumb missing)"; };
+      div.appendChild(img);
       div.addEventListener("click", async ()=>{
-        const img = await loadImage(item.preset);
-        pushUndo();
-        state.background = { type:"image", color:"#000000", image:img, name:item.key };
+        try {
+          const imgEl = await loadImage(item.preset);
+          pushUndo();
+          state.background = { type:"image", color:"#000000", image:imgEl, name:item.key };
+        } catch (e) {
+          console.warn("Preset load failed:", item.preset, e);
+          alert("Could not load preset image:\\n" + item.preset + "\\nCheck filename/path and case.");
+        }
       });
       bgThumbs.appendChild(div);
     });
@@ -369,14 +456,13 @@
   }
 
   // Canvas interactions
-  let dragging = null; // {li, wi, offsetX, offsetY}
+  let dragging = null;
   canvas.addEventListener("mousedown", (e)=>{
     const rect = canvas.getBoundingClientRect();
     const scale = state.zoom;
     const cx = Math.floor((e.clientX - rect.left)/scale);
     const cy = Math.floor((e.clientY - rect.top)/scale);
 
-    // Hit test words
     let hit = null;
     for (let li=0; li<state.lines.length; li++){
       const L = state.lines[li];
@@ -394,7 +480,7 @@
 
     if (hit){
       state.selection = { line: hit.li, word: hit.wi };
-      // Manual drag?
+      refreshInspectorFromSelection();
       if (manualDragChk.checked) {
         if (!state.dragPromptDismissed && !sessionStorage.getItem("LED_dragSuppressed")) {
           dragWarn.classList.remove("hidden");
@@ -404,8 +490,9 @@
         state.lines[hit.li].words[hit.wi].manual = true;
       }
     } else {
-      // Deselect
       state.selection = null;
+      inspectorBody.classList.add("collapsed");
+      toggleInspector.setAttribute("aria-expanded", "false");
     }
   });
 
@@ -421,20 +508,6 @@
   });
   window.addEventListener("mouseup", ()=> dragging=null);
 
-  // Drag warning modal
-  dragWarnOk.addEventListener("click", ()=>{
-    dragWarn.classList.add("hidden");
-    if (suppressDragWarn.checked) sessionStorage.setItem("LED_dragSuppressed","1");
-    state.dragPromptDismissed = true;
-  });
-  dragWarnCancel.addEventListener("click", ()=>{
-    dragWarn.classList.add("hidden");
-    manualDragChk.checked = false;
-  });
-  dragWarn.addEventListener("click", (e)=>{
-    if (e.target.id==="dragWarn") dragWarn.classList.add("hidden");
-  });
-
   // Word ops
   addWordBtn.addEventListener("click", ()=>{
     pushUndo();
@@ -443,12 +516,16 @@
     if (!L) state.lines.push({ words:[base], align:"center" });
     else L.words.push(base);
     state.selection = { line: state.selection?.line || 0, word: (L? L.words.length-1:0) };
+    refreshInspectorFromSelection();
   });
+
   addLineBtn.addEventListener("click", ()=>{
     pushUndo();
     state.lines.push({ words:[{ text:"NEW", color:"#FFFFFF", font:"monospace", size:22, align:"center", anim:"none", x:0,y:0, manual:false }], align:"center" });
     state.selection = { line: state.lines.length-1, word:0 };
+    refreshInspectorFromSelection();
   });
+
   delWordBtn.addEventListener("click", ()=>{
     const sel = state.selection; if(!sel) return;
     pushUndo();
@@ -457,9 +534,11 @@
     L.words.splice(sel.word, 1);
     if (L.words.length===0) state.lines.splice(sel.line,1);
     state.selection = null;
+    inspectorBody.classList.add("collapsed");
+    toggleInspector.setAttribute("aria-expanded", "false");
   });
 
-  // Keyboard typing
+  // Typing
   window.addEventListener("keydown", (e)=>{
     if (state.mode!=="edit") return;
     const w = selectedWord(); if (!w) return;
@@ -471,9 +550,9 @@
       const wi = state.selection.word;
       const L = state.lines[li];
       const tail = L.words.splice(wi+1);
-      // new line starts with empty word
       state.lines.splice(li+1, 0, { words: [{ text:"", color:w.color, font:w.font, size:w.size, anim:w.anim, x:0,y:0, manual:false }].concat(tail), align:L.align || "center" });
       state.selection = { line: li+1, word: 0 };
+      refreshInspectorFromSelection();
       return;
     }
 
@@ -485,6 +564,7 @@
       const L = state.lines[li];
       L.words.splice(wi+1, 0, { text:"", color:w.color, font:w.font, size:w.size, anim:w.anim, x:0,y:0, manual:false });
       state.selection.word = wi+1;
+      refreshInspectorFromSelection();
       return;
     }
 
@@ -502,48 +582,57 @@
     }
   });
 
-  // Auto-size per line to fit width with padding
-  function autosizeIfNeeded() {
-    if (!state.autoSize) return;
-    const pad = 6;
-    for (const line of state.lines) {
-      const maxW = state.res.w - pad*2;
-      // reduce size if overflow
-      let need = true;
-      let tries = 0;
-      while (tries < 30) {
-        const lw = lineWidth(line);
-        if (lw <= maxW) break;
-        for (const w of line.words) w.size = Math.max(6, Math.floor(w.size*0.95));
-        tries++;
-      }
-    }
-  }
-
   // Undo/Redo
   undoBtn.addEventListener("click", ()=>{
     if (!state.undo.length) return;
     const snap = state.undo.pop();
-    state.redo.push(JSON.stringify({ lines: state.lines, background: state.background, spacing: state.spacing }));
+    state.redo.push(JSON.stringify({
+      lines: state.lines,
+      background: { ...state.background, image: undefined },
+      spacing: state.spacing,
+      vAlign: state.vAlign,
+      customSwatches: state.customSwatches
+    }));
     const obj = JSON.parse(snap);
     state.lines = obj.lines; state.background = obj.background; state.spacing = obj.spacing;
+    state.vAlign = obj.vAlign || "middle";
+    state.customSwatches = Array.isArray(obj.customSwatches)? obj.customSwatches : [];
+    buildColorSwatches();
   });
+
   redoBtn.addEventListener("click", ()=>{
     if (!state.redo.length) return;
     const snap = state.redo.pop();
-    state.undo.push(JSON.stringify({ lines: state.lines, background: state.background, spacing: state.spacing }));
+    state.undo.push(JSON.stringify({
+      lines: state.lines,
+      background: { ...state.background, image: undefined },
+      spacing: state.spacing,
+      vAlign: state.vAlign,
+      customSwatches: state.customSwatches
+    }));
     const obj = JSON.parse(snap);
     state.lines = obj.lines; state.background = obj.background; state.spacing = obj.spacing;
+    state.vAlign = obj.vAlign || "middle";
+    state.customSwatches = Array.isArray(obj.customSwatches)? obj.customSwatches : [];
+    buildColorSwatches();
   });
 
-  // Save / Load JSON
+  // Save / Load JSON (persist customSwatches & vAlign)
   saveJsonBtn.addEventListener("click", ()=>{
-    const blob = new Blob([JSON.stringify({ lines: state.lines, background: { ...state.background, image: undefined }, spacing: state.spacing }, null, 2)], {type:"application/json"});
+    const payload = {
+      lines: state.lines,
+      background: { ...state.background, image: undefined },
+      spacing: state.spacing,
+      vAlign: state.vAlign,
+      customSwatches: state.customSwatches
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = "led_animator_config.json"; a.click();
     URL.revokeObjectURL(url);
   });
+
   loadJsonInput.addEventListener("change", async (e)=>{
     const file = e.target.files[0]; if(!file) return;
     const text = await file.text();
@@ -555,12 +644,8 @@
     }
   });
 
-  // ---------- Minimal GIF encoder (very small, not optimized) ----------
-  // Credits: compact adaptation of Kevin Weiner's LZW logic for GIF.
-  // This is intentionally tiny; for large animations consider a full lib.
-  function GifWriter() {
-    this.parts = [];
-  }
+  // GIF encoder (same as before)
+  function GifWriter() { this.parts = []; }
   GifWriter.prototype.write = function(u8){ this.parts.push(u8); };
   GifWriter.prototype.concat = function(){
     let len = this.parts.reduce((s,a)=>s+a.length,0);
@@ -585,18 +670,17 @@
     return best;
   }
   function buildPalette(imgData){
-    // naive palette: sample unique colors up to 256
     const set = new Map();
     const d = imgData.data;
     for(let i=0;i<d.length;i+=4){
-      const a=d[i+3]; if(a<10){ continue; } // skip transparent-ish
+      const a=d[i+3]; if(a<10){ continue; }
       const key=(d[i]<<16)|(d[i+1]<<8)|(d[i+2]);
       set.set(key,true);
       if(set.size>=256) break;
     }
     const arr = Array.from(set.keys()).map(k=>[(k>>16)&255,(k>>8)&255,k&255]);
     if(arr.length===0) arr.push([0,0,0]);
-    while(arr.length&(arr.length-1)) arr.push(arr[arr.length-1]); // power of two
+    while(arr.length&(arr.length-1)) arr.push(arr[arr.length-1]);
     if(arr.length>256) arr.length=256;
     return arr;
   }
@@ -640,37 +724,32 @@
     const fps = Math.max(1, Math.min(30, parseInt(fpsInput.value,10)||8));
     const seconds = Math.max(1, Math.min(20, parseInt(secInput.value,10)||4));
     const frames = fps*seconds;
+    const desiredName = (fileNameInput?.value || "animation.gif").trim() || "animation.gif";
+    downloadLink.setAttribute("download", desiredName);
 
-    // Create an offscreen to draw each frame
     const off = document.createElement("canvas");
     off.width = canvas.width; off.height = canvas.height;
     const octx = off.getContext("2d");
 
-    // First frame to build palette
     octx.drawImage(canvas, 0,0);
     const firstData = octx.getImageData(0,0,off.width,off.height);
     const palette = buildPalette(firstData);
     const gct = colorTable(palette);
-    const gctSizePower = Math.ceil(Math.log2(Math.max(2, palette.length))); // 1..8
+    const gctSizePower = Math.ceil(Math.log2(Math.max(2, palette.length)));
 
     const gif = new GifWriter();
-    // Header
     gif.write(new Uint8Array([71,73,70,56,57,97])); // GIF89a
     gif.write(word(off.width));
     gif.write(word(off.height));
-    gif.write(new Uint8Array([0x80 | (gctSizePower-1), 0, 0])); // GCT flag + size
+    gif.write(new Uint8Array([0x80 | (gctSizePower-1), 0, 0]));
     gif.write(gct);
 
     const delayCs = Math.round(100/fps);
 
-    // For each frame, redraw live scene and encode
     for(let f=0; f<frames; f++){
-      // Simulate time by calling render pieces into offscreen
-      // Temporarily render in preview mode to get animations
       const prevMode = state.mode;
       state.mode = "preview";
-      // Draw to offscreen using same routines
-      // background
+
       octx.clearRect(0,0,off.width,off.height);
       if (state.background.type==="image" && state.background.image){
         octx.drawImage(state.background.image, 0,0,off.width,off.height);
@@ -678,7 +757,6 @@
         octx.fillStyle = state.background.color || "#000";
         octx.fillRect(0,0,off.width,off.height);
       }
-      // content
       layoutContent();
       const tSec = f/fps;
       for (const line of state.lines){
@@ -699,7 +777,6 @@
       state.mode = prevMode;
 
       const imgData = octx.getImageData(0,0,off.width,off.height);
-      // Map to palette
       const indices = new Uint8Array(off.width*off.height);
       let p=0;
       for(let i=0;i<imgData.data.length;i+=4){
@@ -707,17 +784,13 @@
         indices[p++]=idx;
       }
 
-      // Graphic Control Extension (delay)
       gif.write(new Uint8Array([0x21,0xF9,0x04,0x04, delayCs & 255, (delayCs>>8)&255, 0, 0]));
-      // Image Descriptor
-      gif.write(new Uint8Array([0x2C, 0,0,0,0])); // left, top
+      gif.write(new Uint8Array([0x2C, 0,0,0,0]));
       gif.write(word(off.width)); gif.write(word(off.height));
-      gif.write(num(0)); // no local color table
-      // LZW minimum code size
+      gif.write(num(0));
       const lzwMin = Math.max(2, gctSizePower);
       gif.write(num(lzwMin));
       const lzw = lzwEncode(indices, lzwMin);
-      // Sub-blocks
       let si=0;
       while(si<lzw.length){
         const n = Math.min(255, lzw.length-si);
@@ -725,10 +798,9 @@
         gif.write(lzw.slice(si, si+n));
         si+=n;
       }
-      gif.write(num(0)); // block terminator
+      gif.write(num(0));
     }
 
-    // Trailer
     gif.write(num(0x3B));
     const u8 = gif.concat();
     const blob = new Blob([u8], {type:"image/gif"});
@@ -739,14 +811,34 @@
   renderGifBtn.addEventListener("click", renderGIF);
 
   // ---------- INIT ----------
+  function buildColorSwatches() {
+    const wrap = document.getElementById("swatches");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    const all = PRESET_COLORS.concat(state.customSwatches || []);
+    all.slice(0,48).forEach(col => {
+      const btn = document.createElement("button");
+      btn.className = "swatch";
+      btn.style.background = col;
+      btn.title = col;
+      btn.addEventListener("click", ()=>{
+        const w = selectedWord(); if (!w) return;
+        pushUndo();
+        w.color = col;
+        if (fontColor) fontColor.value = col;
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
   function init() {
     setCanvasResolution();
-    setZoomFromUI();
     buildBgThumbs();
-    autosizeIfNeeded();
+    buildColorSwatches();
     setMode("edit"); // default
-    inspectorBody.classList.add("collapsed"); // collapsed by default
     requestAnimationFrame(render);
+    zoomRange.value = String(state.zoom);
+    applyZoom();
   }
   init();
 
