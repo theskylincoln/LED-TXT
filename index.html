@@ -1,97 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>LED Backpack Animator</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <h1>LED Backpack Animator v3.1</h1>
+  <header class="topbar">
+    <div class="title-wrap">
+      <h1 id="appTitle">LED Backpack Animator</h1>
+      <button id="aboutBtn" class="linklike">About</button>
+    </div>
+    <div class="tools-row">
+      <div class="seg">
+        <button id="modeEdit" class="seg-btn active">✏️ Edit</button>
+        <button id="modePreview" class="seg-btn">▶️ Preview</button>
+      </div>
+      <div class="zoom-wrap">
+        <label for="zoom">Zoom</label>
+        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.8" />
+        <button id="fitBtn" class="button tiny">Fit</button>
+      </div>
+      <div class="undo-row">
+        <button id="undoBtn" class="button tiny" title="Undo">↶</button>
+        <button id="clearAllBtn" class="button tiny" title="Clear All">🧹</button>
+        <button id="redoBtn" class="button tiny" title="Redo">↷</button>
+      </div>
+    </div>
   </header>
 
-  <main>
-    <div class="controls">
-      <select id="resSelect">
-        <option value="96x128" selected>96×128</option>
-        <option value="64x64">64×64</option>
-      </select>
-      <button id="fitBtn">Auto-Fit</button>
-      <input type="range" id="zoom" min="0.5" max="10" step="0.1" value="1">
-      <button id="modeEdit" class="active">✏️ Edit</button>
-      <button id="modePreview">▶️ Preview</button>
-    </div>
+  <main class="layout">
+    <aside class="left-panel">
+      <h3>Resolution & Background</h3>
 
-    <div class="canvas-wrap">
-      <canvas id="led"></canvas>
-    </div>
+      <div class="row two">
+        <label for="resSelect">Resolution</label>
+        <select id="resSelect">
+          <option value="96x128" selected>96×128</option>
+          <option value="64x64">64×64</option>
+        </select>
+      </div>
 
-    <div id="inspector" class="inspector">
-      <button id="toggleInspector">Inspector ▾</button>
-      <div id="inspectorBody" class="inspector-body open">
-        <details id="accFont" class="acc" open>
-          <summary>Font</summary>
-          <label>Font</label><select id="fontSelect">
-            <option value="Orbitron">Orbitron</option>
-            <option value="Monospace">Monospace</option>
-            <option value="Arial">Arial</option>
-            <option value="Roboto">Roboto</option>
-            <option value="Courier New">Courier New</option>
-          </select>
-          <label>Size</label><input type="number" id="fontSize" value="22" min="6" max="64">
-          <label><input type="checkbox" id="autoSize" checked> Auto-size</label>
-          <label>Color</label><input type="color" id="fontColor" value="#FFFFFF">
-          <div id="swatches"></div>
-          <button id="addSwatchBtn">Add Swatch</button>
-          <button id="clearSwatchesBtn">Clear Custom</button>
-        </details>
+      <div class="row">
+        <label>Background Presets</label>
+        <div id="bgThumbs" class="thumbs"></div>
+      </div>
 
-        <details id="accLayout" class="acc">
-          <summary>Spacing & Alignment</summary>
-          <label>Line Gap</label><input type="number" id="lineGap" value="4" min="0" max="30">
-          <label>Word Gap</label><input type="number" id="wordGap" value="6" min="0" max="30">
-          <div class="align-group">
-            <button data-align="left">Left</button>
-            <button data-align="center" class="active">Center</button>
-            <button data-align="right">Right</button>
-            <button data-valign="top">Top</button>
-            <button data-valign="middle" class="active">Middle</button>
-            <button data-valign="bottom">Bottom</button>
-          </div>
-          <label><input type="checkbox" id="applyAllAlign"> Apply to All</label>
-        </details>
+      <div class="bg-actions">
+        <div class="row two">
+          <button id="bgSolidBtn" class="button tiny">Solid</button>
+          <input type="color" id="bgSolidColor" value="#000000" />
+        </div>
+        <div class="row">
+          <button id="addBgSwatchBtn" class="button tiny">+ Add BG Swatch</button>
+        </div>
+        <div id="bgSwatches" class="swatches"></div>
 
-        <details id="accAnim" class="acc">
-          <summary>Animations</summary>
-          <button id="animHelpBtn">Help</button>
-          <div id="animList"></div>
-        </details>
+        <label class="upload-btn block">
+          <input type="file" id="bgUpload" accept="image/*" hidden />
+          <span>Upload Background</span>
+        </label>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="canvas-wrap">
+        <canvas id="led" width="96" height="128"></canvas>
+        <!-- floating delete for selected word -->
+        <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
+      </div>
+
+      <div class="stage-actions">
+        <button id="addWordBtn" class="button">+ Word</button>
+        <button id="addLineBtn" class="button">+ Line</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="inspector-bar">
+    <div class="inspector-head">
+      <div class="toolbar">
+        <button id="toggleInspector" aria-expanded="false" class="button">Inspector ▴</button>
+        <div class="toolbar-tabs">
+          <button class="tab" data-acc="accFont">Font</button>
+          <button class="tab" data-acc="accLayout">Spacing & Alignment</button>
+          <button class="tab" data-acc="accAnim">Animations</button>
+        </div>
       </div>
     </div>
 
-    <div class="toolbar-bottom">
-      <button id="addWordBtn">+ Word</button>
-      <button id="addLineBtn">+ Line</button>
-      <button id="undoBtn">↩ Undo</button>
-      <button id="redoBtn">↪ Redo</button>
-      <button id="clearAllBtn">🗑 Clear All</button>
+    <div id="inspectorBody" class="inspector-body">
+      <!-- Font -->
+      <details class="acc" id="accFont">
+        <summary>Font</summary>
+        <div class="acc-body">
+          <div class="row two">
+            <label>Family</label>
+            <select id="fontSelect">
+              <option value="Orbitron">Orbitron</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Roboto Mono">Roboto Mono</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Arial Black">Arial Black</option>
+              <option value="monospace">Monospace</option>
+              <option value="sans-serif">Sans-serif</option>
+              <option value="serif">Serif</option>
+            </select>
+          </div>
+          <div class="row two">
+            <label>Size</label>
+            <input id="fontSize" type="number" min="6" max="64" value="22" />
+          </div>
+          <label class="chk"><input type="checkbox" id="autoSize" checked/> <span>Auto-size</span></label>
+
+          <div class="color-controls">
+            <div id="swatches" class="swatches"></div>
+            <input type="color" id="fontColor" value="#FFFFFF" />
+            <button id="addSwatchBtn" class="button tiny">+ Add</button>
+            <button id="clearSwatchesBtn" class="button tiny">Clear Custom</button>
+          </div>
+        </div>
+      </details>
+
+      <!-- Spacing + Alignment combined -->
+      <details class="acc" id="accLayout">
+        <summary>Spacing & Alignment</summary>
+        <div class="acc-body">
+          <div class="subhead">Spacing</div>
+          <div class="row two">
+            <label>Line</label><input id="lineGap" type="number" min="0" max="30" value="4" />
+            <label>Word</label><input id="wordGap" type="number" min="0" max="30" value="6" />
+          </div>
+
+          <div class="subhead">Alignment</div>
+          <div class="seg">
+            <button class="seg-btn" data-align="left">Left</button>
+            <button class="seg-btn active" data-align="center">Center</button>
+            <button class="seg-btn" data-align="right">Right</button>
+          </div>
+          <div class="seg">
+            <button class="seg-btn" data-valign="top">Top</button>
+            <button class="seg-btn active" data-valign="middle">Middle</button>
+            <button class="seg-btn" data-valign="bottom">Bottom</button>
+          </div>
+
+          <label class="chk"><input type="checkbox" id="applyAllAlign" /> <span>Apply to all</span></label>
+          <label class="chk"><input type="checkbox" id="manualDragChk" /> <span>Manual drag</span></label>
+        </div>
+      </details>
+
+      <!-- Animations -->
+      <details class="acc" id="accAnim">
+        <summary>Animations</summary>
+        <div class="acc-body">
+          <div class="anim-head">
+            <button id="animHelpBtn" class="button tiny">Help</button>
+          </div>
+          <div id="animList" class="anim-list"></div>
+        </div>
+      </details>
+    </div>
+  </footer>
+
+  <section class="bottom-panels">
+    <div class="card">
+      <h3>Config</h3>
+      <div class="row two-eq">
+        <button id="saveJsonBtn" class="button block center">Download Config</button>
+        <label class="upload-btn block center">
+          <input type="file" id="loadJsonInput" accept="application/json" hidden />
+          <span>Import Config</span>
+        </label>
+      </div>
     </div>
 
-    <div class="config-section">
-      <button id="saveJsonBtn">Download Config</button>
-      <input type="file" id="loadJsonInput" accept=".json">
+    <div class="card">
+      <h3>Render & Download</h3>
+      <div class="row two">
+        <label>Filename</label><input id="fileName" value="animation.gif" />
+      </div>
+      <div class="row two">
+        <label>FPS</label><input type="number" id="fps" value="15" min="1" max="30" />
+        <label>Length (s)</label><input type="number" id="seconds" value="8" min="1" max="60" />
+      </div>
+      <div class="row">
+        <button id="downloadGifBtn" class="button block center">Download GIF</button>
+      </div>
     </div>
+  </section>
 
-    <div class="render-section">
-      <label>FPS</label><input id="fps" type="number" value="15" min="1" max="30">
-      <label>Seconds</label><input id="seconds" type="number" value="8" min="1" max="30">
-      <input id="fileName" type="text" value="animation.gif">
-      <button id="renderGifBtn">Render GIF</button>
-      <a id="downloadLink" download="animation.gif">Download GIF</a>
+  <!-- hidden input to trigger mobile keyboard -->
+  <input id="mobileInput" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+
+  <!-- Clear modal -->
+  <div id="clearWarn" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <h3>Clear All?</h3>
+      <p>This will remove all lines and words. Are you sure?</p>
+      <label class="chk"><input type="checkbox" id="suppressClearWarn" /> <span>Don’t show again (this session)</span></label>
+      <div class="modal-actions">
+        <button id="clearCancel">Cancel</button>
+        <button id="clearConfirm" class="primary">Clear</button>
+      </div>
     </div>
-  </main>
+  </div>
 
-  <script src="app.js"></script>
+  <!-- About modal -->
+  <div id="aboutModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <h3>About</h3>
+      <p>LED Backpack Animator — compose text & render GIFs for LED backpacks.</p>
+      <div class="modal-actions">
+        <button id="aboutClose" class="primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GIF encoder libs -->
+  <script src="https://unpkg.com/jsgif@0.2.1/NeuQuant.js"></script>
+  <script src="https://unpkg.com/jsgif@0.2.1/LZWEncoder.js"></script>
+  <script src="https://unpkg.com/jsgif@0.2.1/GIFEncoder.js"></script>
+
+  <script src="app.js" defer></script>
 </body>
 </html>
