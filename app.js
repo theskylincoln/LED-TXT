@@ -854,3 +854,25 @@ requestAnimationFrame(tick);
   if(cb){ cb.addEventListener('change', ()=>{ state.anim.booktok = cb.checked; if(state.mode!=='edit') render(); }); }
   if(sp){ sp.addEventListener('input', ()=>{ state.anim.speed = Math.max(0.2, Math.min(3, parseFloat(sp.value)||1.0)); }); }
 })();    
+
+
+async function loadPresetByName(name){
+  // name like "Preset_A"
+  const is96 = (canvas.width===96 && canvas.height===128);
+  const candidates = [
+    `assets/presets/${is96 ? '96x128' : '64x64'}/${name}.png`,
+    `assets/presets/${name}.png`,
+    `assets/${name}.png`
+  ];
+  for(const src of candidates){
+    const img = new Image();
+    try{
+      await new Promise((resolve,reject)=>{ img.onload=resolve; img.onerror=reject; img.src=src; });
+      bg = { type:'image', image: img, color:'#000', preset:name };
+      layoutAndRender();
+      return true;
+    }catch(e){ /* try next */ }
+  }
+  alert(`Could not load preset: ${name}. Expected at: \n` + candidates.join('\n'));
+  return false;
+}
