@@ -3,56 +3,36 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>LED Backpack Animator v1.9.3-sandbox</title>
+  <title>LED Backpack Animator — FIXED</title>
   <link rel="stylesheet" href="styles.css"/>
-  <style>
-    body{background:#0f1b2a;color:#e6eefc;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0}
-    header, .toolbar{display:flex;gap:8px;align-items:center}
-    header{padding:10px 12px}
-    .toolbar button,.toolbar select{background:#162235;border:1px solid #22324e;border-radius:10px;color:#e6eefc;padding:8px 10px;cursor:pointer}
-    .toolbar button:hover{border-color:#4a6fb8}
-    .wrap{display:grid;grid-template-columns:420px 1fr;gap:16px;padding:12px}
-    .left{display:grid;grid-template-rows:auto 1fr;gap:10px}
-    .thumbs{display:grid;grid-template-columns:repeat(5,72px);gap:8px}
-    .thumb{width:72px;height:72px;border:1px dashed #3a4c70;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#000;cursor:pointer}
-    .thumb.selected{outline:2px solid #61dafb}
-    .stage{background:#0b1422;border:1px solid #22324e;border-radius:12px;padding:10px;height:560px}
-    canvas{image-rendering:pixelated;background:#000;border-radius:8px}
-    .inspector{position:sticky;top:10px;background:#0b1422;border:1px solid #22324e;border-radius:12px;padding:10px}
-    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
-    .grow{flex:1}
-    .muted{color:#9fb0d4;font-size:12px}
-    kbd{background:#101c30;border:1px solid #28406e;border-bottom-color:#20365a;border-radius:6px;padding:2px 6px}
-  </style>
 </head>
 <body>
   <header class="toolbar">
-    <button id="btnPreview">Preview Animation</button>
-    <button id="btnEdit">Edit Mode</button>
+    <button id="btnPreview">Preview</button>
+    <button id="btnEdit">Edit</button>
     <button id="btnUndo">Undo</button>
     <button id="btnRedo">Redo</button>
-    <button id="btnClear">Clear All Text</button>
+    <button id="btnClear" class="danger">Clear</button>
 
     <select id="resolution">
       <option value="96x128" selected>96×128</option>
       <option value="64x64">64×64</option>
     </select>
 
-    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-      <button id="btnZoomOut">-</button>
-      <span id="zoomLabel">100%</span>
-      <button id="btnZoomIn">+</button>
-      <button id="btnToggleInspector">Show/Hide Inspector</button>
-      <button id="btnDownloadConfig">Download Config</button>
-      <button id="btnUploadConfig">Upload Config</button>
-    </div>
+    <div class="grow"></div>
+    <button id="btnZoomOut">-</button>
+    <span id="zoomLabel">300%</span>
+    <button id="btnZoomIn">+</button>
+    <button id="btnToggleInspector">Show/Hide Inspector</button>
   </header>
 
   <main class="wrap">
     <section class="left">
-      <!-- BACKGROUND PICKER (TOP LEFT, like your original) -->
-      <div>
-        <div class="row"><strong>Backgrounds</strong> <span class="muted">(thumbnails change with resolution)</span></div>
+      <div class="block">
+        <div class="row">
+          <strong>Backgrounds</strong>
+          <span class="muted">(A–D change by resolution)</span>
+        </div>
         <div class="thumbs" id="thumbs">
           <div class="thumb" data-kind="preset" data-id="A"><img src="assets/thumbs/Preset_A_thumb.png" alt="Preset A"/></div>
           <div class="thumb" data-kind="preset" data-id="B"><img src="assets/thumbs/Preset_B_thumb.png" alt="Preset B"/></div>
@@ -64,14 +44,19 @@
         <input id="uploadBg" type="file" accept="image/*" style="display:none"/>
       </div>
 
-      <!-- PREVIEW CANVAS -->
-      <div class="stage">
-        <canvas id="canvas" width="96" height="128" style="width:288px;height:384px"></canvas>
-        <div class="muted">Scaled preview • Click blank area to deselect • <kbd>Space</kbd>=new word, <kbd>Enter</kbd>=new line</div>
+      <div class="block stage">
+        <canvas id="canvas" width="96" height="128"></canvas>
+        <div class="muted">Click blank to deselect • <kbd>Space</kbd>=new word • <kbd>Enter</kbd>=new line</div>
+      </div>
+
+      <div class="block typing">
+        <input id="typebox" placeholder="Type here… Space=new word, Enter=new line"/>
+        <button id="btnAddWord">+ Word</button>
+        <button id="btnAddLine">+ Line</button>
+        <div id="chips"></div>
       </div>
     </section>
 
-    <!-- INSPECTOR -->
     <aside class="inspector" id="inspector">
       <div class="row">
         <label>Font</label>
@@ -85,7 +70,7 @@
         </select>
         <label>Size</label>
         <input id="fontSize" type="number" value="22" min="6" max="64" style="width:80px"/>
-        <label><input type="checkbox" id="autoSize" checked/> Auto Size</label>
+        <label><input type="checkbox" id="autoSize" checked/> Auto Size (fit line)</label>
       </div>
 
       <div class="row">
@@ -96,15 +81,11 @@
 
       <div class="row">
         <label>Alignment</label>
-        <div id="alignGroup">
-          <button data-align="left">Left</button>
-          <button data-align="center">Center</button>
-          <button data-align="right">Right</button>
-          <button id="alignReset">Reset</button>
-        </div>
+        <button class="align" data-align="left">Left</button>
+        <button class="align" data-align="center">Center</button>
+        <button class="align" data-align="right">Right</button>
+        <button id="alignReset">Reset</button>
       </div>
-
-      <hr/>
 
       <div class="row">
         <strong>Animation</strong>
@@ -126,6 +107,7 @@
     </aside>
   </main>
 
+  <script src="tinygif.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
