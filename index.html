@@ -45,6 +45,9 @@
       <div class="bg-actions">
         <button id="bgSolidBtn">Solid Color</button>
         <input type="color" id="bgSolidColor" value="#000000" />
+        <div class="row" id="colorSwatchesRow">
+        <div id="swatches" class="swatches"></div>
+        </div>
         <label class="upload-btn">
           <input type="file" id="bgUpload" accept="image/*" hidden />
           <span>Custom Upload</span>
@@ -113,11 +116,15 @@
             <label>Color</label>
             <input type="color" id="fontColor" value="#FFFFFF" />
           </div>
+          <div class="row" id="colorSwatchesRow">
+            <label>Swatches</label>
+            <div id="swatches" class="swatches"></div>
+          </div>
           <div class="row">
             <label>Spacing</label>
             <div class="dual">
-              <span>Line</span><input type="number" id="lineGap" min="0" max="16" value="2" />
-              <span>Word</span><input type="number" id="wordGap" min="0" max="20" value="8" />
+              <span>Line</span><input type="number" id="lineGap" min="0" max="16" value="4" />
+              <span>Word</span><input type="number" id="wordGap" min="0" max="20" value="6" />
             </div>
           </div>
           <div class="row">
