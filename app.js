@@ -82,13 +82,31 @@ const defaults = {
 const defaultPalette = ["#FFFFFF","#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF","#00FFFF","#000000"];
 let customPalette = [], customBgPalette = [];
 
+// DEFAULT DOCUMENT (replaces the old let doc = { ... })
 let doc = {
   res: { w: 96, h: 128 },
-  lines: [{ words: [{ text: "HELLO" }] }],
-  style: { ...defaults },
-  bg: { type: "image", color: null, image: null, preset: null },
-  // doc.animations are effect "switches" that drive the render
-  animations: [] // [{id, params}]
+  lines: [
+    { words: [ { text: "WILL",     style:{ color:"#1E90FF" } } ] }, // blue
+    { words: [ { text: "WHEELIE",  style:{ color:"#32CD32" } } ] }, // green
+    { words: [ { text: "FOR",      style:{ color:"#FFFFFF" } } ] }, // white
+    { words: [ { text: "BOOKTOK",  style:{ color:"#FF66CC" } } ] }, // pink
+    { words: [ { text: "GIRLIES",  style:{ color:"#FF3333" } } ] }, // red
+  ],
+  style: {
+    ...defaults,
+    align: "center",
+    valign: "middle",
+    lineGap: 4,
+    wordGap: 6
+  },
+  // start on preset A BG
+  bg: { type:"image", preset:"repo/assets/presets/Preset_A.png"},
+  // gentle, readable motion out of the box
+  animations: [
+    { id:"pulse", params:{ scale:0.02, vy:2 } },       // soft breathe
+    { id:"glow",  params:{ intensity:0.35 } },         // subtle glow
+    { id:"sweep", params:{ speed:0.5, width:0.18 } }   // highlight sweep
+  ]
 };
 let selected = { line: 0, word: 0, caret: 5 };
 
@@ -146,17 +164,26 @@ function buildBgGrid() {
     bgGrid.appendChild(d);
   });
 }
-function setInitialBackground() {
+function setInitialBackground(){
+  // If doc already has a background (like our new solid black), don't override.
+  if (doc.bg && (doc.bg.type === "solid" || doc.bg.image || doc.bg.preset)) {
+    render(0,null);
+    fitZoom();
+    activateTile(doc.bg.type==="solid" ? "solid" : "preset");
+    showSolidTools(doc.bg.type==="solid");
+    return;
+  }
+
   const set = visibleSet();
   if (set && set[0]) {
     const im = new Image(); im.crossOrigin="anonymous"; im.src = set[0].full;
     im.onload = () => {
       doc.bg = { type:"image", color:null, image:im, preset:set[0].full };
-      render(0, null); fitZoom(); activateTile("preset");
+      render(0,null); fitZoom(); activateTile("preset");
     };
   } else {
     doc.bg = { type:"solid", color:"#000000", image:null, preset:null };
-    render(0, null); fitZoom(); activateTile("solid"); showSolidTools(true);
+    render(0,null); fitZoom(); activateTile("solid"); showSolidTools(true);
   }
 }
 function activateTile(kind) {
