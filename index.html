@@ -45,24 +45,24 @@
 
       <div class="row">
         <label>Background Presets</label>
-        <div id="bgThumbs" class="thumbs"></div>
+        <div id="bgGrid" class="bg-grid">
+          <!-- four tiles are built in JS: A/B/C/D + Solid + Upload -->
+        </div>
       </div>
 
-      <div class="bg-actions">
+      <div id="bgSolidTools" class="bg-solid-tools hidden">
         <div class="row two">
-          <button id="bgSolidBtn" class="button tiny">Solid</button>
+          <label>Solid Color</label>
           <input type="color" id="bgSolidColor" value="#000000" />
         </div>
         <div class="row">
+          <div id="bgSwatches" class="swatches"></div>
           <button id="addBgSwatchBtn" class="button tiny">+ Add BG Swatch</button>
         </div>
-        <div id="bgSwatches" class="swatches"></div>
-
-        <label class="upload-btn block">
-          <input type="file" id="bgUpload" accept="image/*" hidden />
-          <span>Upload Background</span>
-        </label>
       </div>
+
+      <!-- hidden file input for Upload tile -->
+      <input type="file" id="bgUpload" accept="image/*" hidden />
     </aside>
 
     <section class="stage">
@@ -77,15 +77,11 @@
     </section>
   </main>
 
-  <!-- Inspector: horizontal toolbar -->
+  <!-- Inspector: horizontal toolbar only -->
   <footer class="inspector-bar">
     <div class="inspector-head">
       <div class="toolbar">
         <button id="toggleInspector" aria-expanded="false" class="button">Inspector ▴</button>
-        <label class="chk ms">
-          <input type="checkbox" id="multiSelectChk" />
-          <span>Multi-select</span>
-        </label>
         <div class="toolbar-tabs">
           <button class="tab" data-acc="accFont">Font</button>
           <button class="tab" data-acc="accLayout">Spacing & Alignment</button>
@@ -97,7 +93,7 @@
     <div id="inspectorBody" class="inspector-body">
       <!-- Font -->
       <details class="acc" id="accFont">
-        <summary>Font</summary>
+        <summary><span class="subttl">Font</span></summary>
         <div class="acc-body">
           <div class="row two">
             <label>Family</label>
@@ -108,13 +104,10 @@
               <option value="Verdana">Verdana</option>
               <option value="Arial Black">Arial Black</option>
               <option value="monospace">Monospace</option>
-              <option value="sans-serif">Sans-serif</option>
-              <option value="serif">Serif</option>
             </select>
           </div>
           <div class="row two">
-            <label>Size</label>
-            <input id="fontSize" type="number" min="6" max="64" value="22" />
+            <label>Size</label><input id="fontSize" type="number" min="6" max="64" value="22" />
           </div>
           <label class="chk"><input type="checkbox" id="autoSize" checked/> <span>Auto-size</span></label>
 
@@ -122,14 +115,13 @@
             <div id="swatches" class="swatches"></div>
             <input type="color" id="fontColor" value="#FFFFFF" />
             <button id="addSwatchBtn" class="button tiny">+ Add</button>
-            <button id="clearSwatchesBtn" class="button tiny">Clear Custom</button>
           </div>
         </div>
       </details>
 
       <!-- Spacing + Alignment -->
       <details class="acc" id="accLayout">
-        <summary>Spacing & Alignment</summary>
+        <summary><span class="subttl">Spacing & Alignment</span></summary>
         <div class="acc-body">
           <div class="subhead">Spacing</div>
           <div class="row two">
@@ -148,19 +140,13 @@
             <button class="seg-btn active" data-valign="middle">Middle</button>
             <button class="seg-btn" data-valign="bottom">Bottom</button>
           </div>
-
-          <label class="chk"><input type="checkbox" id="applyAllAlign" /> <span>Apply to all</span></label>
-          <label class="chk"><input type="checkbox" id="manualDragChk" /> <span>Manual drag</span></label>
         </div>
       </details>
 
       <!-- Animations -->
       <details class="acc" id="accAnim">
-        <summary>Animations</summary>
+        <summary><span class="subttl">Animations</span></summary>
         <div class="acc-body">
-          <div class="anim-head">
-            <button id="animHelpBtn" class="button tiny">Help</button>
-          </div>
           <div id="animList" class="anim-list"></div>
         </div>
       </details>
@@ -194,22 +180,8 @@
     </div>
   </section>
 
-  <!-- Hidden input to pull up keyboards -->
+  <!-- hidden input to force mobile keyboard -->
   <input id="mobileInput" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
-
-  <!-- Clear All modal -->
-  <div id="clearWarn" class="modal hidden">
-    <div class="modal-backdrop"></div>
-    <div class="modal-card">
-      <h3>Clear All?</h3>
-      <p>This will remove all lines and words. Are you sure?</p>
-      <label class="chk"><input type="checkbox" id="suppressClearWarn" /> <span>Don’t show again (this session)</span></label>
-      <div class="modal-actions">
-        <button id="clearCancel">Cancel</button>
-        <button id="clearConfirm" class="primary">Clear</button>
-      </div>
-    </div>
-  </div>
 
   <!-- About -->
   <div id="aboutModal" class="modal hidden">
@@ -217,24 +189,9 @@
     <div class="modal-card">
       <h3>About</h3>
       <p>LED Backpack Animator — compose text & render GIFs for LED backpacks.</p>
-      <p>Follow <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">theskylincoln</a> on Instagram.</p>
+      <p>Follow <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">theskylincoln</a>.</p>
       <div class="modal-actions">
         <button id="aboutClose" class="primary">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Animation conflict modal -->
-  <div id="conflictModal" class="modal hidden">
-    <div class="modal-backdrop"></div>
-    <div class="modal-card">
-      <h3>Effects may cancel out</h3>
-      <p id="conflictText"></p>
-      <div class="modal-actions">
-        <button id="conflictKeepBoth" class="button">Keep both</button>
-        <button id="conflictKeepNew" class="button">Keep new only</button>
-        <button id="conflictKeepOld" class="button">Keep existing only</button>
-        <button id="conflictCancel" class="primary">Cancel</button>
       </div>
     </div>
   </div>
