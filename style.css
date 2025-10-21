@@ -1,4 +1,4 @@
-/* Glass Cyberpunk — for index.html using app.js */
+/* Glass Cyberpunk */
 
 :root{
   --bg-0: radial-gradient(1200px 800px at 10% 10%, #0a0f1c 0%, transparent 60%),
@@ -26,7 +26,7 @@ body{
 
 .hidden{ display:none !important }
 .shell{ max-width:1180px; margin:0 auto; padding:14px }
-.row{ display:flex; gap:10px; align-items:center }
+.row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
 .gap{ gap:12px } .pad-top{ padding-top:10px }
 .stack{ display:grid; gap:6px } .lbl{ font-size:12px; color:var(--muted) }
 
@@ -70,8 +70,9 @@ body{
 .chip.primary{ border-color: rgba(125,76,255,.5); box-shadow: 0 0 0 1px rgba(125,76,255,.35), 0 0 16px rgba(125,76,255,.25) inset }
 .chip.danger{ border-color: rgba(255,77,141,.5); color: #ffd9e7 }
 .chip.tiny{ padding:5px 10px; font-size:12px }
+.btn-big{ padding:14px 20px; font-size:18px; border-radius:14px }
 
-/* Fields */
+/* Inputs */
 .field, select, input[type="number"], input[type="text"], input[type="file"]{
   background: rgba(255,255,255,.03); color: var(--ink);
   border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 10px; outline: none;
@@ -79,6 +80,7 @@ body{
 .field:focus, select:focus, input[type="number"]:focus, input[type="text"]:focus{
   box-shadow: 0 0 0 1px rgba(125,76,255,.5), 0 0 12px rgba(125,76,255,.25);
 }
+.file-chip{ cursor:pointer }
 
 /* Grid */
 .grid{ display:grid; gap:12px }
@@ -93,16 +95,17 @@ body{
 .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px }
 .panel-head h2{ margin:0; font-size:15px; color:var(--muted); letter-spacing:.3px }
 
-/* BG tiles */
+/* BG tiles: fit (no crop) */
 .bg-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:12px; margin-top:10px }
 .bg-tile{
-  border:1px solid var(--glass-border); border-radius:12px; overflow:hidden;
-  background: rgba(10,14,25,.6); cursor:pointer; position:relative; min-height:110px; transition: transform .12s ease;
+  position:relative; border:1px solid var(--glass-border); border-radius:12px;
+  background: rgba(10,14,25,.6); display:flex; align-items:center; justify-content:center;
+  min-height:120px; overflow:hidden; transition: transform .12s ease; cursor:pointer;
 }
 .bg-tile:hover{ transform: translateY(-2px) }
-.bg-tile .lab{ position:absolute; left:10px; top:10px; font-size:12px; color:var(--muted); text-shadow:0 1px 0 rgba(0,0,0,.5) }
+.bg-tile .lab{ position:absolute; left:10px; top:10px; font-size:12px; color:var(--muted); text-shadow:0 1px 0 rgba(0,0,0,.5); z-index:2 }
 .bg-tile.active{ outline:2px solid var(--accent); box-shadow: 0 0 0 1px rgba(125,76,255,.35), 0 0 16px rgba(125,76,255,.25) inset }
-.bg-tile img{ display:block; width:100%; height:120px; object-fit:cover; background:#05070c }
+.bg-tile img{ width:100%; height:100%; object-fit: contain; padding:10px; background:#05070c }
 
 /* Canvas */
 .canvas-wrap{
@@ -114,7 +117,7 @@ body{
   overflow:hidden;
 }
 #led{
-  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0.8);
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0.9);
   image-rendering:pixelated; border:1px solid rgba(255,255,255,.08); background:#000;
   box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 0 24px rgba(0,0,0,.35) inset;
 }
@@ -140,10 +143,6 @@ body{
 .acc[open] > summary{ background: linear-gradient(0deg, rgba(255,255,255,.03), rgba(255,255,255,.01)); color:var(--ink) }
 .anim-list{ display:flex; flex-direction:column; gap:8px; padding:12px }
 
-/* Swatches */
-.swatches{ display:flex; gap:8px; flex-wrap:wrap }
-.swatch{ width:22px; height:22px; border-radius:6px; border:1px solid rgba(0,0,0,.35); cursor:pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) }
-
 /* Range */
 input[type="range"]{ width:180px; height:6px; border-radius:999px; background:rgba(255,255,255,.1); -webkit-appearance:none; appearance:none }
 input[type="range"]::-webkit-slider-thumb{
@@ -162,5 +161,5 @@ input[type="range"]::-webkit-slider-thumb{
 .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px }
 
 /* Responsive */
-@media (max-width:800px){ #led{ transform: translate(-50%, -50%) scale(.9) } }
+@media (max-width:800px){ #led{ transform: translate(-50%, -50%) scale(.95) } }
 @media (max-width:520px){ #led{ transform: translate(-50%, -50%) scale(1.0) } }
