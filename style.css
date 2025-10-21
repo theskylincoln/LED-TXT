@@ -23,7 +23,7 @@ h1{margin:0;font-size:22px}
 .row.two-eq{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
 /* Background thumbs */
-.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.thumbs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .thumbs .thumb{border:1px solid #2a2c31;border-radius:10px;overflow:hidden;background:#0e0f12;cursor:pointer;min-height:64px;display:flex;align-items:center;justify-content:center}
 .thumbs .thumb img{width:100%;display:block}
 
@@ -33,22 +33,23 @@ h1{margin:0;font-size:22px}
 .stage{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:12px}
 .canvas-wrap{
   position:relative;display:flex;justify-content:center;align-items:center;
-  background: repeating-conic-gradient(#0f1117 0% 25%, #111319 0% 50%) 50% / 20px 20px;
+  background: radial-gradient(transparent 0, transparent 16px, #0f1117 16px) 0 0 / 20px 20px;
   border:1px solid #2a2c31;border-radius:12px;min-height:320px;height:52vh;overflow:hidden
 }
 #led{
   image-rendering:pixelated;image-rendering:crisp-edges;
   position:absolute;left:50%;top:50%;
   transform-origin:0 0;transform:translate(-50%,-50%) scale(1);
-  outline:2px solid rgba(255,0,255,.35); /* faint magenta edge to match selection styling */
+  outline:2px solid rgba(255,0,255,.28);
   box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 0 20px rgba(0,0,0,.35) inset;
 }
 
-/* floating X (top-right of selection box) */
-.word-fx{position:absolute;width:24px;height:24px;border-radius:50%;
-  background:rgba(255,0,255,.25);border:1px solid rgba(255,0,255,.8);color:#fff;
-  font:16px/22px system-ui, -apple-system, Segoe UI, Roboto, Arial; text-align:center;
-  box-shadow:0 0 8px rgba(255,0,255,.85);
+/* floating X pinned top-right of selection box */
+.word-fx{
+  position:absolute;width:24px;height:24px;border-radius:50%;
+  background:rgba(255,0,255,.25);border:1px solid rgba(255,0,255,.9);color:#fff;
+  font:16px/22px system-ui, -apple-system, Segoe UI, Roboto, Arial;text-align:center;
+  box-shadow:0 0 10px rgba(255,0,255,.95);display:flex;align-items:center;justify-content:center
 }
 .word-fx.hidden{display:none}
 
@@ -58,19 +59,20 @@ h1{margin:0;font-size:22px}
 .swatch{width:22px;height:22px;border-radius:6px;border:1px solid #2a2c31;cursor:pointer}
 .swatch-wrap .x{position:absolute;right:-10px;top:-10px;font-size:12px;line-height:1;padding:3px 5px;background:rgba(0,0,0,.7);border:1px solid #2a2c31;border-radius:10px;cursor:pointer}
 
-/* Inspector (horizontal toolbar) */
+/* Inspector (horizontal only) */
 .inspector-bar{background:#0f1013;border-top:1px solid var(--border);
   padding:6px 14px;display:flex;flex-direction:column;gap:10px;position:sticky;bottom:0;z-index:4}
-.inspector-head .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.inspector-head .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .toolbar-tabs{display:flex;gap:8px;flex-wrap:wrap}
 .tab{border:1px solid #2a2c31;border-radius:10px;background:#16171b;color:var(--ink);padding:6px 10px;cursor:pointer}
 .inspector-body{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;max-height:0;transition:max-height .25s ease;overflow:hidden}
 .inspector-body.open{max-height:1200px}
-.acc{border:1px solid #2a2c31;border-radius:10px;background:#16171b;min-width:240px;max-width:100%}
+.acc{border:1px solid #2a2c31;border-radius:10px;background:#16171b;min-width:260px;max-width:100%}
 .acc>summary{cursor:pointer;list-style:none;padding:6px 10px}
 .acc[open] > summary{background:#23262e}
 .acc-body{padding:10px;display:flex;gap:8px;flex-wrap:wrap}
 .subhead{opacity:.8;font-size:12px;margin-top:2px}
+.ms{margin-left:10px}
 
 /* Bottom panels */
 .bottom-panels{padding:14px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -86,8 +88,8 @@ h1{margin:0;font-size:22px}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 .primary{background:#2643ff;color:#fff;border:1px solid #2e44cc;border-radius:10px;padding:6px 10px;cursor:pointer}
 
-/* Responsive stack */
-@media (max-width: 980px){
+/* Responsive */
+@media (max-width:980px){
   .layout{grid-template-columns:1fr}
   .canvas-wrap{height:48vh}
 }
