@@ -165,7 +165,7 @@ function buildBgGrid() {
   });
 }
 function setInitialBackground(){
-  // If doc already has a background (like our new solid black), don't override.
+  // If doc already has a background, don't override.
   if (doc.bg && (doc.bg.type === "solid" || doc.bg.image || doc.bg.preset)) {
     render(0,null);
     fitZoom();
@@ -653,23 +653,37 @@ function startPreview() {
 }
 function stopPreview() { if (rafId) cancelAnimationFrame(rafId); rafId = null; render(0, null); }
 
-/* ---------- swatches ---------- */
-function drawSwatches() {
-  const make = (wrapEl, colors, isBg=false) => {
-    wrapEl.innerHTML="";
-    colors.forEach(c => {
+/* ---------- color swatches ---------- */
+function drawSwatchesUI(){
+  const make=(wrap, list, isBg=false)=>{
+    wrap.innerHTML = "";
+    list.forEach(c=>{
       const d=document.createElement("div"); d.className="swatch"; d.style.background=c;
       d.addEventListener("click", ()=>{
-        if (isBg) { doc.bg = { type:"solid", color:c, image:null, preset:null }; showSolidTools(true); activateTile("solid"); }
-        else { doc.style.color = c; fontColorInput.value = c; }
+        if(isBg){ doc.bg = { type:"solid", color:c, image:null, preset:null }; showSolidTools(true); activateTile("solid"); }
+        else    { doc.style.color = c; fontColorInput.value = c; applyStyleToCurrent(w=> w.style={...w.style, color:c}); }
         render(0,null);
       });
-      wrapEl.appendChild(d);
+      wrap.appendChild(d);
     });
   };
   make(swatchesWrap, [...defaultPalette, ...customPalette], false);
   make(bgSwatches,   [...defaultPalette, ...customBgPalette], true);
 }
+addSwatchBtn.addEventListener("click", ()=>{
+  const c = fontColorInput.value;
+  if(!defaultPalette.includes(c) && !customPalette.includes(c)) customPalette.push(c);
+  drawSwatchesUI();
+});
+addBgSwatchBtn.addEventListener("click", ()=>{
+  const c = bgSolidColor.value;
+  if(!defaultPalette.includes(c) && !customBgPalette.includes(c)) customBgPalette.push(c);
+  drawSwatchesUI();
+});
+bgSolidColor.addEventListener("input", ()=>{
+  doc.bg = { type:"solid", color:bgSolidColor.value, image:null, preset:null };
+  render(0,null);
+});
 
 /* ---------- events ---------- */
 // mode
@@ -815,38 +829,6 @@ function autoSizeIfOn() {
   });
 }
 
-/* ---------- color swatches ---------- */
-function drawSwatchesUI(){
-  const make=(wrap, list, isBg=false)=>{
-    wrap.innerHTML = "";
-    list.forEach(c=>{
-      const d=document.createElement("div"); d.className="swatch"; d.style.background=c;
-      d.addEventListener("click", ()=>{
-        if(isBg){ doc.bg = { type:"solid", color:c, image:null, preset:null }; showSolidTools(true); activateTile("solid"); }
-        else    { doc.style.color = c; fontColorInput.value = c; applyStyleToCurrent(w=> w.style={...w.style, color:c}); }
-        render(0,null);
-      });
-      wrap.appendChild(d);
-    });
-  };
-  make(swatchesWrap, [...defaultPalette, ...customPalette], false);
-  make(bgSwatches,   [...defaultPalette, ...customBgPalette], true);
-}
-addSwatchBtn.addEventListener("click", ()=>{
-  const c = fontColorInput.value;
-  if(!defaultPalette.includes(c) && !customPalette.includes(c)) customPalette.push(c);
-  drawSwatchesUI();
-});
-addBgSwatchBtn.addEventListener("click", ()=>{
-  const c = bgSolidColor.value;
-  if(!defaultPalette.includes(c) && !customBgPalette.includes(c)) customBgPalette.push(c);
-  drawSwatchesUI();
-});
-bgSolidColor.addEventListener("input", ()=>{
-  doc.bg = { type:"solid", color:bgSolidColor.value, image:null, preset:null };
-  render(0,null);
-});
-
 /* ---------- Animations UI ---------- */
 function conflictChoice(newId){
   // simple, reliable prompt; options: BOTH/NEW/OLD/CANCEL
@@ -968,12 +950,10 @@ function setModePreview(){ setMode("preview"); startPreview(); }
 modeEditBtn.addEventListener("click", setModeEdit);
 modePrevBtn.addEventListener("click", setModePreview);
 
-function drawSwatches(){ drawSwatchesUI(); }
-
 function init(){
   buildBgGrid();
   setInitialBackground();
-  drawSwatches();
+  drawSwatchesUI(); // FIX: call the single swatch builder
   setMode("edit");
   render(0,null);
   fitZoom();
