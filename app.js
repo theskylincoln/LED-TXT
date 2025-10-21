@@ -1,18 +1,10 @@
 /* ===============================
-   LED Backpack Animator — v2.7+
-   - 4-tile BG grid (Preset A/B for 96×128, C/D for 64×64) + Solid + Upload
-   - Canvas auto-fit & centered (always)
-   - Inspector is horizontal bar that opens downward (tabs -> <details>)
-   - Selection box (magenta dotted) with "×" pinned to top-right INSIDE box
-   - Mobile typing via hidden input; Enter=new line, Space=new word
-   - Animations engine (stackable) in preview AND GIF export
-   - GIF export renders true motion (fps × seconds)
-   - Default test word: HELLO
+   LED Backpack Animator — v2.7.2 (GP pages paths + padding + history)
 ================================= */
 
 /* ---------- tiny helpers ---------- */
-const $  = (q, el = document) => el.querySelector(q);
-const $$ = (q, el = document) => Array.from(el.querySelectorAll(q));
+const $  = (q, el = document) => el?.querySelector ? el.querySelector(q) : null;
+const $$ = (q, el = document) => el?.querySelectorAll ? Array.from(el.querySelectorAll(q)) : [];
 
 /* ---------- DOM ---------- */
 const canvas = $("#led"), ctx = canvas.getContext("2d"), wrap = $(".canvas-wrap");
@@ -31,6 +23,9 @@ const modePrevBtn = $("#modePreview");
 const addWordBtn = $("#addWordBtn");
 const addLineBtn = $("#addLineBtn");
 const deleteWordFx = $("#deleteWordBtn");
+const undoBtn = $("#undoBtn");
+const redoBtn = $("#redoBtn");
+const clearAllBtn = $("#clearAllBtn");
 
 const inspectorToggle = $("#toggleInspector");
 const inspectorBody = $("#inspectorBody");
@@ -69,7 +64,7 @@ aboutBtn?.addEventListener("click", () => $("#aboutModal").classList.remove("hid
 
 /* ---------- state ---------- */
 let mode = "edit";
-let zoom = parseFloat(zoomSlider.value || "0.8");
+let zoom = parseFloat(zoomSlider?.value || "0.8");
 const defaults = {
   fontFamily: "Orbitron",
   fontSize: 22,
@@ -82,30 +77,34 @@ const defaults = {
 const defaultPalette = ["#FFFFFF","#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF","#00FFFF","#000000"];
 let customPalette = [], customBgPalette = [];
 
-// DEFAULT DOCUMENT (replaces the old let doc = { ... })
+// SAFETY PADDING
+const PAD_X = 10, PAD_TOP = 10, PAD_BOTTOM = 10;
+
+// Asset base detection (works at / or /repo/ on GitHub Pages)
+function getAssetBase(){
+  // Trim filename from path and ensure trailing slash
+  let base = window.location.pathname;
+  if (!base.endsWith("/")) base = base.replace(/\/[^/]*$/, "/");
+  return base + "assets";
+}
+const ASSET_BASE = getAssetBase();
+
+// DEFAULT DOCUMENT
 let doc = {
   res: { w: 96, h: 128 },
   lines: [
-    { words: [ { text: "WILL",     style:{ color:"#1E90FF" } } ] }, // blue
-    { words: [ { text: "WHEELIE",  style:{ color:"#32CD32" } } ] }, // green
-    { words: [ { text: "FOR",      style:{ color:"#FFFFFF" } } ] }, // white
-    { words: [ { text: "BOOKTOK",  style:{ color:"#FF66CC" } } ] }, // pink
-    { words: [ { text: "GIRLIES",  style:{ color:"#FF3333" } } ] }, // red
+    { words: [ { text: "WILL",     style:{ color:"#1E90FF" } } ] },
+    { words: [ { text: "WHEELIE",  style:{ color:"#32CD32" } } ] },
+    { words: [ { text: "FOR",      style:{ color:"#FFFFFF" } } ] },
+    { words: [ { text: "BOOKTOK",  style:{ color:"#FF66CC" } } ] },
+    { words: [ { text: "GIRLIES",  style:{ color:"#FF3333" } } ] },
   ],
-  style: {
-    ...defaults,
-    align: "center",
-    valign: "middle",
-    lineGap: 4,
-    wordGap: 6
-  },
-  // start on preset A BG
-  bg: { type:"image", preset:"repo/assets/presets/Preset_A.png"},
-  // gentle, readable motion out of the box
+  style: { ...defaults, align: "center", valign: "middle", lineGap: 4, wordGap: 6 },
+  bg: { type:"image", preset:`${ASSET_BASE}/presets/96x128/Preset_A.png` },
   animations: [
-    { id:"pulse", params:{ scale:0.02, vy:2 } },       // soft breathe
-    { id:"glow",  params:{ intensity:0.35 } },         // subtle glow
-    { id:"sweep", params:{ speed:0.5, width:0.18 } }   // highlight sweep
+    { id:"pulse", params:{ scale:0.02, vy:2 } },
+    { id:"glow",  params:{ intensity:0.35 } },
+    { id:"sweep", params:{ speed:0.5, width:0.18 } }
   ]
 };
 let selected = { line: 0, word: 0, caret: 5 };
@@ -113,77 +112,105 @@ let selected = { line: 0, word: 0, caret: 5 };
 let history = [], future = [];
 const MAX_STACK = 100;
 
-/* ---------- presets ---------- */
+/* ---------- presets (paths fixed) ---------- */
+function p96(name){ return `${ASSET_BASE}/presets/96x128/${name}`; }
+function p64(name){ return `${ASSET_BASE}/presets/64x64/${name}`; }
+function t(name){ return `${ASSET_BASE}/thumbs/${name}`; }
+
 const PRESETS = {
   "96x128": [
-    { id: "A", thumb: "repo/assets/thumbs/Preset_A_thumb.png", full: "repo/assets/presets/Preset_A.png" },
-    { id: "B", thumb: "repo/assets/thumbs/Preset_B_thumb.png", full: "repo/assets/presets/Preset_B.png" },
+    { id: "A", thumb: t("Preset_A_thumb.png"), full: p96("Preset_A.png") },
+    { id: "B", thumb: t("Preset_B_thumb.png"), full: p96("Preset_B.png") },
   ],
   "64x64": [
-    { id: "C", thumb: "repo/assets/thumbs/Preset_C_thumb.png", full: "repo/assets/presets/Preset_C.png" },
-    { id: "D", thumb: "repo/assets/thumbs/Preset_D_thumb.png", full: "repo/assets/presets/Preset_D.png" },
+    { id: "C", thumb: t("Preset_C_thumb.png"), full: p64("Preset_C.png") },
+    { id: "D", thumb: t("Preset_D_thumb.png"), full: p64("Preset_D.png") },
   ],
 };
+const EXTRA_TILES = [
+  {kind: "solid",  label:"Solid",  thumb:t("Solid_thumb.png")},
+  {kind: "upload", label:"Upload", thumb:t("Upload_thumb.png")},
+];
 const visibleSet = () => PRESETS[`${doc.res.w}x${doc.res.h}`] || [];
 
+/* ---------- history helpers ---------- */
+function pushHistory() { history.push(JSON.stringify(doc)); if (history.length > MAX_STACK) history.shift(); future.length = 0; }
+function undo() { if (!history.length) return; future.push(JSON.stringify(doc)); doc = JSON.parse(history.pop()); render(0, null); }
+function redo() { if (!future.length) return; history.push(JSON.stringify(doc)); doc = JSON.parse(future.pop()); render(0, null); }
+
+undoBtn?.addEventListener("click", undo);
+redoBtn?.addEventListener("click", redo);
+clearAllBtn?.addEventListener("click", ()=>{
+  pushHistory();
+  doc.lines = [{words:[{text:""}]}];
+  selected = { line:0, word:0, caret:0 };
+  render(0,null);
+});
+
+/* ---------- bg grid ---------- */
 function buildBgGrid() {
+  if (!bgGrid) return;
   bgGrid.innerHTML = "";
   const set = visibleSet();
   const tiles = [
-    {...set[0], kind: "preset", label:"Preset 1"},
-    {...set[1], kind: "preset", label:"Preset 2"},
-    {kind: "solid", label:"Solid",  thumb:"repo/assets/thumbs/solid.png"},
-    {kind: "upload",label:"Upload", thumb:"repo/assets/thumbs/upload.png"},
+    ...(set[0] ? [{...set[0], kind:"preset", label:"Preset 1"}] : []),
+    ...(set[1] ? [{...set[1], kind:"preset", label:"Preset 2"}] : []),
+    ...EXTRA_TILES
   ];
-  tiles.forEach((t, i) => {
+  tiles.forEach((t) => {
     const d = document.createElement("div");
     d.className = "bg-tile";
     d.dataset.kind = t.kind;
-    const lab = document.createElement("div"); lab.className = "lab"; lab.textContent = t.label;
+    const lab = document.createElement("div"); lab.className = "lab"; lab.textContent = t.label || t.id || "";
     d.appendChild(lab);
     const img = document.createElement("img");
-    img.alt = t.label;
-    img.src = t.kind === "preset" ? t.thumb : (t.thumb || "");
+    img.alt = t.label || t.id || "";
+    if (t.thumb) img.src = t.thumb;
+    img.onerror = () => { img.removeAttribute("src"); img.alt = "[missing]"; };
     d.appendChild(img);
     d.addEventListener("click", async () => {
       $$(".bg-tile", bgGrid).forEach(x => x.classList.remove("active"));
       d.classList.add("active");
       if (t.kind === "preset") {
-        const im = new Image(); im.crossOrigin = "anonymous"; im.src = t.full;
-        try { await im.decode(); } catch {}
-        doc.bg = { type:"image", color:null, image:im, preset:t.full };
-        showSolidTools(false);
+        const im = new Image(); im.src = t.full;
+        im.onload = () => {
+          pushHistory();
+          doc.bg = { type:"image", color:null, image:im, preset:t.full };
+          showSolidTools(false);
+          render(0, null); fitZoom();
+        };
+        im.onerror = () => alert(`Preset image not found:\n${t.full}`);
       } else if (t.kind === "solid") {
-        doc.bg = { type:"solid", color:bgSolidColor.value, image:null, preset:null };
+        pushHistory();
+        doc.bg = { type:"solid", color:bgSolidColor?.value || "#000000", image:null, preset:null };
         showSolidTools(true);
+        render(0, null); fitZoom();
       } else if (t.kind === "upload") {
-        bgUpload.click();
+        bgUpload?.click();
       }
-      render(0, null); fitZoom();
     });
     bgGrid.appendChild(d);
   });
 }
 function setInitialBackground(){
-  // If doc already has a background, don't override.
-  if (doc.bg && (doc.bg.type === "solid" || doc.bg.image || doc.bg.preset)) {
-    render(0,null);
-    fitZoom();
-    activateTile(doc.bg.type==="solid" ? "solid" : "preset");
-    showSolidTools(doc.bg.type==="solid");
+  // Use preset path, load image
+  const set = visibleSet();
+  if (doc.bg?.type === "image" && doc.bg.preset && !doc.bg.image){
+    const im = new Image(); im.src = doc.bg.preset;
+    im.onload = () => { doc.bg.image = im; render(0,null); fitZoom(); activateTile("preset"); };
+    im.onerror = () => { activateTile("solid"); doc.bg = {type:"solid", color:"#000", image:null, preset:null}; render(0,null); fitZoom(); showSolidTools(true); };
     return;
   }
-
-  const set = visibleSet();
   if (set && set[0]) {
-    const im = new Image(); im.crossOrigin="anonymous"; im.src = set[0].full;
+    const im = new Image(); im.src = set[0].full;
     im.onload = () => {
       doc.bg = { type:"image", color:null, image:im, preset:set[0].full };
       render(0,null); fitZoom(); activateTile("preset");
     };
-  } else {
-    doc.bg = { type:"solid", color:"#000000", image:null, preset:null };
-    render(0,null); fitZoom(); activateTile("solid"); showSolidTools(true);
+    im.onerror = () => {
+      doc.bg = { type:"solid", color:"#000000", image:null, preset:null };
+      render(0,null); fitZoom(); activateTile("solid"); showSolidTools(true);
+    };
   }
 }
 function activateTile(kind) {
@@ -191,41 +218,37 @@ function activateTile(kind) {
   tiles.forEach((t, i) => {
     const k = t.dataset.kind;
     if (kind === "preset") {
-      if (i === 0) t.classList.add("active");
-      else t.classList.remove("active");
+      // highlight first preset
+      t.classList.toggle("active", t.dataset.kind === "preset" && i === 0);
     } else {
       t.classList.toggle("active", k === kind);
     }
   });
 }
-function showSolidTools(on) { bgSolidTools.classList.toggle("hidden", !on); }
+function showSolidTools(on) { bgSolidTools?.classList.toggle("hidden", !on); }
 
-bgUpload.addEventListener("change", (e) => {
+bgUpload?.addEventListener("change", (e) => {
   const f = e.target.files?.[0]; if (!f) return;
   const url = URL.createObjectURL(f);
   const im = new Image();
   im.onload = () => {
     URL.revokeObjectURL(url);
+    pushHistory();
     doc.bg = { type:"image", color:null, image:im, preset:null };
     showSolidTools(false); render(0, null); fitZoom(); activateTile("upload");
   };
   im.src = url;
 });
 
-/* ---------- history ---------- */
-function pushHistory() { history.push(JSON.stringify(doc)); if (history.length > MAX_STACK) history.shift(); future.length = 0; }
-function undo() { if (!history.length) return; future.push(JSON.stringify(doc)); doc = JSON.parse(history.pop()); render(0, null); }
-function redo() { if (!future.length) return; history.push(JSON.stringify(doc)); doc = JSON.parse(future.pop()); render(0, null); }
-
-/* ---------- zoom / fit ---------- */
+/* ---------- mode/zoom ---------- */
 function setMode(m) {
   mode = m;
-  modeEditBtn.classList.toggle("active", m === "edit");
-  modePrevBtn.classList.toggle("active", m !== "edit");
+  modeEditBtn?.classList.toggle("active", m === "edit");
+  modePrevBtn?.classList.toggle("active", m !== "edit");
 }
 function setZoom(z) {
   zoom = z;
-  zoomSlider.value = String(z.toFixed(2));
+  if (zoomSlider) zoomSlider.value = String(z.toFixed(2));
   canvas.style.transform = `translate(-50%,-50%) scale(${zoom})`;
 }
 function fitZoom() {
@@ -238,10 +261,10 @@ function fitZoom() {
 }
 window.addEventListener("resize", fitZoom);
 window.addEventListener("orientationchange", () => setTimeout(fitZoom, 200));
-fitBtn.addEventListener("click", fitZoom);
-zoomSlider.addEventListener("input", (e) => setZoom(parseFloat(e.target.value)));
+fitBtn?.addEventListener("click", fitZoom);
+zoomSlider?.addEventListener("input", (e) => setZoom(parseFloat(e.target.value)));
 
-/* ---------- layout / measure ---------- */
+/* ---------- layout / measure (with padding) ---------- */
 function resolveStyle(over = {}) {
   return {
     fontFamily: over.fontFamily || doc.style.fontFamily || defaults.fontFamily,
@@ -252,12 +275,16 @@ function resolveStyle(over = {}) {
 function layoutDocument() {
   const pos = [];
   const fs = doc.style.fontSize || defaults.fontSize;
-  const lineStep = fs + (doc.style.lineGap ?? defaults.lineGap);
+  const lineGap = (doc.style.lineGap ?? defaults.lineGap);
+  const lineStep = fs + lineGap;
   const totalH = doc.lines.length * lineStep;
+  // vertical start respecting top/bottom padding
   let startY = 0;
-  if (doc.style.valign === "top") startY = fs + 6;
-  else if (doc.style.valign === "middle") startY = (doc.res.h - totalH) / 2 + fs;
-  else startY = doc.res.h - totalH + fs - 6;
+  if (doc.style.valign === "top") startY = PAD_TOP + fs;
+  else if (doc.style.valign === "middle") startY = Math.max(PAD_TOP + fs, (doc.res.h - totalH) / 2 + fs);
+  else startY = Math.max(PAD_TOP + fs, doc.res.h - PAD_BOTTOM - totalH + fs);
+
+  const maxLineWidth = doc.res.w - PAD_X * 2;
 
   doc.lines.forEach((line, li) => {
     const widths = line.words.map(w => {
@@ -266,13 +293,13 @@ function layoutDocument() {
     });
     const gaps = Math.max(0, line.words.length - 1) * (doc.style.wordGap ?? defaults.wordGap);
     const w = line.words.length ? widths.reduce((a, b) => a + b, 0) + gaps : 0;
-    const startX = (doc.style.align === "left") ? 4 :
-                   (doc.style.align === "center") ? (doc.res.w - w) / 2 :
-                   (doc.res.w - w - 4);
+    const startX = (doc.style.align === "left") ? PAD_X :
+                   (doc.style.align === "center") ? Math.max(PAD_X, (doc.res.w - w) / 2) :
+                   Math.max(PAD_X, doc.res.w - w - PAD_X);
     let x = startX, y = startY + li * lineStep;
-    line.words.forEach((_, wi) => { pos.push({ line: li, word: wi, x, y, width: widths[wi] }); x += widths[wi] + (doc.style.wordGap ?? defaults.wordGap); });
+    line.words.forEach((_, wi) => { pos.push({ line: li, word: wi, x, y, width: widths[wi], maxLineWidth }); x += widths[wi] + (doc.style.wordGap ?? defaults.wordGap); });
   });
-  return { positions: pos };
+  return { positions: pos, maxLineWidth };
 }
 function measureWordBBox(li, wi) {
   const line = doc.lines[li]; if (!line) return null;
@@ -286,10 +313,7 @@ function measureWordBBox(li, wi) {
   return { x: p.x, y: p.y - h, w, h };
 }
 
-/* ---------- animations engine ---------- */
-/* All effects stack by modifying a "props" per word.
-   Each active effect adds dx/dy/scale/alpha/color/gradient/perChar, etc. */
-
+/* ---------- animations engine (unchanged) ---------- */
 const ANIMS = [
   { id:"slide",      name:"Slide In",       params:{direction:"Left",  speed:1} },
   { id:"slideaway",  name:"Slide Away",     params:{direction:"Left",  speed:1} },
@@ -318,7 +342,6 @@ const CONFLICTS = [
   ["strobe","flicker"],
   ["rainbow","colorcycle"],
 ];
-
 function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
 function colorToHue(hex){
   const c=hex.replace("#",""); const r=parseInt(c.slice(0,2),16)/255,g=parseInt(c.slice(2,4),16)/255,b=parseInt(c.slice(4,6),16)/255;
@@ -577,25 +600,6 @@ function render(t = 0, totalDur = null) {
     let fillStyle = props.color || st.color;
     const baseX = p.x + (props.dx || 0), baseY = p.y + (props.dy || 0);
 
-    // gradients
-    if (props.gradient && txt.length) {
-      const wordWidth = Math.ceil(ctx.measureText(txt).width);
-      if (props.gradient.type === "rainbow") {
-        const g = ctx.createLinearGradient(baseX, baseY, baseX + wordWidth, baseY);
-        const baseHue = (props.gradient.base + (t * 120 * props.gradient.speed)) % 360;
-        for (let i=0;i<=6;i++){ const stop=i/6; const hue=Math.floor((baseHue+stop*360)%360); g.addColorStop(stop, `hsl(${hue}deg 100% 60%)`); }
-        fillStyle = g;
-      }
-      if (props.gradient.type === "sweep") {
-        const band = Math.max(0.05, Math.min(0.8, props.gradient.width || 0.25));
-        const pos  = (t * (props.gradient.speed || 0.7) * 1.2) % 1;
-        const g = ctx.createLinearGradient(baseX, baseY, baseX + wordWidth, baseY);
-        const a = Math.max(0, pos - band/2), b = Math.min(1, pos + band/2);
-        g.addColorStop(0, fillStyle); g.addColorStop(a, fillStyle);
-        g.addColorStop(pos, "#FFFFFF"); g.addColorStop(b, fillStyle); g.addColorStop(1, fillStyle);
-        fillStyle = g;
-      }
-    }
     ctx.fillStyle = fillStyle;
 
     if (props.perChar && txt.length) {
@@ -622,16 +626,21 @@ function render(t = 0, totalDur = null) {
         ctx.strokeStyle = "rgba(255,0,255,0.95)";
         ctx.lineWidth = 1; ctx.setLineDash([3,2]);
         ctx.shadowColor="rgba(255,0,255,0.85)"; ctx.shadowBlur=6;
-        ctx.strokeRect(box.x-1, box.y-1, box.w+2, box.h+2);
+        // Keep inside padding
+        const bx = Math.max(PAD_X, box.x-1);
+        const bw = Math.min(canvas.width - PAD_X - bx, box.w+2);
+        ctx.strokeRect(bx, Math.max(PAD_TOP, box.y-1), bw, box.h+2);
         ctx.restore();
 
         // position "×" inside top-right
         const rect = canvas.getBoundingClientRect(), host = wrap.getBoundingClientRect();
-        const cx = rect.left + (box.x + box.w - 6) * zoom;
-        const cy = rect.top  + (box.y + 6) * zoom;
-        deleteWordFx.style.left = `${cx - host.left}px`;
-        deleteWordFx.style.top  = `${cy - host.top}px`;
-        deleteWordFx.classList.remove("hidden");
+        const cx = rect.left + Math.min(box.x + box.w - 6, canvas.width - PAD_X - 6) * zoom;
+        const cy = rect.top  + Math.max(PAD_TOP + 6, box.y + 6) * zoom;
+        if (deleteWordFx){
+          deleteWordFx.style.left = `${cx - host.left}px`;
+          deleteWordFx.style.top  = `${cy - host.top}px`;
+          deleteWordFx.classList.remove("hidden");
+        }
       }
     }
     ctx.restore();
@@ -653,79 +662,47 @@ function startPreview() {
 }
 function stopPreview() { if (rafId) cancelAnimationFrame(rafId); rafId = null; render(0, null); }
 
-/* ---------- color swatches ---------- */
+/* ---------- swatches ---------- */
 function drawSwatchesUI(){
   const make=(wrap, list, isBg=false)=>{
+    if (!wrap) return;
     wrap.innerHTML = "";
     list.forEach(c=>{
       const d=document.createElement("div"); d.className="swatch"; d.style.background=c;
       d.addEventListener("click", ()=>{
+        pushHistory();
         if(isBg){ doc.bg = { type:"solid", color:c, image:null, preset:null }; showSolidTools(true); activateTile("solid"); }
-        else    { doc.style.color = c; fontColorInput.value = c; applyStyleToCurrent(w=> w.style={...w.style, color:c}); }
+        else    { doc.style.color = c; fontColorInput && (fontColorInput.value = c); const w = currentWord(); if (w) w.style={...w.style, color:c}; }
         render(0,null);
       });
       wrap.appendChild(d);
     });
   };
+  drawSwatchesUI._did && make(swatchesWrap, [...defaultPalette, ...customPalette], false);
   make(swatchesWrap, [...defaultPalette, ...customPalette], false);
   make(bgSwatches,   [...defaultPalette, ...customBgPalette], true);
+  drawSwatchesUI._did = true;
 }
-addSwatchBtn.addEventListener("click", ()=>{
-  const c = fontColorInput.value;
+addSwatchBtn?.addEventListener("click", ()=>{
+  const c = fontColorInput?.value || "#ffffff";
   if(!defaultPalette.includes(c) && !customPalette.includes(c)) customPalette.push(c);
   drawSwatchesUI();
 });
-addBgSwatchBtn.addEventListener("click", ()=>{
-  const c = bgSolidColor.value;
+addBgSwatchBtn?.addEventListener("click", ()=>{
+  const c = bgSolidColor?.value || "#000000";
   if(!defaultPalette.includes(c) && !customBgPalette.includes(c)) customBgPalette.push(c);
   drawSwatchesUI();
 });
-bgSolidColor.addEventListener("input", ()=>{
+bgSolidColor?.addEventListener("input", ()=>{
+  pushHistory();
   doc.bg = { type:"solid", color:bgSolidColor.value, image:null, preset:null };
   render(0,null);
 });
 
-/* ---------- events ---------- */
-// mode
-modePrevBtn.addEventListener("click", ()=>{ setMode("preview"); startPreview(); });
-modeEditBtn .addEventListener("click", ()=>{ setMode("edit");    stopPreview(); });
-
-// inspector
-function openInspector(open=true){ inspectorBody.classList.toggle("open", open); inspectorToggle.setAttribute("aria-expanded", String(open)); }
-inspectorToggle.addEventListener("click", ()=>{ const open=!inspectorBody.classList.contains("open"); openInspector(open); setTimeout(fitZoom,60); });
-[accFont,accLayout,accAnim].forEach(a => a.addEventListener("toggle", ()=>{ if (a.open) [accFont,accLayout,accAnim].filter(x=>x!==a).forEach(x=>x.open=false); }));
-
-toolbarTabs.forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const id = btn.getAttribute("data-acc");
-    const panel = document.getElementById(id);
-    if (panel) { panel.open = true; [accFont,accLayout,accAnim].filter(x=>x!==panel).forEach(x=>x.open=false); openInspector(true); setTimeout(fitZoom,60); }
-  });
-});
-
-// resolution change
-resSel.addEventListener("change", ()=>{
-  const [w,h] = resSel.value.split("x").map(Number);
-  doc.res = {w,h};
-  buildBgGrid(); setInitialBackground();
-  render(0,null); fitZoom();
-});
-
-// stage add
-addLineBtn.addEventListener("click", ()=>{
-  pushHistory(); doc.lines.push({words:[{text:""}]});
-  selected = { line: doc.lines.length-1, word: 0, caret: 0 }; openInspector(true);
-  render(0,null); focusEditor();
-});
-addWordBtn.addEventListener("click", ()=>{
-  pushHistory(); const line = doc.lines[selected?.line ?? 0] || doc.lines[0];
-  line.words.push({text:""}); selected = { line: doc.lines.indexOf(line), word: line.words.length-1, caret: 0 };
-  openInspector(true); render(0,null); focusEditor();
-});
-
-// selection & typing
-function focusEditor(){ try { mobileInput.value = currentWordText(); mobileInput.focus(); } catch {} }
-function currentWordText(){ if(!selected) return ""; const line=doc.lines[selected.line]; if(!line) return ""; const word=line.words[selected.word]; return word?.text || ""; }
+/* ---------- selection & typing ---------- */
+function currentWord(){ if(!selected) return null; const line=doc.lines[selected.line]; if(!line) return null; return line.words[selected.word] || null; }
+function focusEditor(){ try { const w=currentWord(); mobileInput && (mobileInput.value = w?.text || ""); mobileInput?.focus(); } catch {} }
+function currentWordText(){ const w=currentWord(); return w?.text || ""; }
 
 canvas.addEventListener("click", (e)=>{
   const rect=canvas.getBoundingClientRect(); const x=(e.clientX-rect.left)/zoom, y=(e.clientY-rect.top)/zoom;
@@ -738,12 +715,12 @@ canvas.addEventListener("click", (e)=>{
   }
 });
 
-mobileInput.addEventListener("input", ()=>{
+mobileInput?.addEventListener("input", ()=>{
   if(!selected) return;
-  const line = doc.lines[selected.line]; if(!line) return;
-  const word = line.words[selected.word]; if(!word) return;
-  word.text = mobileInput.value; selected.caret = word.text.length;
-  autoSizeIfOn(word);
+  const w = currentWord(); if(!w) return;
+  pushHistory();
+  w.text = mobileInput.value; selected.caret = w.text.length;
+  autoSizeIfOn();
   render(0,null);
 });
 
@@ -767,14 +744,14 @@ document.addEventListener("keydown", (e)=>{
     const t = word.text || "";
     if (!t.length){
       line.words.splice(selected.word,1);
-      if (!line.words.length){ doc.lines.splice(selected.line,1); selected = doc.lines.length? {line:0,word:0,caret:0} : null; deleteWordFx.classList.add("hidden"); }
+      if (!line.words.length){ doc.lines.splice(selected.line,1); selected = doc.lines.length? {line:0,word:0,caret:0} : null; deleteWordFx?.classList.add("hidden"); }
       else selected.word = Math.max(0, selected.word-1);
     } else {
       word.text = t.slice(0,-1);
       selected.caret = Math.max(0, (selected.caret ?? t.length)-1);
-      mobileInput.value = word.text;
+      mobileInput && (mobileInput.value = word.text);
     }
-    autoSizeIfOn(word);
+    autoSizeIfOn();
     render(0,null); return;
   }
   if (e.key.length === 1 && !e.metaKey && !e.ctrlKey){ e.preventDefault();
@@ -782,14 +759,14 @@ document.addEventListener("keydown", (e)=>{
     const t = word.text || "";
     const pos = (selected.caret == null) ? t.length : selected.caret;
     word.text = t.slice(0,pos) + e.key + t.slice(pos);
-    selected.caret = pos + 1; mobileInput.value = word.text;
-    autoSizeIfOn(word);
+    selected.caret = pos + 1; mobileInput && (mobileInput.value = word.text);
+    autoSizeIfOn();
     render(0,null);
   }
 });
 
 // delete word
-deleteWordFx.addEventListener("click", ()=>{
+deleteWordFx?.addEventListener("click", ()=>{
   if (!selected) return;
   pushHistory();
   const line = doc.lines[selected.line]; if(!line) return;
@@ -801,29 +778,29 @@ deleteWordFx.addEventListener("click", ()=>{
 
 /* ---------- font/spacing controls ---------- */
 function applyStyleToCurrent(fn){
-  const w = doc.lines[selected?.line]?.words[selected?.word];
-  if (w) fn(w);
+  const w = currentWord();
+  if (w) { pushHistory(); fn(w); }
 }
-fontSel.addEventListener("change", ()=>{ doc.style.fontFamily = fontSel.value; applyStyleToCurrent(w=> w.style={...w.style, fontFamily:fontSel.value}); render(0,null); });
-fontSizeInput.addEventListener("input", ()=>{ const v = Math.max(6, Math.min(64, +fontSizeInput.value||22)); doc.style.fontSize=v; applyStyleToCurrent(w=> w.style={...w.style, fontSize:v}); autoSizeIfOn(); render(0,null); });
-fontColorInput.addEventListener("input", ()=>{ const v = fontColorInput.value; doc.style.color=v; applyStyleToCurrent(w=> w.style={...w.style, color:v}); render(0,null); });
-lineGapInput.addEventListener("input", ()=>{ doc.style.lineGap = +lineGapInput.value || 4; render(0,null); fitZoom(); });
-wordGapInput.addEventListener("input", ()=>{ doc.style.wordGap = +wordGapInput.value || 6; render(0,null); fitZoom(); });
-alignBtns.forEach(b => b.addEventListener("click", ()=>{ alignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active"); doc.style.align=b.dataset.align; render(0,null); }));
-valignBtns.forEach(b => b.addEventListener("click", ()=>{ valignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active"); doc.style.valign=b.dataset.valign; render(0,null); fitZoom(); }));
+fontSel?.addEventListener("change", ()=>{ doc.style.fontFamily = fontSel.value; applyStyleToCurrent(w=> w.style={...w.style, fontFamily:fontSel.value}); render(0,null); });
+fontSizeInput?.addEventListener("input", ()=>{ const v = Math.max(6, Math.min(64, +fontSizeInput.value||22)); doc.style.fontSize=v; applyStyleToCurrent(w=> w.style={...w.style, fontSize:v}); autoSizeIfOn(); render(0,null); });
+fontColorInput?.addEventListener("input", ()=>{ const v = fontColorInput.value; doc.style.color=v; applyStyleToCurrent(w=> w.style={...w.style, color:v}); render(0,null); });
+lineGapInput?.addEventListener("input", ()=>{ pushHistory(); doc.style.lineGap = +lineGapInput.value || 4; render(0,null); fitZoom(); });
+wordGapInput?.addEventListener("input", ()=>{ pushHistory(); doc.style.wordGap = +wordGapInput.value || 6; render(0,null); fitZoom(); });
+alignBtns.forEach(b => b.addEventListener("click", ()=>{ alignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active"); pushHistory(); doc.style.align=b.dataset.align; render(0,null); }));
+valignBtns.forEach(b => b.addEventListener("click", ()=>{ valignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active"); pushHistory(); doc.style.valign=b.dataset.valign; render(0,null); fitZoom(); }));
 
 function autoSizeIfOn() {
-  if (!autoSizeChk.checked) return;
-  // ensure current word fits line; shrink if overflow; grow modestly if lots of space (soft auto)
+  if (!autoSizeChk?.checked) return;
   const layout = layoutDocument();
   layout.positions.forEach(p=>{
     const w = doc.lines[p.line].words[p.word];
     const st = resolveStyle(w.style);
     ctx.font = `${st.fontSize}px ${st.fontFamily}`;
     const textW = Math.ceil(ctx.measureText(w.text||"").width);
-    const overshoot = (p.x + textW) - (doc.res.w - 4);
+    const maxWidth = p.maxLineWidth;
+    const overshoot = (p.x - PAD_X) + textW - maxWidth;
     if (overshoot > 0) { // shrink
-      const s = Math.max(6, Math.floor(st.fontSize * (doc.res.w - 8) / (textW + 1)));
+      const s = Math.max(6, Math.floor(st.fontSize * (maxWidth - (p.x - PAD_X)) / (textW + 1)));
       w.style = {...w.style, fontSize: s};
     }
   });
@@ -831,7 +808,6 @@ function autoSizeIfOn() {
 
 /* ---------- Animations UI ---------- */
 function conflictChoice(newId){
-  // simple, reliable prompt; options: BOTH/NEW/OLD/CANCEL
   const offenders = doc.animations.filter(a => CONFLICTS.some(p => p.includes(a.id) && p.includes(newId)));
   if (!offenders.length) return "both";
   const names = offenders.map(o => ANIMS.find(z=>z.id===o.id).name).join(", ");
@@ -841,6 +817,7 @@ function conflictChoice(newId){
   return "both";
 }
 function buildAnimUI(){
+  if (!animList) return;
   animList.innerHTML="";
   ANIMS.forEach(a=>{
     const row=document.createElement("div"); row.style.display="flex"; row.style.gap="6px"; row.style.alignItems="center"; row.style.flexWrap="wrap";
@@ -849,7 +826,6 @@ function buildAnimUI(){
     const gear=document.createElement("button"); gear.textContent="⚙"; gear.className="button tiny";
     const params=document.createElement("div"); params.style.display="none"; params.style.margin="6px 0";
 
-    // params
     Object.keys(a.params).forEach(k=>{
       const p=document.createElement("div"); p.style.display="inline-flex"; p.style.gap="6px"; p.style.marginRight="8px"; p.style.alignItems="center";
       const lab=document.createElement("span"); lab.textContent=k[0].toUpperCase()+k.slice(1);
@@ -887,17 +863,16 @@ function buildAnimUI(){
 }
 
 /* ---------- Config & GIF ---------- */
-saveJsonBtn.addEventListener("click", ()=>{
+saveJsonBtn?.addEventListener("click", ()=>{
   const blob = new Blob([JSON.stringify(doc,null,2)], {type:"application/json"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download="config.json"; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
 });
-loadJsonInput.addEventListener("change",(e)=>{
+loadJsonInput?.addEventListener("change",(e)=>{
   const f=e.target.files?.[0]; if(!f) return;
   const r=new FileReader(); r.onload=()=>{ try{ doc=JSON.parse(r.result); render(0,null); fitZoom(); }catch{} }; r.readAsText(f);
 });
 
-// robust GIF loader (CDN w/ fallback)
 async function loadScript(src){ return new Promise((res,rej)=>{const s=document.createElement('script'); s.src=src; s.async=true; s.onload=()=>res(true); s.onerror=()=>rej(); document.head.appendChild(s);}); }
 async function ensureGifLibs(){
   if (typeof GIFEncoder!=="undefined") return true;
@@ -914,8 +889,8 @@ function encoderToBlob(enc){
   return new Blob([u8], {type:"image/gif"});
 }
 async function downloadGif(){
-  const fps   = Math.max(1, Math.min(30, parseInt(fpsInput.value||15)));
-  const secs  = Math.max(1, Math.min(60, parseInt(secInput.value||8)));
+  const fps   = Math.max(1, Math.min(30, parseInt(fpsInput?.value||15)));
+  const secs  = Math.max(1, Math.min(60, parseInt(secInput?.value||8)));
   const frames= fps * secs;
   const delay = Math.round(1000 / fps);
 
@@ -932,28 +907,49 @@ async function downloadGif(){
   enc.finish();
   const blob = encoderToBlob(enc);
   const url  = URL.createObjectURL(blob);
-  const name = (fileNameInput.value||"animation.gif").replace(/\.(png|jpe?g|webp)$/i,".gif");
+  const name = (fileNameInput?.value||"animation.gif").replace(/\.(png|jpe?g|webp)$/i,".gif");
   const a = document.createElement("a"); a.href = url; a.download = name; a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 4000);
 
   if (wasPrev) startPreview();
 }
-downloadGifBtn.addEventListener("click", async ()=>{
+downloadGifBtn?.addEventListener("click", async ()=>{
   if (!(await ensureGifLibs())) { alert("GIF export library couldn’t load (stay online or I can inline it next)."); return; }
   await downloadGif();
 });
 
 /* ---------- init ---------- */
+function openInspector(open=true){ inspectorBody?.classList.toggle("open", open); inspectorToggle?.setAttribute("aria-expanded", String(open)); }
+inspectorToggle?.addEventListener("click", ()=>{ const open=!inspectorBody.classList.contains("open"); openInspector(open); setTimeout(fitZoom,60); });
+[accFont,accLayout,accAnim].forEach(a => a?.addEventListener("toggle", ()=>{ if (a.open) [accFont,accLayout,accAnim].filter(x=>x!==a).forEach(x=>x.open=false); }));
+
+toolbarTabs.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const id = btn.getAttribute("data-acc");
+    const panel = document.getElementById(id);
+    if (panel) { panel.open = true; [accFont,accLayout,accAnim].filter(x=>x!==panel).forEach(x=>x.open=false); openInspector(true); setTimeout(fitZoom,60); }
+  });
+});
+
+// resolution change
+resSel?.addEventListener("change", ()=>{
+  const [w,h] = resSel.value.split("x").map(Number);
+  pushHistory();
+  doc.res = {w,h};
+  buildBgGrid(); setInitialBackground();
+  render(0,null); fitZoom();
+});
+
 function setModeEdit(){ setMode("edit"); stopPreview(); }
 function setModePreview(){ setMode("preview"); startPreview(); }
 
-modeEditBtn.addEventListener("click", setModeEdit);
-modePrevBtn.addEventListener("click", setModePreview);
+modeEditBtn?.addEventListener("click", setModeEdit);
+modePrevBtn?.addEventListener("click", setModePreview);
 
 function init(){
   buildBgGrid();
   setInitialBackground();
-  drawSwatchesUI(); // FIX: call the single swatch builder
+  drawSwatchesUI();
   setMode("edit");
   render(0,null);
   fitZoom();
