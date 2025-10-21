@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
   <!-- Theme -->
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- Topbar -->
@@ -36,9 +36,9 @@
         </div>
 
         <div class="hist">
-          <button id="undoBtn"    class="chip" title="Undo">↶</button>
+          <button id="undoBtn" class="chip" title="Undo">↶</button>
           <button id="clearAllBtn" class="chip danger" title="Clear All">🧹</button>
-          <button id="redoBtn"    class="chip" title="Redo">↷</button>
+          <button id="redoBtn" class="chip" title="Redo">↷</button>
         </div>
 
         <button id="aboutBtn" class="linklike">About</button>
@@ -49,9 +49,7 @@
   <!-- Content -->
   <main class="shell">
     <section class="panel glass">
-      <div class="panel-head">
-        <h2>Resolution & Background</h2>
-      </div>
+      <div class="panel-head"><h2>Resolution & Background</h2></div>
 
       <div class="grid cols-3 gap">
         <label class="stack">
@@ -79,9 +77,7 @@
     </section>
 
     <section class="panel glass">
-      <div class="panel-head">
-        <h2>Canvas</h2>
-      </div>
+      <div class="panel-head"><h2>Canvas</h2></div>
 
       <div class="canvas-wrap">
         <canvas id="led" width="96" height="128"></canvas>
@@ -228,10 +224,7 @@
     </div>
   </div>
 
-  <!-- Hidden input to trigger mobile keyboard -->
-  <input id="mobileInputHidden" class="hidden" />
-
   <!-- App -->
-  <script src="app.v2.7.2.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
