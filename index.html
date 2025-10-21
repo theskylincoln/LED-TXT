@@ -1,48 +1,74 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>LED Backpack Animator</title>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>LED Backpack Animator</title>
 <link rel="stylesheet" href="style.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet"></head>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet"/>
+</head>
 <body>
-<header class="topbar"><div class="title-wrap"><div class="appmark"><div class="leddot"></div><h1 id="appTitle">LED Backpack Animator</h1></div>
-<div class="tools-row"><div class="seg"><button id="modeEdit" class="seg-btn active">✏️ Edit</button><button id="modePreview" class="seg-btn">▶️ Preview</button></div>
-<div class="zoom-wrap"><span>Zoom</span><input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.8"/><button id="fitBtn" class="button tiny">Fit</button></div>
-<div class="undo-row"><button id="undoBtn" class="button tiny" title="Undo">↶</button><button id="clearAllBtn" class="button tiny" title="Clear All">🧹</button><button id="redoBtn" class="button tiny" title="Redo">↷</button></div>
-<button id="aboutBtn" class="linklike">About</button></div></div></header>
+<header class="topbar">
+  <h1>LED Backpack Animator</h1>
+  <div class="toolbar">
+    <button id="editMode">✏️ Edit</button>
+    <button id="previewMode">▶️ Preview</button>
+    <label>Zoom</label><input type="range" id="zoom" min="0.4" max="4" step="0.05" value="1">
+    <button id="fit">Fit</button>
+  </div>
+</header>
 
-<main class="container">
-<section class="card"><h2>Resolution & Background</h2>
-<div class="row"><label for="resSelect" class="sr">Resolution</label>
-<select id="resSelect"><option value="96x128" selected>96×128</option><option value="64x64">64×64</option></select></div>
-<div id="bgGrid" class="bg-grid"></div>
-<div id="bgSolidTools" class="bg-solid-tools hidden"><div class="row solidrow"><label class="solidlab">Solid Color</label><input type="color" id="bgSolidColor" value="#000000"/></div>
-<div class="row"><div id="bgSwatches" class="swatches"></div><button id="addBgSwatchBtn" class="button tiny">+ Add BG</button></div></div>
-<input type="file" id="bgUpload" accept="image/*" hidden/></section>
+<main>
+<section class="card">
+  <h2>Resolution & Background</h2>
+  <select id="resSelect">
+    <option value="96x128">96×128</option>
+    <option value="64x64">64×64</option>
+  </select>
+  <div id="bgGrid" class="bg-grid"></div>
 
-<section class="card"><h2>Canvas</h2>
-<div class="canvas-wrap"><canvas id="led" width="96" height="128"></canvas><button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button></div>
-<div class="stage-actions"><button id="addWordBtn" class="button">+ Word</button><button id="addLineBtn" class="button">+ Line</button></div>
-<div class="pillbar"><button class="pill" id="tabFont">Font</button><button class="pill" id="tabLayout">Spacing & Alignment</button><button class="pill" id="tabAnim">Animations</button><button class="pill" id="toggleInspector">Inspector ▸</button></div>
-<div id="inspectorBody" class="inspector-body">
-<details class="acc" id="accFont"><summary><span>Font</span></summary>
-<div class="acc-body"><div class="row twocol"><label>Family</label><select id="fontSelect"><option value="Orbitron">Orbitron</option><option value="Montserrat">Montserrat</option><option value="Roboto Mono">Roboto Mono</option><option value="Verdana">Verdana</option><option value="Arial Black">Arial Black</option><option value="monospace">Monospace</option></select>
-<label>Size</label><input id="fontSize" type="number" min="6" max="64" value="22"/></div>
-<label class="chk"><input type="checkbox" id="autoSize" checked/> <span>Auto-size</span></label>
-<div class="color-controls"><div id="swatches" class="swatches"></div><input type="color" id="fontColor" value="#FFFFFF"/><button id="addSwatchBtn" class="button tiny">+ Add</button></div>
-</div></details>
-<details class="acc" id="accLayout"><summary><span>Spacing & Alignment</span></summary>
-<div class="acc-body"><div class="row twocol"><label>Line Gap</label><input id="lineGap" type="number" min="0" max="30" value="4"/><label>Word Gap</label><input id="wordGap" type="number" min="0" max="30" value="6"/></div>
-<div class="subhead">Align</div><div class="seg"><button class="seg-btn" data-align="left">Left</button><button class="seg-btn active" data-align="center">Center</button><button class="seg-btn" data-align="right">Right</button></div>
-<div class="seg"><button class="seg-btn" data-valign="top">Top</button><button class="seg-btn active" data-valign="middle">Middle</button><button class="seg-btn" data-valign="bottom">Bottom</button></div></div></details>
-<details class="acc" id="accAnim"><summary><span>Animations</span></summary><div class="acc-body"><div id="animList" class="anim-list"></div></div></details>
-</div></section>
+  <div id="solidTools" class="hidden">
+    <label>Solid Color</label>
+    <input type="color" id="solidColor" value="#000000">
+    <div id="swatches">
+      <button class="swatch" data-color="#ffffff" style="background:#fff"></button>
+      <button class="swatch" data-color="#ff0000" style="background:#f00"></button>
+      <button class="swatch" data-color="#00ff00" style="background:#0f0"></button>
+      <button class="swatch" data-color="#0000ff" style="background:#00f"></button>
+      <button class="swatch" data-color="#ffff00" style="background:#ff0"></button>
+      <button class="swatch" data-color="#ff00ff" style="background:#f0f"></button>
+      <button class="swatch" data-color="#00ffff" style="background:#0ff"></button>
+      <button class="swatch" data-color="#000000" style="background:#000"></button>
+    </div>
+  </div>
+</section>
 
-<section class="card"><h2>Render & Download</h2>
-<div class="row two-eq"><label class="upload-btn"><input type="file" id="loadJsonInput" accept="application/json" hidden/><span class="button block">Import Config</span></label>
-<button id="saveJsonBtn" class="button block">Download Config</button></div>
-<div class="row twocol"><label>Filename</label><input id="fileName" value="animation.gif"/><label>FPS</label><input type="number" id="fps" value="15" min="1" max="30"/><label>Seconds</label><input type="number" id="seconds" value="8" min="1" max="60"/></div>
-<div class="row"><button id="downloadGifBtn" class="button primary block big">Render / Preview GIF</button><img id="gifPreview" alt="" style="display:none;margin-top:10px;border-radius:10px;border:1px solid #26293b;max-width:100%"/></div>
-</section></main>
+<section class="card">
+  <h2>Canvas</h2>
+  <div class="canvas-wrap"><canvas id="led" width="96" height="128"></canvas></div>
+  <div class="controls">
+    <button id="addWord">+ Word</button>
+    <button id="addLine">+ Line</button>
+  </div>
+</section>
 
-<div id="aboutModal" class="modal hidden"><div class="modal-backdrop"></div><div class="modal-card"><h3>About</h3><p>Compose text, preview animations, and render true-motion GIFs for LED backpacks.</p>
-<div class="modal-actions"><button id="aboutClose" class="primary">Close</button></div></div></div>
-<script src="app.js"></script></body></html>
+<section class="card">
+  <h2>Render & Download</h2>
+  <div class="button-row">
+    <button id="previewRender">🖼 Preview Only</button>
+    <button id="inlineGifRender">🎞 Full Inline Encoder (GIF)</button>
+  </div>
+  <div class="render-set">
+    <label>Filename</label><input id="fileName" value="animation.gif">
+    <label>FPS</label><input id="fps" type="number" value="15">
+    <label>Seconds</label><input id="seconds" type="number" value="8">
+  </div>
+  <img id="gifPreview" style="display:none;margin-top:10px;max-width:100%;border-radius:8px"/>
+</section>
+</main>
+
+<footer>
+  <p>© 2025 <a href="https://instagram.com/theskylincoln" target="_blank">@theskylincoln</a></p>
+</footer>
+<script src="app.js"></script>
+</body></html>
