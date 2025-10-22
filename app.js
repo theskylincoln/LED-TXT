@@ -731,7 +731,7 @@ function startPreview() {
 
     // progress bar & timestamps
     if (progressBar) {
-      const frac = tt / dur;         // 0..1
+      const frac = tt / dur;
       progressBar.style.setProperty("--p", frac);
       if (tCur) tCur.textContent = `${tt.toFixed(1)}s`;
       if (tEnd) tEnd.textContent = `${dur.toFixed(1)}s`;
@@ -743,7 +743,7 @@ function startPreview() {
 function stopPreview(){
   if (rafId) cancelAnimationFrame(rafId);
   rafId = null;
-  render(0, getTotalSeconds()); // reset to first frame
+  render(0, getTotalSeconds());
 }
 
 /* ---------- GIF export (CDN encoder) ---------- */
@@ -751,7 +751,8 @@ async function loadScript(src){
   return new Promise((res, rej)=>{
     const s=document.createElement("script");
     s.src=src; s.async=true;
-    s.onload=()=>res(true); s.onerror=()=>rej(new Error("load fail "+src));
+    s.onload=()=>res(true);
+    s.onerror=()=>rej(new Error("load fail "+src));
     document.head.appendChild(s);
   });
 }
@@ -771,68 +772,63 @@ function encoderToBlob(enc){
   return new Blob([u8], {type:"image/gif"});
 }
 
-/* Renders a real animated GIF and triggers download; also previews it in #gifPreview */
-async function renderGif(){
+/* ---------- render + preview/download GIF ---------- */
+async function renderGif(previewOnly=false){
   const fps=getFPS(), secs=getTotalSeconds();
   const frames=fps*secs;
   const delay=Math.max(1, Math.round(1000/fps));
 
   const W=canvas.width, H=canvas.height;
-
-  // ensure encoder
   try{
     const ok = await ensureGifLibs();
     if(!ok) { alert("Couldn’t load GIF encoder. Stay online and try again."); return; }
-  }catch(_){ alert("Couldn’t load GIF encoder. Try again."); return; }
+  }catch(_){ alert("Couldn’t load GIF encoder."); return; }
 
   const wasPrev = (mode === "preview");
   if (wasPrev) stopPreview();
 
   const enc = new GIFEncoder();
-  enc.setRepeat(0);        // loop forever
-  enc.setDelay(delay);     // ms per frame
-  enc.setQuality(10);      // 1=best; 10 is a good balance
+  enc.setRepeat(0);
+  enc.setDelay(delay);
+  enc.setQuality(10);
   enc.setSize(W,H);
   enc.start();
 
-  // build frames
   for(let i=0;i<frames;i++){
-    const t = i / fps;     // seconds
-    render(t, secs);       // draw onto the main canvas
-    enc.addFrame(ctx);     // capture frame
+    const t = i / fps;
+    render(t, secs);
+    enc.addFrame(ctx);
   }
   enc.finish();
 
-  // Blob + mobile-friendly save
   const blob = encoderToBlob(enc);
   const url  = URL.createObjectURL(blob);
   const name = (fileNameInput.value || "animation").replace(/\.(png|jpe?g|webp|gif)$/i, "") + ".gif";
 
-  // inline preview
+  // always preview inline
   if (gifPreviewImg) {
     gifPreviewImg.classList.remove("hidden");
     gifPreviewImg.src = url;
   }
 
-  // trigger download
-  const a=document.createElement("a");
-  a.href=url; a.download=name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  // only auto-download when previewOnly === false
+  if (!previewOnly) {
+    const a=document.createElement("a");
+    a.href=url; a.download=name;
+    document.body.appendChild(a);
+    a.click(); a.remove();
+  }
 
   setTimeout(()=>URL.revokeObjectURL(url), 6000);
   if (wasPrev) startPreview();
 }
 
-/* ---------- selection & typing ---------- */
+/* ---------- click selection & typing ---------- */
 function focusGhostForMobile(){
-  // bring up iOS/Android keyboard without showing a visible input
   const g = ensureGhostInput?.() || null;
-  if (g){ g.value = currentWordText(); g.focus({preventScroll:true}); }
+  if (g){ g.value = ""; g.focus({preventScroll:true}); }
 }
 
-// click to select word; click empty to deselect
 on(canvas, "click", (e)=>{
   const rect=canvas.getBoundingClientRect();
   const x=(e.clientX-rect.left)/zoom, y=(e.clientY-rect.top)/zoom;
@@ -844,7 +840,7 @@ on(canvas, "click", (e)=>{
   });
   if (hit){
     selected = { line: hit.line, word: hit.word, caret: caretFromClick(hit.line, hit.word, x) };
-    if (mode === "preview") setMode("edit"); // editing implies visible caret, no outline in preview
+    if (mode === "preview") setMode("edit");
     render(0, getTotalSeconds());
     focusGhostForMobile();
   } else {
@@ -854,160 +850,56 @@ on(canvas, "click", (e)=>{
   }
 });
 
-// fully-editable typing with caret
-on(document, "keydown", (e)=>{
-  if (mode !== "edit" || !selected) return;
+/* ---------- keyboard editing ---------- */
+on(document,"keydown",(e)=>{
+  if (mode!=="edit"||!selected) return;
+  const line=doc.lines[selected.line]; if(!line) return;
+  const word=line.words[selected.word]; if(!word) return;
+  const t=word.text||""; const pos=selected.caret??t.length;
 
-  const line = doc.lines[selected.line]; if(!line) return;
-  const word = line.words[selected.word]; if(!word) return;
-
-  const t = word.text || "";
-  const pos = (selected.caret == null) ? t.length : selected.caret;
-
-  // text input
-  if (e.key.length === 1 && !e.metaKey && !e.ctrlKey){
+  // typing
+  if(e.key.length===1&&!e.metaKey&&!e.ctrlKey){
     e.preventDefault();
     pushHistory();
-    word.text = t.slice(0,pos) + e.key + t.slice(pos);
-    selected.caret = pos + 1;
+    word.text=t.slice(0,pos)+e.key+t.slice(pos);
+    selected.caret=pos+1;
     autoSizeLine(selected.line);
-    render(0, getTotalSeconds());
+    render(0,getTotalSeconds());
     return;
   }
 
   // navigation
-  if (e.key === "ArrowLeft"){ e.preventDefault();
-    if (pos>0) selected.caret = pos-1;
-    else if (selected.word>0){ selected.word--; selected.caret = (line.words[selected.word].text||"").length; }
-    render(0, getTotalSeconds()); return;
-  }
-  if (e.key === "ArrowRight"){ e.preventDefault();
-    if (pos < t.length) selected.caret = pos+1;
-    else if (selected.word < line.words.length-1){ selected.word++; selected.caret = 0; }
-    render(0, getTotalSeconds()); return;
-  }
-  if (e.key === "Home"){ e.preventDefault(); selected.caret=0; render(0, getTotalSeconds()); return; }
-  if (e.key === "End"){ e.preventDefault(); selected.caret=t.length; render(0, getTotalSeconds()); return; }
+  if(e.key==="ArrowLeft"){ if(pos>0)selected.caret=pos-1; render(0,getTotalSeconds()); return; }
+  if(e.key==="ArrowRight"){ if(pos<t.length)selected.caret=pos+1; render(0,getTotalSeconds()); return; }
 
-  // enter -> new line; space -> new word
-  if (e.key === "Enter"){ e.preventDefault();
+  // add new line/word
+  if(e.key==="Enter"){ e.preventDefault();
     pushHistory(); doc.lines.splice(selected.line+1,0,{words:[{text:""}]});
-    selected = { line:selected.line+1, word:0, caret:0 }; render(0,getTotalSeconds()); return;
+    selected={line:selected.line+1,word:0,caret:0}; render(0,getTotalSeconds()); return;
   }
-  if (e.key === " " && !e.ctrlKey && !e.metaKey){ e.preventDefault();
-    pushHistory(); line.words.splice(selected.word+1,0,{text:""}); selected = { line:selected.line, word:selected.word+1, caret:0 };
+  if(e.key===" "&&!e.ctrlKey&&!e.metaKey){ e.preventDefault();
+    pushHistory(); line.words.splice(selected.word+1,0,{text:""}); selected={line:selected.line,word:selected.word+1,caret:0};
     render(0,getTotalSeconds()); return;
   }
 
-  // backspace / delete with merge behavior
-  if (e.key === "Backspace"){ e.preventDefault();
+  // backspace
+  if(e.key==="Backspace"){ e.preventDefault();
     pushHistory();
-    if (pos>0){ word.text = t.slice(0,pos-1) + t.slice(pos); selected.caret = pos-1; }
-    else {
-      if (selected.word>0){ // merge with previous word
-        const prev = line.words[selected.word-1];
-        const prevLen = (prev.text||"").length;
-        prev.text = (prev.text||"") + t;
-        line.words.splice(selected.word,1);
-        selected.word--; selected.caret = prevLen;
-      } else if (selected.line>0){ // merge with previous line
-        const prevLine = doc.lines[selected.line-1];
-        const prev = prevLine.words[prevLine.words.length-1];
-        const prevLen = (prev?.text||"").length;
-        if (prev){ prev.text = (prev.text||"") + t; }
-        doc.lines.splice(selected.line,1);
-        selected = { line:selected.line-1, word:Math.max(0, prevLine.words.length-1), caret:prevLen };
-      }
-    }
-    autoSizeLine(selected.line);
-    render(0,getTotalSeconds()); return;
-  }
-  if (e.key === "Delete"){ e.preventDefault();
-    pushHistory();
-    if (pos < t.length){ word.text = t.slice(0,pos) + t.slice(pos+1); }
-    else {
-      if (selected.word < line.words.length-1){
-        const next = line.words[selected.word+1];
-        word.text = t + (next.text||""); line.words.splice(selected.word+1,1);
-      } else if (selected.line < doc.lines.length-1){
-        const nextLine = doc.lines[selected.line+1];
-        if (nextLine.words.length){
-          word.text = t + (nextLine.words[0].text||"");
-          nextLine.words.shift();
-        }
-        if (!nextLine.words.length) doc.lines.splice(selected.line+1,1);
-      }
-    }
-    autoSizeLine(selected.line);
-    render(0,getTotalSeconds()); return;
+    if(pos>0){ word.text=t.slice(0,pos-1)+t.slice(pos); selected.caret=pos-1; }
+    render(0,getTotalSeconds());
   }
 });
 
-// delete pin
-on(deleteWordFx, "click", ()=>{
-  if (!selected) return;
-  pushHistory();
-  const line = doc.lines[selected.line]; if(!line) return;
-  line.words.splice(selected.word, 1);
-  if (!line.words.length){
-    doc.lines.splice(selected.line,1);
-    selected = doc.lines.length? {line:0,word:0,caret:0} : null;
-  } else {
-    selected.word = Math.max(0, selected.word-1);
-  }
-  deleteWordFx.classList.add("hidden");
-  render(0, getTotalSeconds());
-});
-
-/* ---------- inspector & toolbar ---------- */
-// Horizontal-only inspector; toggle expands/collapses the details group
+/* ---------- inspector / toolbar ---------- */
 on(inspectorToggle,"click",()=>{
-  const open = !inspectorBody.classList.contains("open");
-  inspectorBody.classList.toggle("open", open);
-  inspectorToggle.textContent = open ? "Inspector ▴" : "Inspector ▾";
-  inspectorToggle.setAttribute("aria-expanded", String(open));
-  setTimeout(fitZoom, 60);
+  const open=!inspectorBody.classList.contains("open");
+  inspectorBody.classList.toggle("open",open);
+  inspectorToggle.textContent=open?"Inspector ▴":"Inspector ▾";
+  inspectorToggle.setAttribute("aria-expanded",String(open));
+  setTimeout(fitZoom,60);
 });
-
-// Only one <details> open at a time
-[accFont, accLayout, accAnim].forEach(a=>{
-  on(a,"toggle",()=>{
-    if (a.open) [accFont,accLayout,accAnim].filter(x=>x!==a).forEach(x=>x.open=false);
-  });
-});
-
-/* ---------- left panel actions ---------- */
-on(resSel,"change", ()=>{
-  const [w,h] = resSel.value.split("x").map(Number);
-  doc.res = {w,h};
-  buildBgGrid();
-  showSolidTools(doc.bg?.type==="solid");
-  autoSizeAllIfOn();
-  render(0,getTotalSeconds());
-  fitZoom();
-});
-
-on(addLineBtn,"click", ()=>{
-  pushHistory();
-  doc.lines.push({words:[{text:""}]});
-  selected = { line: doc.lines.length-1, word: 0, caret: 0 };
-  render(0,getTotalSeconds());
-});
-on(addWordBtn,"click", ()=>{
-  pushHistory();
-  const line = doc.lines[selected?.line ?? 0] || doc.lines[0];
-  line.words.push({text:""});
-  selected = { line: doc.lines.indexOf(line), word: line.words.length-1, caret: 0 };
-  render(0,getTotalSeconds());
-});
-
-on(undoBtn,"click", undo);
-on(redoBtn,"click", redo);
-on(clearAllBtn,"click", ()=>{
-  pushHistory();
-  doc.lines = [{words:[{text:""}]}];
-  selected = {line:0,word:0,caret:0};
-  render(0, getTotalSeconds());
+[accFont,accLayout,accAnim].forEach(a=>{
+  on(a,"toggle",()=>{if(a.open)[accFont,accLayout,accAnim].filter(x=>x!==a).forEach(x=>x.open=false);});
 });
 
 /* ---------- config import/export ---------- */
@@ -1018,53 +910,38 @@ on(saveJsonBtn,"click",()=>{
   a.download="config.json";
   document.body.appendChild(a);
   a.click(); a.remove();
-  setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 });
 on(loadJsonInput,"change",(e)=>{
-  const f=e.target.files?.[0]; if(!f) return;
+  const f=e.target.files?.[0]; if(!f)return;
   const r=new FileReader();
   r.onload=()=>{
-    try{
-      doc = JSON.parse(r.result);
-      autoSizeAllIfOn();
-      render(0,getTotalSeconds());
-      fitZoom();
-    }catch{}
+    try{doc=JSON.parse(r.result);autoSizeAllIfOn();render(0,getTotalSeconds());fitZoom();}catch{}
   };
   r.readAsText(f);
 });
 
-/* ---------- zoom controls ---------- */
-fitBtn && on(fitBtn,"click", fitZoom);
-zoomSlider && on(zoomSlider,"input",(e)=> setZoom(parseFloat(e.target.value)));
+/* ---------- buttons ---------- */
+on(previewBtn,"click",()=>renderGif(true));   // preview inline only
+on(gifBtn,"click",()=>renderGif(false));      // preview + auto-download
 
-/* ---------- mode buttons ---------- */
-on(modePreview,"click", ()=> setMode("preview"));
-on(modeEdit,"click",    ()=> setMode("edit"));
-
-/* ---------- render/download buttons ---------- */
-on(previewBtn,"click",()=>{ // just start live animated preview (progress bar moves)
-  setMode("preview");
+on(undoBtn,"click",undo);
+on(redoBtn,"click",redo);
+on(clearAllBtn,"click",()=>{
+  pushHistory();
+  doc.lines=[{words:[{text:""}]}];
+  selected={line:0,word:0,caret:0};
+  render(0,getTotalSeconds());
 });
-on(gifBtn,"click",()=> renderGif());
 
 /* ---------- init ---------- */
 function init(){
-  // build UI
-  rebuildTextSwatches?.();
-  rebuildBgSwatches?.();
   buildBgGrid();
   showSolidTools(false);
-
-  // default to EDIT, but autoplay preview when user toggles
   setMode("edit");
-
-  // first paint + center
   autoSizeAllIfOn();
-  render(0, getTotalSeconds());
+  render(0,getTotalSeconds());
   fitZoom();
-
-  // open first inspector panel by default
-  accFont.open = true;
+  accFont.open=true;
 }
 init();
