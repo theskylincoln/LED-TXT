@@ -8,11 +8,10 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+  <!-- Top bar -->
   <header class="topbar glass">
     <div class="title-wrap">
       <h1 id="appTitle">LED Backpack Animator</h1>
@@ -25,13 +24,13 @@
         <button id="modePreview" class="seg-btn">▶️ Preview</button>
       </div>
 
-      <div class="zoom-wrap" style="display:flex;align-items:center;gap:8px;">
+      <div class="zoom-wrap">
         <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.95" />
+        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="1" />
         <button id="fitBtn" class="button tiny">Fit</button>
       </div>
 
-      <div class="undo-row" style="display:flex;gap:6px;">
+      <div class="undo-row">
         <button id="undoBtn" class="button tiny" title="Undo">↶</button>
         <button id="clearAllBtn" class="button tiny" title="Clear All">🧹</button>
         <button id="redoBtn" class="button tiny" title="Redo">↷</button>
@@ -39,10 +38,11 @@
     </div>
   </header>
 
+  <!-- MAIN LAYOUT -->
   <main class="layout">
-    <!-- ==================== Resolution & Background ==================== -->
-    <section class="card glass">
-      <h2>Resolution & Background</h2>
+    <!-- LEFT: Resolution & Background FIRST -->
+    <aside class="left-panel glass">
+      <h3>Resolution & Background</h3>
 
       <div class="row two">
         <label for="resSelect">Resolution</label>
@@ -52,12 +52,12 @@
         </select>
       </div>
 
-      <!-- Preset / Solid / Upload grid -->
+      <!-- Preset thumbnails (A/B) + Solid + Upload -->
       <div class="row">
         <div id="bgGrid" class="bg-grid" aria-label="Background presets"></div>
       </div>
 
-      <!-- Solid color tools -->
+      <!-- Solid color picker + swatches (visible only when Solid selected) -->
       <div id="bgSolidTools" class="bg-solid-tools hidden">
         <div class="row two">
           <label>Solid</label>
@@ -69,157 +69,171 @@
         </div>
       </div>
 
-      <!-- Hidden upload input -->
+      <!-- Hidden upload for background image -->
       <input type="file" id="bgUpload" accept="image/*" hidden />
-    </section>
+    </aside>
 
-    <!-- ==================== Canvas / Stage ==================== -->
+    <!-- RIGHT: Stage (canvas) -->
     <section class="stage glass">
       <div class="canvas-wrap">
+        <!-- The canvas is absolutely centered by CSS; JS scales it -->
         <canvas id="led" width="96" height="128"></canvas>
         <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
       </div>
 
+      <!-- Progress bar directly under canvas -->
       <div class="progress-wrap">
-        <div class="progress"><div id="progress"></div></div>
+        <div class="progress">
+          <div id="progress"></div>
+        </div>
         <div class="time"><span id="tCur">0.0s</span> / <span id="tEnd">8.0s</span></div>
       </div>
 
-      <div class="stage-actions center" style="display:flex;gap:10px;">
+      <div class="stage-actions">
         <button id="addWordBtn" class="button">+ Word</button>
         <button id="addLineBtn" class="button">+ Line</button>
       </div>
     </section>
+  </main>
 
-    <!-- ==================== Inspector ==================== -->
-    <section class="inspector-bar glass">
-      <div class="inspector-head">
-        <div class="toolbar">
-          <button id="toggleInspector" aria-expanded="false" class="button">Inspector ▾</button>
-          <div class="toolbar-tabs">
-            <button class="pill" data-acc="accFont">Font</button>
-            <button class="pill" data-acc="accLayout">Spacing & Alignment</button>
-            <button class="pill" data-acc="accAnim">Animations</button>
-          </div>
-        </div>
+  <!-- Inspector: horizontal toolbar only -->
+  <footer class="inspector glass">
+    <div class="inspector-bar">
+      <button id="toggleInspector" aria-expanded="true" class="button">Inspector ▾</button>
+      <div class="toolbar-tabs">
+        <button class="pill" data-acc="accFont">Font</button>
+        <button class="pill" data-acc="accLayout">Spacing & Alignment</button>
+        <button class="pill" data-acc="accAnim">Animations</button>
       </div>
+    </div>
 
-      <div id="inspectorBody" class="inspector-body">
-        <!-- Font Settings -->
-        <details class="acc" id="accFont" open>
-          <summary><span class="subttl">Font</span></summary>
-          <div class="acc-body">
-            <div class="row two">
-              <label>Family</label>
-              <select id="fontSelect">
-                <option value="Orbitron">Orbitron</option>
-                <option value="Montserrat">Montserrat</option>
-                <option value="Roboto Mono">Roboto Mono</option>
-                <option value="Verdana">Verdana</option>
-                <option value="Arial Black">Arial Black</option>
-                <option value="monospace">Monospace</option>
-              </select>
-            </div>
-            <div class="row two">
-              <label>Size</label><input id="fontSize" type="number" min="6" max="64" value="22" />
-            </div>
-            <label class="chk"><input type="checkbox" id="autoSize" checked/> <span>Auto-size</span></label>
+    <div id="inspectorBody" class="inspector-body open">
+      <!-- FONT -->
+      <details id="accFont" class="acc" open>
+        <summary><span class="subttl">Font</span></summary>
+        <div class="acc-body">
+          <div class="row two">
+            <label>Family</label>
+            <select id="fontSelect">
+              <option value="Orbitron" selected>Orbitron</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Roboto Mono">Roboto Mono</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Arial Black">Arial Black</option>
+              <option value="monospace">Monospace</option>
+            </select>
+          </div>
 
-            <div class="color-controls" style="display:flex;align-items:center;gap:8px;">
-              <div id="swatches" class="swatches"></div>
+          <div class="row two">
+            <label>Size</label>
+            <input id="fontSize" type="number" min="6" max="64" value="22" />
+          </div>
+
+          <label class="chk"><input type="checkbox" id="autoSize" checked /> <span>Auto-size</span></label>
+
+          <div class="row">
+            <div class="swatch-line">
+              <!-- default text swatches; JS wires them up -->
+              <div id="swatches" class="swatches">
+                <div class="swatch" style="background:#FFFFFF"></div>
+                <div class="swatch" style="background:#FF0000"></div>
+                <div class="swatch" style="background:#00FF00"></div>
+                <div class="swatch" style="background:#0000FF"></div>
+                <div class="swatch" style="background:#FFFF00"></div>
+                <div class="swatch" style="background:#FF00FF"></div>
+                <div class="swatch" style="background:#00FFFF"></div>
+                <div class="swatch" style="background:#000000"></div>
+              </div>
               <input type="color" id="fontColor" value="#FFFFFF" />
               <button id="addSwatchBtn" class="button tiny">+ Add</button>
             </div>
           </div>
-        </details>
+        </div>
+      </details>
 
-        <!-- Layout -->
-        <details class="acc" id="accLayout">
-          <summary><span class="subttl">Spacing & Alignment</span></summary>
-          <div class="acc-body">
-            <div class="subhead">Spacing</div>
-            <div class="row two">
-              <label>Line</label><input id="lineGap" type="number" min="0" max="30" value="4" />
-              <label>Word</label><input id="wordGap" type="number" min="0" max="30" value="6" />
-            </div>
-
-            <div class="subhead">Alignment</div>
-            <div class="seg">
-              <button class="seg-btn" data-align="left">Left</button>
-              <button class="seg-btn active" data-align="center">Center</button>
-              <button class="seg-btn" data-align="right">Right</button>
-            </div>
-            <div class="seg">
-              <button class="seg-btn" data-valign="top">Top</button>
-              <button class="seg-btn active" data-valign="middle">Middle</button>
-              <button class="seg-btn" data-valign="bottom">Bottom</button>
-            </div>
+      <!-- SPACING & ALIGNMENT -->
+      <details id="accLayout" class="acc">
+        <summary><span class="subttl">Spacing & Alignment</span></summary>
+        <div class="acc-body">
+          <div class="subhead">Spacing</div>
+          <div class="row two">
+            <label>Line</label><input id="lineGap" type="number" min="0" max="30" value="4" />
+            <label>Word</label><input id="wordGap" type="number" min="0" max="30" value="6" />
           </div>
-        </details>
 
-        <!-- Animations -->
-        <details class="acc" id="accAnim">
-          <summary><span class="subttl">Animations</span></summary>
-          <div class="acc-body">
-            <div id="animList" class="anim-list"></div>
+          <div class="subhead">Alignment</div>
+          <div class="seg">
+            <button class="seg-btn" data-align="left">Left</button>
+            <button class="seg-btn active" data-align="center">Center</button>
+            <button class="seg-btn" data-align="right">Right</button>
           </div>
-        </details>
-      </div>
-    </section>
-
-    <!-- ==================== Config & Render ==================== -->
-    <section class="bottom-panels">
-      <div class="card glass">
-        <h3>Config</h3>
-        <div class="row two-eq">
-          <label class="upload-btn block center">
-            <input type="file" id="loadJsonInput" accept="application/json" hidden />
-            <span class="button block center">Import Config</span>
-          </label>
-          <button id="saveJsonBtn" class="button block center">Download Config</button>
-        </div>
-      </div>
-
-      <div class="card glass">
-        <h3>Render & Download</h3>
-        <div class="row two">
-          <label>Filename</label><input id="fileName" value="animation" />
-        </div>
-        <div class="row two">
-          <label>FPS</label><input type="number" id="fps" value="15" min="1" max="30" />
-          <label>Length (s)</label><input type="number" id="seconds" value="8" min="1" max="60" />
-        </div>
-        <div class="row">
-          <div class="row two-eq">
-            <button id="previewRenderBtn" class="button block center">Render Preview GIF</button>
-            <button id="gifRenderBtn" class="button block center primary">Download GIF</button>
+          <div class="seg">
+            <button class="seg-btn" data-valign="top">Top</button>
+            <button class="seg-btn active" data-valign="middle">Middle</button>
+            <button class="seg-btn" data-valign="bottom">Bottom</button>
           </div>
         </div>
-        <div class="row">
-          <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF will appear here" />
-        </div>
-      </div>
-    </section>
-  </main>
+      </details>
 
-  <!-- ==================== About Modal ==================== -->
+      <!-- ANIMATIONS -->
+      <details id="accAnim" class="acc">
+        <summary><span class="subttl">Animations</span></summary>
+        <div class="acc-body">
+          <div id="animList" class="anim-list"></div>
+        </div>
+      </details>
+    </div>
+  </footer>
+
+  <!-- Bottom cards -->
+  <section class="bottom-panels">
+    <div class="card glass">
+      <h3>Config</h3>
+      <div class="row two-eq">
+        <label class="upload-btn block center">
+          <input type="file" id="loadJsonInput" accept="application/json" hidden />
+          <span class="button block center">Import Config</span>
+        </label>
+        <button id="saveJsonBtn" class="button block center">Download Config</button>
+      </div>
+    </div>
+
+    <div class="card glass">
+      <h3>Render & Download</h3>
+      <div class="row two">
+        <label>Filename</label><input id="fileName" value="animation" />
+      </div>
+      <div class="row two">
+        <label>FPS</label><input type="number" id="fps" value="15" min="1" max="30" />
+        <label>Length (s)</label><input type="number" id="seconds" value="8" min="1" max="60" />
+      </div>
+      <div class="row two-eq">
+        <button id="previewRenderBtn" class="button block center">Render Preview GIF</button>
+        <button id="gifRenderBtn" class="button block center primary">Download GIF</button>
+      </div>
+      <div class="row">
+        <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF will appear here" />
+      </div>
+    </div>
+  </section>
+
+  <!-- About Modal -->
   <div id="aboutModal" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-card glass">
       <h3>About</h3>
-      <p>LED Backpack Animator — compose text & render GIFs for LED backpacks.</p>
-      <p>Follow <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>.</p>
+      <p>LED Backpack Animator — compose text and render animated GIFs for LED backpacks.</p>
+      <p>Follow <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>. Built with ❤️ in collaboration with ChatGPT.</p>
       <div class="modal-actions">
         <button id="aboutClose" class="primary">Close</button>
       </div>
     </div>
   </div>
 
-  <!-- ==================== Scripts ==================== -->
+  <!-- (Only) helper libs you already rely on elsewhere -->
   <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/NeuQuant.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/LZWEncoder.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/GIFEncoder.js"></script>
+
+  <!-- Your app -->
   <script defer src="app.js"></script>
 </body>
 </html>
