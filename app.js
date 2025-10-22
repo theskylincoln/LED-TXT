@@ -906,3 +906,138 @@ if(fileNameInput && !fileNameInput.value) fileNameInput.value = 'led_animation';
   autoSizeAllIfOn();
   render(0,getTotalSeconds());
 })();
+/* ============================================
+   PART 3 — Resolution, Inspector UI, Anim List,
+             Preview controls, Window events
+   ============================================ */
+
+/* ---------- Resolution selector ---------- */
+on(resSel, 'change', () => {
+  const val = resSel.value; // "96x128" | "64x64" | "custom"
+  if (val === '96x128') setRes(96,128);
+  else if (val === '64x64') setRes(64,64);
+  else {
+    // If you support custom inputs in your HTML, read them here.
+    // Fallback to current doc.res for now.
+    setRes(doc.res.w, doc.res.h);
+  }
+});
+
+/* ---------- Fit to screen ---------- */
+on(fitBtn, 'click', () => fitZoom(true));
+window.addEventListener('resize', () => fitZoom(true));
+
+/* ---------- Inspector show/hide ---------- */
+on(inspectorToggle, 'click', () => {
+  inspectorBody?.classList.toggle('hidden');
+});
+
+/* ---------- Seconds/FPS inputs live update ---------- */
+on(secInput, 'input', () => {
+  const total = getTotalSeconds();
+  tEnd && (tEnd.textContent = total.toFixed(1)+'s');
+  // If preview running, restart to apply new duration
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; startTs = null; rafId = requestAnimationFrame(tick); }
+});
+on(fpsInput, 'input', () => {
+  // No need to redraw immediately; affects GIF export & perceived smoothness in your own loop
+});
+
+/* ---------- Stop Preview helper ---------- */
+function stopPreview(){
+  if(rafId){ cancelAnimationFrame(rafId); rafId = null; startTs = null; }
+  mode = 'edit'; editActive = true;
+  render(0, getTotalSeconds());
+}
+
+/* ---------- About modal already wired above ---------- */
+
+/* ---------- Animations UI (19 toggles) ---------- */
+const ALL_ANIMS = [
+  'flicker','pulse','glow','sweep','waveX','waveY','jitter','bounceY','bounceX',
+  'shake','typeOn','fadeInOut','rainbow','outlinePulse','blurPulse','marqueeLeft',
+  'marqueeRight','twinkle'
+];
+// Note: 'none' exists as a noop but we don’t surface a toggle for it.
+
+function buildAnimList(){
+  if(!animList) return;
+  animList.innerHTML = '';
+
+  const active = new Set(activeAnimList());
+
+  ALL_ANIMS.forEach(id=>{
+    const row = document.createElement('label');
+    row.className = 'anim-row';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = active.has(id);
+    cb.dataset.animId = id;
+
+    const name = document.createElement('span');
+    name.textContent = id;
+
+    row.appendChild(cb);
+    row.appendChild(name);
+    animList.appendChild(row);
+
+    cb.addEventListener('change', ()=>{
+      pushHistory();
+      // ensure doc.animations array exists
+      doc.animations ||= [];
+      const idx = doc.animations.findIndex(a=>a.id===id);
+      if(cb.checked){
+        if(idx===-1) doc.animations.push({id, params:{}});
+      }else{
+        if(idx!==-1) doc.animations.splice(idx,1);
+      }
+      render(0, getTotalSeconds());
+    });
+  });
+}
+
+/* ---------- Toolbar mode sync (optional) ---------- */
+function setModeButtons(){
+  modeEditBtn?.classList.toggle('active', mode==='edit');
+  modePrevBtn?.classList.toggle('active', mode==='preview');
+}
+on(modeEditBtn,'click', ()=>{ setModeButtons(); stopPreview(); });
+on(modePrevBtn,'click', ()=>{ setModeButtons(); /* tick() handler already starts */ });
+
+/* ---------- GIF preview hide on new edits ---------- */
+function hideGifPreview(){
+  if(gifPreviewImg){
+    gifPreviewImg.classList.add('hidden');
+    // keep src to allow re-open in Files; or clear it:
+    // gifPreviewImg.src = '';
+  }
+}
+
+/* ---------- JSON load should hide preview image ---------- */
+loadJsonInput && loadJsonInput.addEventListener('change', ()=> hideGifPreview());
+
+/* ---------- Keyboard: Esc stops preview ---------- */
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    stopPreview();
+  }
+});
+
+/* ---------- Background grid rebuild on res change ---------- */
+const _setResOrig = setRes;
+setRes = function(w,h){
+  _setResOrig(w,h);         // call original
+  buildBgGrid();            // refresh visible tiles A/B vs C/D
+  hideGifPreview();
+};
+
+/* ---------- Initialize this part ---------- */
+(function initPart3(){
+  setModeButtons();
+  buildAnimList();
+  // set dropdown to current res if options exist
+  if(resSel){
+    const key = `${doc.res.w}x${doc.res.h}`;
+    if([...resSel.options].some(o=>o.value===key)) resSel.value = key;
+  }
+})();
