@@ -1026,27 +1026,13 @@ buildAnimationsUI();
    Preview loop + local GIF export + controls wiring
    ======================================================= */
 
-/* ---------- DOM ---------- */
-const fpsInput        = $("#fps");
-const secondsInput    = $("#seconds");
-const fileNameInput   = $("#fileName");
-const previewBtn      = $("#previewRenderBtn");
-const gifBtn          = $("#gifRenderBtn");
-const gifPreviewImg   = $("#gifPreview");
-const progressFill    = $("#progress");
-const tCur            = $("#tCur");
-const tEnd            = $("#tEnd");
-
-const modeEditBtn     = $("#modeEdit");
-const modePreviewBtn  = $("#modePreview");
-
 /* ---------- Helpers ---------- */
 function getFPS() {
   const v = parseInt(fpsInput?.value || "15", 10);
   return Math.max(1, Math.min(30, v || 15));
 }
 function getDuration() {
-  const v = parseInt(secondsInput?.value || "8", 10);
+  const v = parseInt(secInput?.value || "8", 10);
   return Math.max(1, Math.min(60, v || 8));
 }
 
