@@ -1,4 +1,6 @@
-window.addEventListener('error', e => alert('JS error: ' + (e?.error?.message || 
+window.addEventListener('error', e => {
+  alert('JS error: ' + (e?.error?.message || e.message));
+});
 
 /* =======================================================
    LED Backpack Animator — app.js (Part 1 of 3)
@@ -30,7 +32,7 @@ const accFont   = $("#accFont"),
       accAnim   = $("#accAnim");
 
 const bgGrid  = $("#bgGrid"),
-      bgSolidTools = $("#bgSolidTools"),
+      bgSolidTools = $(".bg-solid-tools"),
       bgSolidColor = $("#bgSolidColor"),
       addBgSwatchBtn = $("#addBgSwatchBtn"),
       bgSwatches = $("#bgSwatches"),
@@ -39,6 +41,22 @@ const bgGrid  = $("#bgGrid"),
 const progressBar = $("#progress"),
       tCur = $("#tCur"),
       tEnd = $("#tEnd");
+
+/* ---------- aliases / missing DOM refs for Part 3 ---------- */
+// Name mismatch: code uses modePreviewBtn, we declared modePrevBtn.
+const modePreviewBtn = modePrevBtn;
+
+// progress bar is referenced as progressFill later
+const progressFill = progressBar;
+
+// Render / GIF controls used in Part 3
+const fpsInput      = $("#fps");
+const secondsInput  = $("#seconds");
+const secInput      = secondsInput;              // some code reads secInput
+const fileNameInput = $("#fileName");
+const previewBtn    = $("#previewRenderBtn");
+const gifBtn        = $("#gifRenderBtn");
+const gifPreviewImg = $("#gifPreview");
 
 /* ---------- state ---------- */
 let mode = "edit";
