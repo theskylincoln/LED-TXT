@@ -1,3 +1,5 @@
+window.addEventListener('error', e => alert('JS error: ' + (e?.error?.message || e.message)));
+
 /* ============================================
    LED Backpack Animator — app.js (fixed full)
    - Keeps your structure (Parts 1–3 merged)
