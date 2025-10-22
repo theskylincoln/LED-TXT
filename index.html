@@ -8,7 +8,7 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <!-- Your stylesheet (the one you pasted) -->
+  <!-- Your stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -24,7 +24,7 @@
       </div>
       <div class="zoom-wrap" style="display:flex;align-items:center;gap:8px;">
         <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.95" />
+        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="1" />
         <button id="fitBtn" class="button tiny">Fit</button>
       </div>
       <div class="undo-row" style="display:flex;gap:6px;">
@@ -48,9 +48,11 @@
       </div>
 
       <div class="row">
+        <!-- Preset grid: tiles (A/B or C/D) + Solid + Upload are built by app.js -->
         <div id="bgGrid" class="bg-grid" aria-label="Background presets"></div>
       </div>
 
+      <!-- Solid color tools (only visible when "Solid" tile is active) -->
       <div id="bgSolidTools" class="bg-solid-tools hidden">
         <div class="row two">
           <label>Solid</label>
@@ -62,6 +64,7 @@
         </div>
       </div>
 
+      <!-- hidden file input for Upload tile -->
       <input type="file" id="bgUpload" accept="image/*" hidden />
     </aside>
 
@@ -71,7 +74,7 @@
         <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
       </div>
 
-      <!-- Progress just under the canvas -->
+      <!-- Progress bar directly under the canvas -->
       <div class="progress-wrap">
         <div class="progress">
           <div id="progress"></div>
@@ -100,6 +103,7 @@
     </div>
 
     <div id="inspectorBody" class="inspector-body">
+      <!-- Font -->
       <details class="acc" id="accFont" open>
         <summary><span class="subttl">Font</span></summary>
         <div class="acc-body">
@@ -127,6 +131,7 @@
         </div>
       </details>
 
+      <!-- Spacing & Alignment -->
       <details class="acc" id="accLayout">
         <summary><span class="subttl">Spacing & Alignment</span></summary>
         <div class="acc-body">
@@ -150,6 +155,7 @@
         </div>
       </details>
 
+      <!-- Animations -->
       <details class="acc" id="accAnim">
         <summary><span class="subttl">Animations</span></summary>
         <div class="acc-body">
@@ -192,7 +198,7 @@
     </div>
   </section>
 
-  <!-- Hidden input to trigger mobile keyboard without UI -->
+  <!-- Hidden input to softly summon mobile keyboard (no visible UI) -->
   <input id="kbdProxy" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" hidden />
 
   <!-- About Modal -->
@@ -208,12 +214,7 @@
     </div>
   </div>
 
-  <!-- Libraries -->
-  <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <!-- Optional: for true GIF export (otherwise PNG-frames ZIP fallback is used) -->
-  <script defer src="https://unpkg.com/gifencoder/browser/gifencoder.js"></script>
-
-  <!-- Your app script -->
+  <!-- App script (v2.10). It will dynamically load the GIF encoder from CDN when needed. -->
   <script defer src="app.js"></script>
 </body>
 </html>
