@@ -635,19 +635,23 @@ function render(t=0, totalDur=null){
       if (props.shadow) { ctx.shadowBlur = props.shadow.blur; ctx.shadowColor = props.shadow.color || (w.color||defaults.color); }
       else ctx.shadowBlur = 0;
 
-      // gradient
-      let fillStyle = props.color || (w.color || defaults.color);
-      if (props.gradient && txt.length) {
-        const wordWidth = Math.ceil(ctx.measureText(txt).width);
-        if (props.gradient.type === "rainbow") {
-          const g = ctx.createLinearGradient(props.x, props.y, props.x + wordWidth, props.y);
+      // compute animated draw position first (needed for gradients)
+       const drawX = base.x + (props.dx||0);
+       const drawY = base.y + (props.dy||0);
+
+       // gradient
+       let fillStyle = props.color || (w.color || defaults.color);
+       if (props.gradient && txt.length) {
+       const wordWidth = Math.ceil(ctx.measureText(txt).width);
+       if (props.gradient.type === "rainbow") 
+          const g = ctx.createLinearGradient(drawX, drawY, drawX + wordWidth, drawY);
           const baseHue = (props.gradient.base + (t * 120 * props.gradient.speed)) % 360;
           for (let i=0;i<=6;i++){ const stop=i/6; const hue=Math.floor((baseHue+stop*360)%360); g.addColorStop(stop, `hsl(${hue}deg 100% 60%)`); }
           fillStyle = g;
         } else if (props.gradient.type === "sweep") {
           const band = Math.max(0.05, Math.min(0.8, props.gradient.width || 0.25));
           const pos  = (t * (props.gradient.speed || 0.7) * 1.2) % 1;
-          const g = ctx.createLinearGradient(props.x, props.y, props.x + wordWidth, props.y);
+          const g = ctx.createLinearGradient(drawX, drawY, drawX + wordWidth, drawY);
           const a = Math.max(0, pos - band/2), b = Math.min(1, pos + band/2);
           g.addColorStop(0, fillStyle); g.addColorStop(a, fillStyle);
           g.addColorStop(pos, "#FFFFFF"); g.addColorStop(b, fillStyle); g.addColorStop(1, fillStyle);
