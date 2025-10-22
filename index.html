@@ -8,10 +8,11 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 
+  <!-- App CSS (you’ll paste in Step 2) -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Top bar -->
+  <!-- ========== TOPBAR ========== -->
   <header class="topbar glass">
     <div class="title-wrap">
       <h1 id="appTitle">LED Backpack Animator</h1>
@@ -38,11 +39,12 @@
     </div>
   </header>
 
-  <!-- MAIN LAYOUT -->
+  <!-- ========== MAIN CONTENT ========== -->
   <main class="layout">
-    <!-- LEFT: Resolution & Background FIRST -->
-    <aside class="left-panel glass">
-      <h3>Resolution & Background</h3>
+
+    <!-- ------ Resolution & Background FIRST ------ -->
+    <section class="card glass">
+      <h2>Resolution &amp; Background</h2>
 
       <div class="row two">
         <label for="resSelect">Resolution</label>
@@ -52,12 +54,18 @@
         </select>
       </div>
 
-      <!-- Preset thumbnails (A/B) + Solid + Upload -->
+      <!-- Preset / Solid / Upload tiles -->
       <div class="row">
-        <div id="bgGrid" class="bg-grid" aria-label="Background presets"></div>
+        <div id="bgGrid" class="bg-grid" aria-label="Background presets">
+          <!-- JS will populate with 4 tiles:
+               - Preset A (thumb from assets/thumbs/...)
+               - Preset B
+               - Solid
+               - Upload -->
+        </div>
       </div>
 
-      <!-- Solid color picker + swatches (visible only when Solid selected) -->
+      <!-- Solid color tools (shown only when Solid is selected) -->
       <div id="bgSolidTools" class="bg-solid-tools hidden">
         <div class="row two">
           <label>Solid</label>
@@ -69,23 +77,20 @@
         </div>
       </div>
 
-      <!-- Hidden upload for background image -->
       <input type="file" id="bgUpload" accept="image/*" hidden />
-    </aside>
+    </section>
 
-    <!-- RIGHT: Stage (canvas) -->
+    <!-- ------ Stage / Canvas ------ -->
     <section class="stage glass">
       <div class="canvas-wrap">
-        <!-- The canvas is absolutely centered by CSS; JS scales it -->
         <canvas id="led" width="96" height="128"></canvas>
+        <!-- delete pin overlays near selected word -->
         <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
       </div>
 
-      <!-- Progress bar directly under canvas -->
+      <!-- Progress directly under canvas -->
       <div class="progress-wrap">
-        <div class="progress">
-          <div id="progress"></div>
-        </div>
+        <div class="progress"><div id="progress"></div></div>
         <div class="time"><span id="tCur">0.0s</span> / <span id="tEnd">8.0s</span></div>
       </div>
 
@@ -94,28 +99,32 @@
         <button id="addLineBtn" class="button">+ Line</button>
       </div>
     </section>
+
   </main>
 
-  <!-- Inspector: horizontal toolbar only -->
-  <footer class="inspector glass">
-    <div class="inspector-bar">
-      <button id="toggleInspector" aria-expanded="true" class="button">Inspector ▾</button>
-      <div class="toolbar-tabs">
-        <button class="pill" data-acc="accFont">Font</button>
-        <button class="pill" data-acc="accLayout">Spacing & Alignment</button>
-        <button class="pill" data-acc="accAnim">Animations</button>
+  <!-- ========== INSPECTOR (pills-only header; panels open below) ========== -->
+  <footer class="inspector-bar glass">
+    <div class="inspector-head">
+      <div class="toolbar">
+        <button id="toggleInspector" aria-expanded="true" class="button">Inspector ▾</button>
+        <div class="toolbar-tabs">
+          <button class="pill" data-acc="accFont">Font</button>
+          <button class="pill" data-acc="accLayout">Spacing &amp; Alignment</button>
+          <button class="pill" data-acc="accAnim">Animations</button>
+        </div>
       </div>
     </div>
 
     <div id="inspectorBody" class="inspector-body open">
-      <!-- FONT -->
-      <details id="accFont" class="acc" open>
-        <summary><span class="subttl">Font</span></summary>
+      <!-- Font -->
+      <details class="acc open" id="accFont" open>
+        <!-- summary is kept for accessibility; hidden via CSS -->
+        <summary>Font</summary>
         <div class="acc-body">
           <div class="row two">
             <label>Family</label>
             <select id="fontSelect">
-              <option value="Orbitron" selected>Orbitron</option>
+              <option value="Orbitron">Orbitron</option>
               <option value="Montserrat">Montserrat</option>
               <option value="Roboto Mono">Roboto Mono</option>
               <option value="Verdana">Verdana</option>
@@ -129,31 +138,25 @@
             <input id="fontSize" type="number" min="6" max="64" value="22" />
           </div>
 
-          <label class="chk"><input type="checkbox" id="autoSize" checked /> <span>Auto-size</span></label>
+          <label class="chk">
+            <input type="checkbox" id="autoSize" checked />
+            <span>Auto-size</span>
+          </label>
 
+          <!-- Text color swatches -->
           <div class="row">
-            <div class="swatch-line">
-              <!-- default text swatches; JS wires them up -->
-              <div id="swatches" class="swatches">
-                <div class="swatch" style="background:#FFFFFF"></div>
-                <div class="swatch" style="background:#FF0000"></div>
-                <div class="swatch" style="background:#00FF00"></div>
-                <div class="swatch" style="background:#0000FF"></div>
-                <div class="swatch" style="background:#FFFF00"></div>
-                <div class="swatch" style="background:#FF00FF"></div>
-                <div class="swatch" style="background:#00FFFF"></div>
-                <div class="swatch" style="background:#000000"></div>
-              </div>
-              <input type="color" id="fontColor" value="#FFFFFF" />
-              <button id="addSwatchBtn" class="button tiny">+ Add</button>
+            <div id="swatches" class="swatches">
+              <!-- default palette buttons injected by JS -->
             </div>
+            <input type="color" id="fontColor" value="#FFFFFF" />
+            <button id="addSwatchBtn" class="button tiny">+ Add</button>
           </div>
         </div>
       </details>
 
-      <!-- SPACING & ALIGNMENT -->
-      <details id="accLayout" class="acc">
-        <summary><span class="subttl">Spacing & Alignment</span></summary>
+      <!-- Spacing & Alignment -->
+      <details class="acc" id="accLayout">
+        <summary>Spacing & Alignment</summary>
         <div class="acc-body">
           <div class="subhead">Spacing</div>
           <div class="row two">
@@ -175,17 +178,17 @@
         </div>
       </details>
 
-      <!-- ANIMATIONS -->
-      <details id="accAnim" class="acc">
-        <summary><span class="subttl">Animations</span></summary>
+      <!-- Animations -->
+      <details class="acc" id="accAnim">
+        <summary>Animations</summary>
         <div class="acc-body">
-          <div id="animList" class="anim-list"></div>
+          <div id="animList" class="anim-list"><!-- filled by JS --></div>
         </div>
       </details>
     </div>
   </footer>
 
-  <!-- Bottom cards -->
+  <!-- ========== BOTTOM PANELS ========== -->
   <section class="bottom-panels">
     <div class="card glass">
       <h3>Config</h3>
@@ -199,7 +202,7 @@
     </div>
 
     <div class="card glass">
-      <h3>Render & Download</h3>
+      <h3>Render &amp; Download</h3>
       <div class="row two">
         <label>Filename</label><input id="fileName" value="animation" />
       </div>
@@ -217,23 +220,23 @@
     </div>
   </section>
 
-  <!-- About Modal -->
+  <!-- Hidden input (optional iOS keyboard proxy if we need it later) -->
+  <input id="kbdProxy" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" hidden />
+
+  <!-- ========== About Modal ========== -->
   <div id="aboutModal" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-card glass">
       <h3>About</h3>
-      <p>LED Backpack Animator — compose text and render animated GIFs for LED backpacks.</p>
-      <p>Follow <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>. Built with ❤️ in collaboration with ChatGPT.</p>
+      <p>LED Backpack Animator — compose text &amp; render GIFs for LED backpacks.</p>
+      <p>By <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a> — in collaboration with ChatGPT.</p>
       <div class="modal-actions">
         <button id="aboutClose" class="primary">Close</button>
       </div>
     </div>
   </div>
 
-  <!-- (Only) helper libs you already rely on elsewhere -->
-  <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-
-  <!-- Your app -->
-  <script defer src="app.js"></script>
+  <!-- (No scripts here yet — we’ll add JS in later steps) -->
+  <!-- When we get to JS steps, you’ll include: app.js and GIF libs -->
 </body>
 </html>
