@@ -8,25 +8,29 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <!-- Your stylesheet -->
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Top bar -->
   <header class="topbar glass">
     <div class="title-wrap">
       <h1 id="appTitle">LED Backpack Animator</h1>
       <button id="aboutBtn" class="linklike">About</button>
     </div>
+
     <div class="tools-row">
       <div class="seg">
         <button id="modeEdit" class="seg-btn active">✏️ Edit</button>
         <button id="modePreview" class="seg-btn">▶️ Preview</button>
       </div>
+
       <div class="zoom-wrap" style="display:flex;align-items:center;gap:8px;">
         <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="1" />
+        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.95" />
         <button id="fitBtn" class="button tiny">Fit</button>
       </div>
+
       <div class="undo-row" style="display:flex;gap:6px;">
         <button id="undoBtn" class="button tiny" title="Undo">↶</button>
         <button id="clearAllBtn" class="button tiny" title="Clear All">🧹</button>
@@ -36,6 +40,7 @@
   </header>
 
   <main class="layout">
+    <!-- Left panel -->
     <aside class="left-panel glass">
       <h3>Background</h3>
 
@@ -47,12 +52,12 @@
         </select>
       </div>
 
+      <!-- Preset thumbnails (no labels on tiles) -->
       <div class="row">
-        <!-- Preset grid: tiles (A/B or C/D) + Solid + Upload are built by app.js -->
         <div id="bgGrid" class="bg-grid" aria-label="Background presets"></div>
       </div>
 
-      <!-- Solid color tools (only visible when "Solid" tile is active) -->
+      <!-- Solid color tools (hidden unless Solid is selected) -->
       <div id="bgSolidTools" class="bg-solid-tools hidden">
         <div class="row two">
           <label>Solid</label>
@@ -64,21 +69,20 @@
         </div>
       </div>
 
-      <!-- hidden file input for Upload tile -->
+      <!-- Hidden file input for Upload tile -->
       <input type="file" id="bgUpload" accept="image/*" hidden />
     </aside>
 
+    <!-- Stage -->
     <section class="stage glass">
       <div class="canvas-wrap">
         <canvas id="led" width="96" height="128"></canvas>
         <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
       </div>
 
-      <!-- Progress bar directly under the canvas -->
+      <!-- Progress bar sits directly under the canvas -->
       <div class="progress-wrap">
-        <div class="progress">
-          <div id="progress"></div>
-        </div>
+        <div class="progress"><div id="progress"></div></div>
         <div class="time"><span id="tCur">0.0s</span> / <span id="tEnd">8.0s</span></div>
       </div>
 
@@ -89,7 +93,7 @@
     </section>
   </main>
 
-  <!-- Inspector: horizontal toolbar only -->
+  <!-- Inspector (horizontal toolbar only) -->
   <footer class="inspector-bar glass">
     <div class="inspector-head">
       <div class="toolbar">
@@ -165,6 +169,7 @@
     </div>
   </footer>
 
+  <!-- Config + Render -->
   <section class="bottom-panels">
     <div class="card glass">
       <h3>Config</h3>
@@ -188,18 +193,15 @@
       </div>
       <div class="row">
         <div class="row two-eq">
-          <button id="previewRenderBtn" class="button block center">Render Preview GIF</button>
+          <button id="previewRenderBtn" class="button block center">Render Preview</button>
           <button id="gifRenderBtn" class="button block center primary">Download GIF</button>
         </div>
       </div>
       <div class="row">
-        <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF will appear here" />
+        <img id="gifPreview" class="gif-preview hidden" alt="Preview will appear here" />
       </div>
     </div>
   </section>
-
-  <!-- Hidden input to softly summon mobile keyboard (no visible UI) -->
-  <input id="kbdProxy" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" hidden />
 
   <!-- About Modal -->
   <div id="aboutModal" class="modal hidden">
@@ -214,7 +216,13 @@
     </div>
   </div>
 
-  <!-- App script (v2.10). It will dynamically load the GIF encoder from CDN when needed. -->
+  <!-- Optional: pre-load GIF libs (app.js can lazy-load too) -->
+  <!-- Keeping these helps mobile reliability -->
+  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/NeuQuant.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/LZWEncoder.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/GIFEncoder.js"></script>
+
+  <!-- App -->
   <script defer src="app.js"></script>
 </body>
 </html>
