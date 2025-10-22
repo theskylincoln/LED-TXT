@@ -10,28 +10,29 @@
 
   <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Preload GIF libs (plus runtime fallback in app.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/NeuQuant.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/LZWEncoder.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/GIFEncoder.js" defer></script>
 </head>
 <body>
-  <!-- Top bar -->
   <header class="topbar glass">
     <div class="title-wrap">
       <h1 id="appTitle">LED Backpack Animator</h1>
       <button id="aboutBtn" class="linklike">About</button>
     </div>
-
     <div class="tools-row">
       <div class="seg">
         <button id="modeEdit" class="seg-btn active">✏️ Edit</button>
         <button id="modePreview" class="seg-btn">▶️ Preview</button>
       </div>
-
-      <div class="zoom-wrap" style="display:flex;align-items:center;gap:8px;">
+      <div class="zoom-wrap">
         <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.95" />
+        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="1" />
         <button id="fitBtn" class="button tiny">Fit</button>
       </div>
-
-      <div class="undo-row" style="display:flex;gap:6px;">
+      <div class="undo-row">
         <button id="undoBtn" class="button tiny" title="Undo">↶</button>
         <button id="clearAllBtn" class="button tiny" title="Clear All">🧹</button>
         <button id="redoBtn" class="button tiny" title="Redo">↷</button>
@@ -40,9 +41,8 @@
   </header>
 
   <main class="layout">
-    <!-- Left panel -->
     <aside class="left-panel glass">
-      <h3>Background</h3>
+      <h3>Resolution & Background</h3>
 
       <div class="row two">
         <label for="resSelect">Resolution</label>
@@ -52,15 +52,14 @@
         </select>
       </div>
 
-      <!-- Preset thumbnails (no labels on tiles) -->
       <div class="row">
         <div id="bgGrid" class="bg-grid" aria-label="Background presets"></div>
       </div>
 
-      <!-- Solid color tools (hidden unless Solid is selected) -->
+      <!-- Solid tools appear ONLY when Solid tile is selected -->
       <div id="bgSolidTools" class="bg-solid-tools hidden">
         <div class="row two">
-          <label>Solid</label>
+          <label>Solid Color</label>
           <input type="color" id="bgSolidColor" value="#000000" />
         </div>
         <div class="row">
@@ -69,31 +68,29 @@
         </div>
       </div>
 
-      <!-- Hidden file input for Upload tile -->
       <input type="file" id="bgUpload" accept="image/*" hidden />
     </aside>
 
-    <!-- Stage -->
     <section class="stage glass">
       <div class="canvas-wrap">
         <canvas id="led" width="96" height="128"></canvas>
         <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
       </div>
 
-      <!-- Progress bar sits directly under the canvas -->
+      <!-- Progress just under the canvas -->
       <div class="progress-wrap">
         <div class="progress"><div id="progress"></div></div>
         <div class="time"><span id="tCur">0.0s</span> / <span id="tEnd">8.0s</span></div>
       </div>
 
-      <div class="stage-actions center" style="display:flex;gap:10px;">
+      <div class="stage-actions center">
         <button id="addWordBtn" class="button">+ Word</button>
         <button id="addLineBtn" class="button">+ Line</button>
       </div>
     </section>
   </main>
 
-  <!-- Inspector (horizontal toolbar only) -->
+  <!-- Inspector: horizontal toolbar only -->
   <footer class="inspector-bar glass">
     <div class="inspector-head">
       <div class="toolbar">
@@ -107,7 +104,6 @@
     </div>
 
     <div id="inspectorBody" class="inspector-body">
-      <!-- Font -->
       <details class="acc" id="accFont" open>
         <summary><span class="subttl">Font</span></summary>
         <div class="acc-body">
@@ -126,8 +122,7 @@
             <label>Size</label><input id="fontSize" type="number" min="6" max="64" value="22" />
           </div>
           <label class="chk"><input type="checkbox" id="autoSize" checked/> <span>Auto-size</span></label>
-
-          <div class="color-controls" style="display:flex;align-items:center;gap:8px;">
+          <div class="color-controls">
             <div id="swatches" class="swatches"></div>
             <input type="color" id="fontColor" value="#FFFFFF" />
             <button id="addSwatchBtn" class="button tiny">+ Add</button>
@@ -135,7 +130,6 @@
         </div>
       </details>
 
-      <!-- Spacing & Alignment -->
       <details class="acc" id="accLayout">
         <summary><span class="subttl">Spacing & Alignment</span></summary>
         <div class="acc-body">
@@ -144,7 +138,6 @@
             <label>Line</label><input id="lineGap" type="number" min="0" max="30" value="4" />
             <label>Word</label><input id="wordGap" type="number" min="0" max="30" value="6" />
           </div>
-
           <div class="subhead">Alignment</div>
           <div class="seg">
             <button class="seg-btn" data-align="left">Left</button>
@@ -159,7 +152,6 @@
         </div>
       </details>
 
-      <!-- Animations -->
       <details class="acc" id="accAnim">
         <summary><span class="subttl">Animations</span></summary>
         <div class="acc-body">
@@ -169,7 +161,6 @@
     </div>
   </footer>
 
-  <!-- Config + Render -->
   <section class="bottom-panels">
     <div class="card glass">
       <h3>Config</h3>
@@ -193,15 +184,18 @@
       </div>
       <div class="row">
         <div class="row two-eq">
-          <button id="previewRenderBtn" class="button block center">Render Preview</button>
+          <button id="previewRenderBtn" class="button block center">Render Preview GIF</button>
           <button id="gifRenderBtn" class="button block center primary">Download GIF</button>
         </div>
       </div>
       <div class="row">
-        <img id="gifPreview" class="gif-preview hidden" alt="Preview will appear here" />
+        <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF will appear here" />
       </div>
     </div>
   </section>
+
+  <!-- Hidden input to trigger mobile keyboard without UI -->
+  <input id="kbdProxy" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" hidden />
 
   <!-- About Modal -->
   <div id="aboutModal" class="modal hidden">
@@ -216,13 +210,7 @@
     </div>
   </div>
 
-  <!-- Optional: pre-load GIF libs (app.js can lazy-load too) -->
-  <!-- Keeping these helps mobile reliability -->
-  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/NeuQuant.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/LZWEncoder.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/jsgif@0.2.1/GIFEncoder.js"></script>
-
   <!-- App -->
-  <script defer src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
