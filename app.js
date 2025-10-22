@@ -574,3 +574,213 @@ function render(t = 0, totalDur = null) {
     ctx.restore();
   });
 }
+/* =====================================================
+   PART 3 — Preview Loop, GIF Export, UI + Events
+   ===================================================== */
+
+/* ---------- preview loop ---------- */
+let rafId = null, t0 = null;
+function getTotalSeconds(){ return Math.max(1, Math.min(60, parseInt(secInput?.value || "8"))); }
+function getFPS(){ return Math.max(1, Math.min(30, parseInt(fpsInput?.value || "15"))); }
+
+function startPreview() {
+  if (rafId) cancelAnimationFrame(rafId);
+  t0 = performance.now();
+  const dur = getTotalSeconds();
+  const loop = (now) => {
+    const t = (now - t0) / 1000;
+    const tt = t % dur;
+    render(tt, dur);
+
+    // progress bar sync
+    if (progressBar) {
+      const frac = tt / dur;
+      progressBar.style.setProperty("--p", frac);
+      if (tCur) tCur.textContent = `${tt.toFixed(1)}s`;
+      if (tEnd) tEnd.textContent = `${dur.toFixed(1)}s`;
+    }
+    rafId = requestAnimationFrame(loop);
+  };
+  rafId = requestAnimationFrame(loop);
+}
+function stopPreview(){ if (rafId) cancelAnimationFrame(rafId); rafId = null; render(0, getTotalSeconds()); }
+
+/* ---------- GIF export ---------- */
+async function loadScript(src){return new Promise((r,j)=>{const s=document.createElement("script");s.src=src;s.async=true;s.onload=()=>r(true);s.onerror=j;document.head.appendChild(s);});}
+async function ensureGifLibs(){
+  if(typeof GIFEncoder!=="undefined")return true;
+  const urls=[
+    "https://cdn.jsdelivr.net/npm/jsgif@0.2.1/NeuQuant.js",
+    "https://cdn.jsdelivr.net/npm/jsgif@0.2.1/LZWEncoder.js",
+    "https://cdn.jsdelivr.net/npm/jsgif@0.2.1/GIFEncoder.js"
+  ];
+  for(const u of urls)await loadScript(u);
+  return typeof GIFEncoder!=="undefined";
+}
+function encoderToBlob(enc){
+  const bytes=enc.stream().bin||enc.stream().getData();
+  const u8=(bytes instanceof Uint8Array)?bytes:new Uint8Array(bytes);
+  return new Blob([u8],{type:"image/gif"});
+}
+
+async function renderGif(previewOnly=false){
+  const fps=getFPS(), secs=getTotalSeconds(), frames=fps*secs, delay=Math.round(1000/fps);
+  const W=canvas.width, H=canvas.height;
+
+  if(!(await ensureGifLibs())){alert("GIF encoder failed to load (stay online).");return;}
+  const enc=new GIFEncoder(); enc.setRepeat(0); enc.setDelay(delay); enc.setQuality(10); enc.setSize(W,H); enc.start();
+
+  const wasPrev=(mode==="preview"); if(wasPrev)stopPreview();
+  for(let i=0;i<frames;i++){const t=i/fps; render(t,secs); enc.addFrame(ctx);}
+  enc.finish();
+  const blob=encoderToBlob(enc);
+  const url=URL.createObjectURL(blob);
+  const name=(fileNameInput.value||"animation.gif").replace(/\.(png|jpg|jpeg|webp)$/i,".gif");
+  gifPreviewImg.classList.remove("hidden");
+  gifPreviewImg.src=url;
+  if(!previewOnly){
+    const a=document.createElement("a"); a.href=url; a.download=name; a.click();
+  }
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+  if(wasPrev)startPreview();
+}
+
+/* ---------- UI wiring ---------- */
+function setMode(m) {
+  mode = m;
+  modeEditBtn?.classList.toggle("active", m === "edit");
+  modePrevBtn?.classList.toggle("active", m !== "edit");
+  if (mode === "preview") startPreview();
+  else stopPreview();
+}
+
+function setZoom(z) {
+  zoom = z;
+  if (zoomSlider) zoomSlider.value = String(z.toFixed(2));
+  canvas.style.transform = `translate(-50%,-50%) scale(${zoom})`;
+}
+function fitZoom() {
+  if (!wrap) return;
+  const pad = 18;
+  const r = wrap.getBoundingClientRect();
+  const availW = Math.max(40, r.width - pad * 2);
+  const availH = Math.max(40, r.height - pad * 2);
+  const s = Math.max(0.1, Math.min(availW / doc.res.w, availH / doc.res.h));
+  setZoom(s);
+}
+
+/* ---------- click selection & typing ---------- */
+on(canvas,"click",(e)=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=(e.clientX-rect.left)/zoom, y=(e.clientY-rect.top)/zoom;
+  const pos=layoutDocument().positions;
+  let hit=null;
+  pos.forEach(p=>{
+    const b=measureWordBBox(p.line,p.word); if(!b)return;
+    if(x>=b.x-2&&x<=b.x+b.w+2&&y>=b.y-2&&y<=b.y+b.h+2)hit=p;
+  });
+  if(hit){selected={line:hit.line,word:hit.word,caret:caretFromClick(hit.line,hit.word,x)};render(0,getTotalSeconds());}
+  else{selected=null;render(0,getTotalSeconds());}
+});
+
+/* simple typing */
+on(document,"keydown",(e)=>{
+  if(mode!=="edit"||!selected)return;
+  const line=doc.lines[selected.line],word=line.words[selected.word];
+  if(!word)return;
+  const text=word.text||"",pos=selected.caret??text.length;
+
+  if(e.key.length===1&&!e.metaKey&&!e.ctrlKey){e.preventDefault();
+    word.text=text.slice(0,pos)+e.key+text.slice(pos);
+    selected.caret=pos+1; render(0,getTotalSeconds()); return;}
+  if(e.key==="Backspace"){e.preventDefault();
+    if(pos>0){word.text=text.slice(0,pos-1)+text.slice(pos);selected.caret=pos-1;}
+    render(0,getTotalSeconds());}
+});
+
+/* ---------- inspector toggle ---------- */
+on(inspectorToggle,"click",()=>{
+  const open=!inspectorBody.classList.contains("open");
+  inspectorBody.classList.toggle("open",open);
+  inspectorToggle.setAttribute("aria-expanded",String(open));
+  setTimeout(fitZoom,60);
+});
+
+/* ---------- buttons / sliders ---------- */
+on(modePrevBtn,"click",()=>setMode("preview"));
+on(modeEditBtn,"click",()=>setMode("edit"));
+zoomSlider && on(zoomSlider,"input",(e)=>setZoom(parseFloat(e.target.value)));
+fitBtn && on(fitBtn,"click",fitZoom);
+on(previewBtn,"click",()=>{startPreview();});
+on(gifBtn,"click",()=>renderGif(false));
+
+/* ---------- backgrounds UI ---------- */
+function buildBgGrid() {
+  bgGrid.innerHTML = "";
+  const set = visibleSet();
+  const tiles = [
+    {...set[0], kind: "preset"},
+    {...set[1], kind: "preset"},
+    {kind: "solid",  thumb:"assets/thumbs/Solid_thumb.png"},
+    {kind: "upload", thumb:"assets/thumbs/Upload_thumb.png"},
+  ].filter(Boolean);
+
+  tiles.forEach((t) => {
+    const d = document.createElement("div");
+    d.className = "bg-tile";
+    d.dataset.kind = t.kind;
+    const img = document.createElement("img");
+    img.alt = "";
+    img.src = t.kind === "preset" ? t.thumb : (t.thumb || "");
+    d.appendChild(img);
+
+    on(d, "click", async () => {
+      $$(".bg-tile", bgGrid).forEach(x => x.classList.remove("active"));
+      d.classList.add("active");
+      if (t.kind === "preset") {
+        const im = new Image(); im.crossOrigin = "anonymous"; im.src = t.full;
+        try { await im.decode(); } catch {}
+        doc.bg = { type:"image", color:null, image:im, preset:t.full };
+        showSolidTools(false);
+      } else if (t.kind === "solid") {
+        doc.bg = { type:"solid", color:bgSolidColor.value, image:null, preset:null };
+        showSolidTools(true);
+      } else if (t.kind === "upload") {
+        bgUpload.click(); return;
+      }
+      render(0, getTotalSeconds());
+      fitZoom();
+    });
+
+    bgGrid.appendChild(d);
+  });
+
+  const first = $(".bg-tile", bgGrid);
+  if (first) first.classList.add("active");
+}
+function showSolidTools(show) {
+  bgSolidTools.classList.toggle("hidden", !show);
+}
+on(bgUpload, "change", (e) => {
+  const f = e.target.files?.[0]; if (!f) return;
+  const url = URL.createObjectURL(f);
+  const im = new Image();
+  im.onload = () => {
+    URL.revokeObjectURL(url);
+    doc.bg = { type:"image", color:null, image:im, preset:null };
+    showSolidTools(false);
+    render(0, getTotalSeconds());
+    fitZoom();
+    $$(".bg-tile", bgGrid).forEach(x => x.classList.remove("active"));
+  };
+  im.src = url;
+});
+
+/* ---------- init ---------- */
+function init(){
+  buildBgGrid();
+  setMode("edit");
+  render(0,getTotalSeconds());
+  fitZoom();
+}
+init();
