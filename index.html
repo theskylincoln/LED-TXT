@@ -1,76 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>LED Backpack Animator</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header class="topbar">
-    <div class="title-wrap">
-      <div class="brand">
-        <div class="leddot"></div>
-        <h1>LED Backpack Animator</h1>
+  <header class="topbar glass">
+    <div class="brand">
+      <div class="dot"></div>
+      <h1>LED Backpack Animator</h1>
+    </div>
+
+    <div class="controls-row">
+      <div class="seg">
+        <button id="modeEdit" class="seg-btn active">✏️ Edit</button>
+        <button id="modePreview" class="seg-btn">▶️ Preview</button>
       </div>
-      <div class="tools-row">
-        <div class="seg">
-          <button id="modeEdit" class="seg-btn active" title="Edit">✏️ Edit</button>
-          <button id="modePreview" class="seg-btn" title="Preview">▶️ Preview</button>
-        </div>
-        <div class="zoom-wrap">
-          <span>Zoom</span>
-          <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.95"/>
-          <button id="fitBtn" class="button tiny">Fit</button>
-        </div>
-        <div class="undo-row">
-          <button id="undoBtn" class="button tiny" title="Undo">↶</button>
-          <button id="clearAllBtn" class="button tiny" title="Clear All">🧹</button>
-          <button id="redoBtn" class="button tiny" title="Redo">↷</button>
-        </div>
-        <button id="aboutBtn" class="linklike">About</button>
+
+      <div class="zoom-wrap">
+        <span>Zoom</span>
+        <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.95" />
+        <button id="fitBtn" class="button tiny">Fit</button>
       </div>
+
+      <div class="undo-wrap">
+        <button id="undoBtn" class="button tiny" title="Undo">↶</button>
+        <button id="clearAllBtn" class="button tiny" title="Clear All">🧹</button>
+        <button id="redoBtn" class="button tiny" title="Redo">↷</button>
+      </div>
+
+      <button id="aboutBtn" class="linklike">About</button>
     </div>
   </header>
 
-  <main class="container">
-    <!-- Resolution & Background -->
-    <section class="card">
+  <main class="main-grid">
+    <!-- Left: Resolution & Background -->
+    <section class="card glass">
       <h2>Resolution & Background</h2>
 
       <div class="row">
-        <label for="resSelect" class="sr">Resolution</label>
         <select id="resSelect">
           <option value="96x128" selected>96×128</option>
           <option value="64x64">64×64</option>
         </select>
       </div>
 
-      <!-- Four tiles built by JS: 2 presets by resolution + Solid + Upload -->
-      <div id="bgGrid" class="bg-grid"></div>
+      <div id="bgGrid" class="bg-grid">
+        <!-- built by JS: A/B (or C/D), Solid, Upload -->
+      </div>
 
-      <!-- Solid color tools (ONLY visible when "Solid" is active) -->
+      <!-- Solid tools (only visible when Solid tile is active) -->
       <div id="bgSolidTools" class="bg-solid-tools hidden">
-        <div class="row solidrow">
-          <label class="solidlab">Solid Color</label>
-          <input type="color" id="bgSolidColor" value="#000000"/>
+        <div class="row">
+          <input type="color" id="bgSolidColor" value="#000000" />
         </div>
         <div class="row">
           <div id="bgSwatches" class="swatches"></div>
-          <button id="addBgSwatchBtn" class="button tiny">+ Add BG Swatch</button>
+          <button id="addBgSwatchBtn" class="button tiny">+ Add BG</button>
         </div>
       </div>
 
-      <input type="file" id="bgUpload" accept="image/*" hidden/>
+      <input id="bgUpload" type="file" accept="image/*" hidden />
     </section>
 
-    <!-- Stage / Canvas -->
-    <section class="card">
+    <!-- Center: Canvas -->
+    <section class="card glass">
       <h2>Canvas</h2>
-      <div class="canvas-wrap">
-        <canvas id="led" width="96" height="128"></canvas>
-        <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
+
+      <div class="canvas-outer">
+        <div class="canvas-wrap">
+          <canvas id="led" width="96" height="128"></canvas>
+          <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
+        </div>
+
+        <!-- Timeline sits directly under canvas -->
+        <div class="timeline">
+          <span id="tCur">0.0s</span>
+          <div class="progress-rail">
+            <div id="progress" class="progress"></div>
+          </div>
+          <span id="tEnd">0.0s</span>
+        </div>
       </div>
 
       <div class="stage-actions">
@@ -78,19 +93,19 @@
         <button id="addLineBtn" class="button">+ Line</button>
       </div>
 
-      <!-- Inspector: horizontal tabs only -->
-      <div class="pillbar">
+      <div class="pills">
         <button class="pill" data-acc="accFont">Font</button>
         <button class="pill" data-acc="accLayout">Spacing & Alignment</button>
         <button class="pill" data-acc="accAnim">Animations</button>
-        <button id="toggleInspector" class="pill">Inspector ▸</button>
+        <button id="toggleInspector" class="pill right">Inspector ▸</button>
       </div>
 
       <div id="inspectorBody" class="inspector-body">
+        <!-- Font -->
         <details class="acc" id="accFont">
-          <summary><span>Font</span></summary>
+          <summary>Font</summary>
           <div class="acc-body">
-            <div class="row twocol">
+            <div class="row two">
               <label>Family</label>
               <select id="fontSelect">
                 <option value="Orbitron">Orbitron</option>
@@ -100,34 +115,43 @@
                 <option value="Arial Black">Arial Black</option>
                 <option value="monospace">Monospace</option>
               </select>
+
               <label>Size</label>
-              <input id="fontSize" type="number" min="6" max="64" value="22"/>
+              <input id="fontSize" type="number" min="6" max="64" value="22" />
             </div>
+
             <label class="chk">
-              <input type="checkbox" id="autoSize" checked/> <span>Auto-size</span>
+              <input id="autoSize" type="checkbox" checked />
+              <span>Auto-size</span>
             </label>
-            <div class="color-controls">
+
+            <div class="row">
               <div id="swatches" class="swatches"></div>
-              <input type="color" id="fontColor" value="#FFFFFF"/>
+            </div>
+            <div class="row two">
+              <input type="color" id="fontColor" value="#FFFFFF" />
               <button id="addSwatchBtn" class="button tiny">+ Add</button>
             </div>
           </div>
         </details>
 
+        <!-- Spacing & Alignment -->
         <details class="acc" id="accLayout">
-          <summary><span>Spacing & Alignment</span></summary>
+          <summary>Spacing & Alignment</summary>
           <div class="acc-body">
-            <div class="row twocol">
-              <label>Line Gap</label><input id="lineGap" type="number" min="0" max="30" value="4"/>
-              <label>Word Gap</label><input id="wordGap" type="number" min="0" max="30" value="6"/>
+            <div class="row two">
+              <label>Line</label>
+              <input id="lineGap" type="number" min="0" max="30" value="4" />
+              <label>Word</label>
+              <input id="wordGap" type="number" min="0" max="30" value="6" />
             </div>
-            <div class="subhead">Horizontal</div>
+
             <div class="seg">
               <button class="seg-btn" data-align="left">Left</button>
               <button class="seg-btn active" data-align="center">Center</button>
               <button class="seg-btn" data-align="right">Right</button>
             </div>
-            <div class="subhead">Vertical</div>
+
             <div class="seg">
               <button class="seg-btn" data-valign="top">Top</button>
               <button class="seg-btn active" data-valign="middle">Middle</button>
@@ -136,8 +160,9 @@
           </div>
         </details>
 
+        <!-- Animations -->
         <details class="acc" id="accAnim">
-          <summary><span>Animations</span></summary>
+          <summary>Animations</summary>
           <div class="acc-body">
             <div id="animList" class="anim-list"></div>
           </div>
@@ -145,54 +170,52 @@
       </div>
     </section>
 
-    <!-- Render / Export -->
-    <section class="card">
+    <!-- Right: Render & Download -->
+    <section class="card glass">
       <h2>Render & Download</h2>
 
       <div class="row two-eq">
         <label class="upload-btn">
-          <input type="file" id="loadJsonInput" accept="application/json" hidden/>
-          <span class="button block">Import Config</span>
+          <input type="file" id="loadJsonInput" accept="application/json" hidden />
+          <span>Import Config</span>
         </label>
         <button id="saveJsonBtn" class="button block">Download Config</button>
       </div>
 
-      <div class="row twocol-3">
-        <label>Filename</label><input id="fileName" value="animation.gif"/>
-        <label>FPS</label><input type="number" id="fps" value="15" min="1" max="30"/>
-        <label>Seconds</label><input type="number" id="seconds" value="8" min="1" max="60"/>
+      <div class="row two">
+        <label>Filename</label><input id="fileName" value="animation.gif" />
+      </div>
+      <div class="row two">
+        <label>FPS</label><input type="number" id="fps" value="15" min="1" max="30" />
+        <label>Seconds</label><input type="number" id="seconds" value="8" min="1" max="60" />
       </div>
 
-      <div class="button-row">
-        <button id="previewRenderBtn" class="button primary big">🖼 Preview (fast)</button>
-        <button id="gifRenderBtn" class="button big">🎞 GIF (CDN encoder)</button>
+      <div class="row two-eq">
+        <button id="previewRenderBtn" class="primary block">Preview (fast)</button>
+        <button id="gifRenderBtn" class="button block">GIF (CDN encoder)</button>
       </div>
 
-      <!-- Autoplay preview timeline -->
-      <div class="timeline">
-        <div class="bar"><div id="progress" class="progress"></div></div>
-        <div class="tlabels"><span id="tCur">0.0s</span><span id="tEnd">0.0s</span></div>
+      <div class="gif-pane">
+        <img id="gifPreview" alt="" />
+        <a id="gifDownload" class="button hidden" download>Download GIF</a>
       </div>
-
-      <img id="gifPreview" alt="" style="display:none;margin-top:10px;border-radius:10px;border:1px solid #26293b;max-width:100%"/>
     </section>
   </main>
 
   <!-- About -->
   <div id="aboutModal" class="modal hidden">
     <div class="modal-backdrop"></div>
-    <div class="modal-card">
+    <div class="modal-card glass">
       <h3>About</h3>
       <p>Compose text, preview animations, and render true-motion GIFs for LED backpacks.</p>
       <p>Follow <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>.</p>
       <div class="modal-actions">
-        <button id="aboutClose" class="primary">Close</button>
+        <button id="aboutClose" class="button">Close</button>
       </div>
     </div>
   </div>
 
-  <!-- Encoder (online-first) -->
-  <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
+  <!-- Your working app code -->
   <script src="app.js" defer></script>
 </body>
 </html>
