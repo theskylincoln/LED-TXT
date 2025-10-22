@@ -301,3 +301,276 @@ function init(){
   accFont.open = true;
 }
 init();
+/* =====================================================
+   PART 2 — Rendering, Text Editing, Animations Engine
+   ===================================================== */
+
+/* ---------- layout & measuring ---------- */
+function resolveStyle(over = {}) {
+  return {
+    fontFamily: over.fontFamily || doc.style.fontFamily || defaults.fontFamily,
+    fontSize:   over.fontSize   || doc.style.fontSize   || defaults.fontSize,
+    color:      over.color      || doc.style.color      || defaults.color,
+  };
+}
+
+function layoutDocument() {
+  const pos = [];
+  const fs = doc.style.fontSize || defaults.fontSize;
+  const lineStep = fs + (doc.style.lineGap ?? defaults.lineGap);
+  const totalH = doc.lines.length * lineStep;
+  let startY = 0;
+
+  if (doc.style.valign === "top") startY = fs + 6;
+  else if (doc.style.valign === "middle") startY = (doc.res.h - totalH) / 2 + fs;
+  else startY = doc.res.h - totalH + fs - 6;
+
+  doc.lines.forEach((line, li) => {
+    const widths = line.words.map(w => {
+      const st = resolveStyle(w.style);
+      ctx.font = `${st.fontSize}px ${st.fontFamily}`;
+      return Math.ceil(ctx.measureText(w.text || "").width);
+    });
+
+    const gaps = Math.max(0, line.words.length - 1) * (doc.style.wordGap ?? defaults.wordGap);
+    const w = line.words.length ? widths.reduce((a, b) => a + b, 0) + gaps : 0;
+
+    const startX =
+      doc.style.align === "left" ? 4 :
+      doc.style.align === "center" ? (doc.res.w - w) / 2 :
+      (doc.res.w - w - 4);
+
+    let x = startX, y = startY + li * lineStep;
+    line.words.forEach((_, wi) => {
+      pos.push({ line: li, word: wi, x, y, width: widths[wi] });
+      x += widths[wi] + (doc.style.wordGap ?? defaults.wordGap);
+    });
+  });
+  return { positions: pos };
+}
+
+function measureWordBBox(li, wi) {
+  const line = doc.lines[li]; if (!line) return null;
+  const word = line.words[wi]; if (!word) return null;
+  const st = resolveStyle(word.style);
+  ctx.font = `${st.fontSize}px ${st.fontFamily}`;
+  const t = word.text || "";
+  const m = ctx.measureText(t);
+  const w = Math.ceil(m.width), h = Math.ceil(st.fontSize * 1.15);
+  const p = layoutDocument().positions.find(v => v.line === li && v.word === wi);
+  if (!p) return null;
+  return { x: p.x, y: p.y - h, w, h };
+}
+
+/* ---------- caret & typing ---------- */
+function measureCharWidths(text, fontSpec) {
+  ctx.save();
+  ctx.font = fontSpec;
+  const arr = [];
+  for (let i = 0; i < text.length; i++)
+    arr.push(Math.ceil(ctx.measureText(text[i]).width));
+  ctx.restore();
+  return arr;
+}
+
+function caretFromClick(li, wi, clickX) {
+  const line = doc.lines[li]; if (!line) return 0;
+  const word = line.words[wi]; if (!word) return 0;
+  const st = resolveStyle(word.style);
+  const fontSpec = `${st.fontSize}px ${st.fontFamily}`;
+  const widths = measureCharWidths(word.text || "", fontSpec);
+  const pos = layoutDocument().positions.find(v => v.line === li && v.word === wi);
+  if (!pos) return (word.text || "").length;
+  let acc = pos.x;
+  for (let i = 0; i < widths.length; i++) {
+    const mid = acc + widths[i] / 2;
+    if (clickX < mid) return i;
+    acc += widths[i];
+  }
+  return widths.length;
+}
+
+/* ---------- easing & helpers ---------- */
+function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
+function colorToHue(hex){
+  const c = hex.replace("#", "");
+  const r = parseInt(c.slice(0,2),16)/255,
+        g = parseInt(c.slice(2,4),16)/255,
+        b = parseInt(c.slice(4,6),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h = 0;
+  if (max !== min) {
+    const d = max - min;
+    switch(max){
+      case r: h=(g-b)/d+(g<b?6:0); break;
+      case g: h=(b-r)/d+2; break;
+      case b: h=(r-g)/d+4; break;
+    }
+    h /= 6;
+  }
+  return Math.round(h*360);
+}
+const getActive = id => doc.animations.find(a => a.id === id);
+
+/* ---------- animation engine ---------- */
+function animatedProps(base, wordObj, t, totalDur){
+  const props = { x:base.x, y:base.y, scale:1, alpha:1, text:wordObj.text||"", color:null, dx:0, dy:0, shadow:null, gradient:null, perChar:null };
+
+  // Scroll
+  const scroll = getActive("scroll");
+  if (scroll) {
+    const dir = (scroll.params.direction || "Left");
+    const sp  = Number(scroll.params.speed || 1);
+    const v = 20 * sp;
+    if(dir==="Left")  props.dx -= (t * v) % (doc.res.w + 200);
+    if(dir==="Right") props.dx += (t * v) % (doc.res.w + 200);
+    if(dir==="Up")    props.dy -= (t * v) % (doc.res.h + 200);
+    if(dir==="Down")  props.dy += (t * v) % (doc.res.h + 200);
+  }
+
+  // Pulse
+  const pulse = getActive("pulse");
+  if (pulse) {
+    const s = Number(pulse.params.scale || 0.03);
+    const vy = Number(pulse.params.vy || 4);
+    props.scale *= 1 + (Math.sin(t * 2 * Math.PI) * s);
+    props.dy    += Math.sin(t * 2 * Math.PI) * vy;
+  }
+
+  // Wave
+  const wave = getActive("wave");
+  if (wave) {
+    const ax = Number(wave.params.ax || 0.8);
+    const ay = Number(wave.params.ay || 1.4);
+    const cyc= Number(wave.params.cycles || 1.0);
+    const ph = cyc * 2 * Math.PI * t;
+    props.dx += Math.sin(ph + base.x * 0.05) * ax * 4;
+    props.dy += Math.sin(ph + base.y * 0.06) * ay * 4;
+  }
+
+  // Jitter
+  const jit = getActive("jitter");
+  if (jit) {
+    const a = Number(jit.params.amp || 0.10), f = Number(jit.params.freq || 2.5);
+    props.dx += Math.sin(t * 2 * Math.PI * f) * a * 3;
+    props.dy += Math.cos(t * 2 * Math.PI * f) * a * 3;
+  }
+
+  // Glow
+  const glow = getActive("glow");
+  if (glow) {
+    const intensity = Math.max(0, Number(glow.params.intensity || 0.6));
+    const k = (Math.sin(t * 2 * Math.PI * 1.2) * 0.5 + 0.5) * intensity;
+    props.shadow = { blur: 6 + k * 10, color: props.color || null };
+  }
+
+  // Sweep
+  const sweep = getActive("sweep");
+  if (sweep) {
+    const speed = Number(sweep.params.speed || 0.7), width = Number(sweep.params.width || 0.25);
+    props.gradient = { type: "sweep", speed, width };
+  }
+
+  // Typewriter
+  const type = getActive("typewriter");
+  if (type && props.text) {
+    const rate = Number(type.params.rate || 1);
+    const cps  = 10 * rate;
+    const shown = Math.max(0, Math.min(props.text.length, Math.floor(t * cps)));
+    props.text = props.text.slice(0, shown);
+  }
+
+  // Color cycle / rainbow
+  const cc = getActive("colorcycle");
+  if (cc) {
+    const sp = Number(cc.params.speed || 0.5);
+    const base = (cc.params.start || "#ff0000");
+    const hueBase = colorToHue(base);
+    const hue = Math.floor((hueBase + (t * 60 * sp)) % 360);
+    props.color = `hsl(${hue}deg 100% 60%)`;
+  }
+
+  const rainbow = getActive("rainbow");
+  if (rainbow) {
+    const speed = Number(rainbow.params.speed || 0.5);
+    const base = (rainbow.params.start || "#ff00ff");
+    const hueBase = colorToHue(base);
+    props.gradient = { type: "rainbow", speed, base: hueBase };
+  }
+
+  return props;
+}
+
+/* ---------- background & main render ---------- */
+function renderBg() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (doc.bg.type === "solid") {
+    ctx.fillStyle = doc.bg.color || "#000";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  } else if (doc.bg.type === "image") {
+    if (doc.bg.image) {
+      try { ctx.drawImage(doc.bg.image, 0, 0, canvas.width, canvas.height); } catch {}
+    } else if (doc.bg.preset) {
+      const im = new Image();
+      im.crossOrigin = "anonymous";
+      im.src = doc.bg.preset;
+      im.onload = () => { doc.bg.image = im; render(0, getTotalSeconds()); };
+    }
+  }
+}
+
+function render(t = 0, totalDur = null) {
+  canvas.width  = doc.res.w;
+  canvas.height = doc.res.h;
+
+  renderBg();
+  const layout = layoutDocument();
+
+  layout.positions.forEach((p) => {
+    const word = doc.lines[p.line].words[p.word];
+    const st = resolveStyle(word.style);
+    const props = animatedProps(p, word, t, totalDur);
+    const txt = props.text || "";
+
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, props.alpha));
+    ctx.textBaseline = "alphabetic";
+    const fsize = st.fontSize * props.scale;
+    const fontSpec = `${fsize}px ${st.fontFamily}`;
+    ctx.font = fontSpec;
+
+    if (props.shadow) {
+      ctx.shadowBlur = props.shadow.blur;
+      ctx.shadowColor = props.shadow.color || st.color;
+    } else ctx.shadowBlur = 0;
+
+    let fillStyle = props.color || st.color;
+    const baseX = p.x + (props.dx || 0), baseY = p.y + (props.dy || 0);
+
+    // gradient fills
+    if (props.gradient && txt.length) {
+      const wordWidth = Math.ceil(ctx.measureText(txt).width);
+      if (props.gradient.type === "rainbow") {
+        const g = ctx.createLinearGradient(baseX, baseY, baseX + wordWidth, baseY);
+        const baseHue = (props.gradient.base + (t * 120 * props.gradient.speed)) % 360;
+        for (let i=0;i<=6;i++){
+          const stop=i/6;
+          const hue=Math.floor((baseHue+stop*360)%360);
+          g.addColorStop(stop, `hsl(${hue}deg 100% 60%)`);
+        }
+        fillStyle = g;
+      } else if (props.gradient.type === "sweep") {
+        const band = Math.max(0.05, Math.min(0.8, props.gradient.width || 0.25));
+        const pos  = (t * (props.gradient.speed || 0.7) * 1.2) % 1;
+        const g = ctx.createLinearGradient(baseX, baseY, baseX + wordWidth, baseY);
+        const a = Math.max(0, pos - band/2), b = Math.min(1, pos + band/2);
+        g.addColorStop(0, fillStyle); g.addColorStop(a, fillStyle);
+        g.addColorStop(pos, "#FFFFFF"); g.addColorStop(b, fillStyle); g.addColorStop(1, fillStyle);
+        fillStyle = g;
+      }
+    }
+    ctx.fillStyle = fillStyle;
+    ctx.fillText(txt, baseX, baseY);
+    ctx.restore();
+  });
+}
