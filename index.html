@@ -8,76 +8,8 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <!-- Minimal CSS scaffold -->
-  <style>
-    :root{
-      --glass-bg: rgba(20,20,28,0.6);
-      --glass-bd: rgba(255,255,255,0.06);
-      --txt: #e6e7ee;
-      --muted: #a2a7b7;
-      --accent: #52b3ff;
-    }
-    *{box-sizing:border-box;}
-    html,body{height:100%;background:#0e0f14;color:var(--txt);font-family:Montserrat,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-    h1,h2,h3{margin:0 0 8px;font-weight:700;}
-    .glass{background:var(--glass-bg);border:1px solid var(--glass-bd);backdrop-filter:blur(8px);border-radius:12px;}
-    header.topbar{display:flex;flex-direction:column;gap:10px;padding:12px 16px;margin:12px;}
-    header .title-wrap{display:flex;align-items:center;gap:12px;justify-content:space-between;}
-    .tools-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
-    .seg{display:inline-flex;border:1px solid var(--glass-bd);border-radius:8px;overflow:hidden;}
-    .seg-btn{background:transparent;color:var(--txt);padding:8px 10px;border:0;cursor:pointer;}
-    .seg-btn.active{background:#1b1e28;}
-    .button{background:#1b1e28;color:var(--txt);border:1px solid var(--glass-bd);border-radius:8px;padding:8px 12px;cursor:pointer;}
-    .button.tiny{padding:6px 8px;}
-    .button.primary{background:var(--accent);color:#0b0e14;border-color:transparent;}
-    .linklike{background:transparent;border:0;color:var(--accent);cursor:pointer;}
-    label{color:var(--muted);font-size:13px;}
-    input[type="number"],input[type="text"],input[type="color"],select,.button.block{width:100%;}
-    input[type="number"],input[type="text"],select{background:#11141b;color:var(--txt);border:1px solid var(--glass-bd);border-radius:8px;padding:8px 10px;}
-    input[type="range"]{accent-color:var(--accent);}
-    main.layout{display:grid;grid-template-columns:280px 1fr;gap:12px;margin:0 12px;}
-    aside.left-panel{padding:12px;}
-    .row{display:grid;gap:8px;margin:10px 0;}
-    .row.two{grid-template-columns:1fr 1fr;}
-    .row.two-eq{grid-template-columns:1fr 1fr;gap:10px;}
-    .subhead{color:var(--muted);margin-top:6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;}
-    .stage{padding:16px;display:flex;flex-direction:column;gap:10px;align-items:stretch;}
-    .canvas-wrap{position:relative;width:var(--cW,96px);height:var(--cH,128px);margin:8px auto;display:grid;place-items:center;}
-    #led{image-rendering:pixelated;border:1px dashed rgba(255,255,255,0.08);background:#000;}
-    .word-fx{position:absolute;right:-28px;top:-28px;}
-    .progress-wrap{display:flex;align-items:center;gap:10px;justify-content:center;}
-    .progress{height:6px;background:#222836;border-radius:6px;overflow:hidden;width:260px;}
-    #progress{height:100%;width:0%;background:var(--accent);}
-    .time{color:var(--muted);font-variant-numeric:tabular-nums;}
-    footer.inspector-bar{margin:12px;padding:12px;}
-    .toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;}
-    .toolbar .pill{background:#151824;color:var(--txt);border:1px solid var(--glass-bd);padding:6px 10px;border-radius:999px;cursor:pointer;}
-    .inspector-body{margin-top:10px;}
-    details.acc{border:1px solid var(--glass-bd);border-radius:10px;padding:6px 10px;background:#121622;}
-    details.acc+details.acc{margin-top:8px;}
-    details.acc summary{cursor:pointer;}
-    .subttl{color:var(--muted);}
-    .color-controls{display:flex;align-items:center;gap:8px;}
-    .swatches{display:flex;flex-wrap:wrap;gap:6px;}
-    .swatch{width:22px;height:22px;border-radius:4px;border:1px solid #333;cursor:pointer;}
-    .bg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
-    .bg-tile{border:1px solid var(--glass-bd);border-radius:8px;padding:6px;cursor:pointer;background:#131621;}
-    .bg-tile.active{outline:2px solid var(--accent);}
-    .bg-tile img{width:100%;border-radius:6px;display:block;}
-    .bg-solid-tools.hidden,.hidden{display:none!important;}
-    .bottom-panels{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:0 12px 12px;}
-    .card{padding:12px;}
-    .gif-preview{width:100%;max-width:320px;display:block;margin-top:8px;border-radius:8px;border:1px solid var(--glass-bd);}
-    .modal.hidden{display:none;}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);}
-    .modal-card{position:fixed;inset:0;margin:auto;width:min(520px,92vw);height:auto;padding:16px;}
-    .center{text-align:center;}
-    .block{display:block;}
-    @media(max-width:980px){
-      main.layout{grid-template-columns:1fr;}
-      .bottom-panels{grid-template-columns:1fr;}
-    }
-  </style>
+  <!-- Your stylesheet (the one you pasted) -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="topbar glass">
@@ -90,12 +22,12 @@
         <button id="modeEdit" class="seg-btn active">✏️ Edit</button>
         <button id="modePreview" class="seg-btn">▶️ Preview</button>
       </div>
-      <div class="zoom-wrap">
+      <div class="zoom-wrap" style="display:flex;align-items:center;gap:8px;">
         <label for="zoom">Zoom</label>
         <input type="range" id="zoom" min="0.4" max="4" step="0.05" value="0.95" />
         <button id="fitBtn" class="button tiny">Fit</button>
       </div>
-      <div class="undo-row">
+      <div class="undo-row" style="display:flex;gap:6px;">
         <button id="undoBtn" class="button tiny" title="Undo">↶</button>
         <button id="clearAllBtn" class="button tiny" title="Clear All">🧹</button>
         <button id="redoBtn" class="button tiny" title="Redo">↷</button>
@@ -106,6 +38,7 @@
   <main class="layout">
     <aside class="left-panel glass">
       <h3>Background</h3>
+
       <div class="row two">
         <label for="resSelect">Resolution</label>
         <select id="resSelect">
@@ -113,16 +46,22 @@
           <option value="64x64">64×64</option>
         </select>
       </div>
-      <div class="row"><div id="bgGrid" class="bg-grid"></div></div>
+
+      <div class="row">
+        <div id="bgGrid" class="bg-grid" aria-label="Background presets"></div>
+      </div>
+
       <div id="bgSolidTools" class="bg-solid-tools hidden">
         <div class="row two">
-          <label>Solid</label><input type="color" id="bgSolidColor" value="#000000" />
+          <label>Solid</label>
+          <input type="color" id="bgSolidColor" value="#000000" />
         </div>
         <div class="row">
           <div id="bgSwatches" class="swatches"></div>
           <button id="addBgSwatchBtn" class="button tiny">+ Add</button>
         </div>
       </div>
+
       <input type="file" id="bgUpload" accept="image/*" hidden />
     </aside>
 
@@ -132,23 +71,27 @@
         <button id="deleteWordBtn" class="word-fx hidden" title="Delete">×</button>
       </div>
 
+      <!-- Progress just under the canvas -->
       <div class="progress-wrap">
-        <div class="progress"><div id="progress"></div></div>
+        <div class="progress">
+          <div id="progress"></div>
+        </div>
         <div class="time"><span id="tCur">0.0s</span> / <span id="tEnd">8.0s</span></div>
       </div>
 
-      <div class="stage-actions" style="display:flex;gap:10px;justify-content:center;">
+      <div class="stage-actions center" style="display:flex;gap:10px;">
         <button id="addWordBtn" class="button">+ Word</button>
         <button id="addLineBtn" class="button">+ Line</button>
       </div>
     </section>
   </main>
 
+  <!-- Inspector: horizontal toolbar only -->
   <footer class="inspector-bar glass">
     <div class="inspector-head">
       <div class="toolbar">
         <button id="toggleInspector" aria-expanded="false" class="button">Inspector ▾</button>
-        <div class="toolbar-tabs" style="display:flex;gap:8px;">
+        <div class="toolbar-tabs">
           <button class="pill" data-acc="accFont">Font</button>
           <button class="pill" data-acc="accLayout">Spacing & Alignment</button>
           <button class="pill" data-acc="accAnim">Animations</button>
@@ -175,7 +118,8 @@
             <label>Size</label><input id="fontSize" type="number" min="6" max="64" value="22" />
           </div>
           <label class="chk"><input type="checkbox" id="autoSize" checked/> <span>Auto-size</span></label>
-          <div class="color-controls">
+
+          <div class="color-controls" style="display:flex;align-items:center;gap:8px;">
             <div id="swatches" class="swatches"></div>
             <input type="color" id="fontColor" value="#FFFFFF" />
             <button id="addSwatchBtn" class="button tiny">+ Add</button>
@@ -191,6 +135,7 @@
             <label>Line</label><input id="lineGap" type="number" min="0" max="30" value="4" />
             <label>Word</label><input id="wordGap" type="number" min="0" max="30" value="6" />
           </div>
+
           <div class="subhead">Alignment</div>
           <div class="seg">
             <button class="seg-btn" data-align="left">Left</button>
@@ -207,7 +152,9 @@
 
       <details class="acc" id="accAnim">
         <summary><span class="subttl">Animations</span></summary>
-        <div class="acc-body"><div id="animList" class="anim-list"></div></div>
+        <div class="acc-body">
+          <div id="animList" class="anim-list"></div>
+        </div>
       </details>
     </div>
   </footer>
@@ -239,29 +186,34 @@
           <button id="gifRenderBtn" class="button block center primary">Download GIF</button>
         </div>
       </div>
-      <div class="row"><img id="gifPreview" class="gif-preview hidden" alt="Preview GIF" /></div>
+      <div class="row">
+        <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF will appear here" />
+      </div>
     </div>
   </section>
 
+  <!-- Hidden input to trigger mobile keyboard without UI -->
   <input id="kbdProxy" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" hidden />
 
+  <!-- About Modal -->
   <div id="aboutModal" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-card glass">
       <h3>About</h3>
       <p>LED Backpack Animator — compose text & render GIFs for LED backpacks.</p>
       <p>Follow <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>.</p>
-      <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:8px;">
-        <button id="aboutClose" class="button primary">Close</button>
+      <div class="modal-actions">
+        <button id="aboutClose" class="primary">Close</button>
       </div>
     </div>
   </div>
 
   <!-- Libraries -->
   <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <!-- Optional: for true GIF export (otherwise PNG-frames ZIP fallback is used) -->
   <script defer src="https://unpkg.com/gifencoder/browser/gifencoder.js"></script>
 
-  <!-- Your app -->
+  <!-- Your app script -->
   <script defer src="app.js"></script>
 </body>
 </html>
