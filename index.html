@@ -2,37 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LED Backpack Animator</title>
-
-  <!-- App styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <!-- ===== Topbar / Toolbar ===== -->
+<body class="theme-midnight">
+
+  <!-- ===== Topbar ===== -->
   <header class="topbar glass">
-    <div class="title-wrap">
-      <h1>LED Backpack Animator</h1>
-    </div>
+    <h1 class="app-title">LED Backpack Animator</h1>
 
-    <div class="tools-row">
-      <!-- Mode -->
+    <div class="top-controls">
       <div class="seg">
-        <button id="modeEdit" class="seg-btn active" title="Edit (E)">📝 Edit</button>
-        <button id="modePreview" class="seg-btn" title="Preview (P)">▶ Preview</button>
+        <button id="modeEdit" class="seg-btn active">📝 Edit</button>
+        <button id="modePreview" class="seg-btn">▶ Preview</button>
       </div>
 
-      <!-- Undo / Redo / Clear -->
       <div class="seg">
-        <button id="undoBtn" class="seg-btn" title="Undo (⌘/Ctrl+Z)">↩ Undo</button>
-        <button id="redoBtn" class="seg-btn" title="Redo (⇧+⌘/Ctrl+Z or Ctrl+Y)">↪ Redo</button>
-        <button id="clearAllBtn" class="seg-btn" title="Clear all text">🗑 Clear</button>
+        <button id="undoBtn" class="seg-btn">↩ Undo</button>
+        <button id="redoBtn" class="seg-btn">↪ Redo</button>
+        <button id="clearAllBtn" class="seg-btn">🗑 Clear</button>
       </div>
 
-      <!-- Zoom -->
       <div class="zoom-wrap">
         <label for="zoom">Zoom</label>
         <input type="range" id="zoom" min="0.2" max="4" step="0.1" value="1" />
@@ -41,57 +32,53 @@
     </div>
   </header>
 
-  <!-- ===== Main Layout ===== -->
   <main class="layout">
 
-    <!-- === Controls above the canvas: Resolution + Backgrounds (collapsible, open by default) === -->
-    <section class="above-stage glass">
-      <details id="bgPanel" open>
-        <summary class="panel-summary">Background & Resolution</summary>
+    <!-- ===== Background & Resolution (collapsible, default open, ABOVE canvas) ===== -->
+    <details class="panel glass" open>
+      <summary class="panel-title">Background &amp; Resolution</summary>
 
-        <div class="panel-body">
-          <div class="row two">
-            <label for="resSelect">Resolution</label>
-            <select id="resSelect">
-              <option value="96x128" selected>96×128</option>
-              <option value="64x64">64×64</option>
-            </select>
+      <div class="row two">
+        <label for="resSelect">Resolution</label>
+        <select id="resSelect">
+          <option value="96x128" selected>96×128</option>
+          <option value="64x64">64×64</option>
+        </select>
+      </div>
+
+      <!-- 2×2 grid; app.js will rebuild tiles dynamically. These placeholders keep layout nice before JS runs -->
+      <div id="bgGrid" class="bg-grid">
+        <!-- Tiles are injected by app.js (uses PRESETS and Solid/Upload) -->
+      </div>
+
+      <!-- Solid color tools (shown only when Solid is active) -->
+      <div id="bgSolidTools" class="bg-solid-tools hidden">
+        <div class="row two-eq stack-sm">
+          <div class="swatch-bank">
+            <div class="swatches" id="bgSwatches"></div>
           </div>
-
-          <!-- 2x2 background grid; JS rebuilds with presets/solid/upload -->
-          <div id="bgGrid" class="bg-grid">
-            <!-- JS will populate: 2 presets + Solid + Upload -->
-          </div>
-
-          <!-- Solid color tools -->
-          <div id="bgSolidTools" class="bg-solid-tools hidden">
-            <div class="swatch-row">
-              <div class="swatches" id="bgSwatches"></div>
-            </div>
-            <div class="row two-eq">
-              <label for="bgSolidColor" class="block">Custom color</label>
-              <input type="color" id="bgSolidColor" value="#000000" />
-              <button id="addBgSwatchBtn" class="button tiny">Add BG Swatch</button>
-            </div>
-            <input type="file" id="bgUpload" accept="image/*" hidden />
+          <div class="custom-color">
+            <input type="color" id="bgSolidColor" value="#000000" />
+            <button id="addBgSwatchBtn" class="button">Add BG Swatch</button>
           </div>
         </div>
-      </details>
-    </section>
+        <input type="file" id="bgUpload" accept="image/*" hidden />
+      </div>
+    </details>
 
-    <!-- === Stage (Canvas) === -->
-    <section class="stage glass">
+    <!-- ===== Stage / Canvas ===== -->
+    <section class="panel stage glass">
       <div class="canvas-wrap">
         <canvas id="led" width="96" height="128"></canvas>
       </div>
 
-      <!-- Action box under the canvas -->
-      <div class="stage-actions">
-        <div class="row">
-          <button id="multiSelectBtn" class="button tiny" aria-pressed="false">Multi-select</button>
-          <span id="multiTip" class="tip">Tip: Hold Shift/Cmd to multi-select.</span>
+      <!-- Controls directly under preview -->
+      <div class="stage-controls">
+        <div class="multi-tip">
+          <button id="multiToggle" class="chip">Multi-select</button>
+          <span class="tip">Tip: Hold Shift/Cmd to multi-select.</span>
         </div>
-        <div class="row">
+        <div class="word-row">
           <button id="addWordBtn" class="button tiny">+ Word</button>
           <button id="addLineBtn" class="button tiny">+ Line</button>
           <button id="deleteWordBtn" class="button tiny danger">× Delete</button>
@@ -100,34 +87,25 @@
 
       <!-- Timeline / progress -->
       <div class="progress-wrap">
-        <div class="progress">
-          <div id="progress"></div>
-        </div>
-        <div class="time">
-          <span id="tCur">0.0s</span> / <span id="tEnd">8s</span>
-        </div>
+        <div class="progress"><div id="progress"></div></div>
+        <div class="time"><span id="tCur">0.0s</span> / <span id="tEnd">8s</span></div>
       </div>
     </section>
 
-    <!-- === Inspector (pills show panels) === -->
-    <aside class="inspector glass">
+    <!-- ===== Inspector (pills control which section is visible) ===== -->
+    <section class="panel inspector glass">
       <div class="inspector-head">
-        <div class="toolbar">
-          <button id="toggleInspector" class="button">Inspector ▾</button>
-          <div class="toolbar-tabs">
-            <button class="pill active" data-acc="accFont">Font</button>
-            <button class="pill" data-acc="accLayout">Spacing & Alignment</button>
-            <button class="pill" data-acc="accAnim">Animations</button>
-            <button class="pill" data-acc="accConfig">Config</button>
-            <button class="pill" data-acc="accRender">Render</button>
-          </div>
+        <div class="pillbar">
+          <button class="pill active" data-acc="accFont">Font</button>
+          <button class="pill" data-acc="accLayout">Spacing &amp; Alignment</button>
+          <button class="pill" data-acc="accAnim">Animations</button>
         </div>
       </div>
 
       <div id="inspectorBody" class="inspector-body open">
-        <!-- Font -->
+        <!-- Font (default visible) -->
         <details id="accFont" class="acc" open>
-          <summary><span class="subttl">Font & Color</span></summary>
+          <summary><span class="subttl">Font &amp; Color</span></summary>
           <div class="acc-body">
             <div class="row">
               <label for="fontSelect">Font</label>
@@ -146,51 +124,52 @@
               <input type="number" id="fontSize" min="6" max="64" value="22" />
             </div>
 
-            <label class="row">
-              <input type="checkbox" id="autoSize" />
-              Auto-size (per line)
+            <label class="row checkbox">
+              <input type="checkbox" id="autoSize" checked />
+              <span>Auto-size (per line)</span>
             </label>
 
-            <!-- Swatches + custom color -->
-            <div class="swatch-row">
+            <!-- Swatches ABOVE custom color + Add -->
+            <div class="row">
               <div class="swatches" id="swatches"></div>
             </div>
-            <div class="row two-eq">
-              <label for="fontColor" class="block">Custom color</label>
-              <input type="color" id="fontColor" value="#FFFFFF" />
-              <button id="addSwatchBtn" class="button tiny">Add Swatch</button>
+            <div class="row two-eq stack-sm">
+              <div class="custom-color">
+                <label for="fontColor">Custom color</label>
+                <input type="color" id="fontColor" value="#FFFFFF" />
+              </div>
+              <div class="custom-actions">
+                <button id="addSwatchBtn" class="button">Add Swatch</button>
+              </div>
             </div>
           </div>
         </details>
 
-        <!-- Layout -->
+        <!-- Spacing & Alignment -->
         <details id="accLayout" class="acc">
-          <summary><span class="subttl">Spacing & Alignment</span></summary>
+          <summary><span class="subttl">Spacing &amp; Alignment</span></summary>
           <div class="acc-body">
             <div class="row two">
-              <label for="lineGap">Line Gap</label>
-              <input type="number" id="lineGap" min="0" max="40" value="6" />
+              <label>Line Gap</label>
+              <input type="number" id="lineGap" min="0" max="40" value="4" />
             </div>
-
             <div class="row two">
-              <label for="wordGap">Word Gap</label>
-              <input type="number" id="wordGap" min="0" max="40" value="8" />
+              <label>Word Gap</label>
+              <input type="number" id="wordGap" min="0" max="40" value="6" />
             </div>
-
             <div class="row two">
               <label>Horizontal</label>
               <div class="seg">
-                <button class="seg-btn" data-align="left">Left</button>
                 <button class="seg-btn active" data-align="center">Center</button>
+                <button class="seg-btn" data-align="left">Left</button>
                 <button class="seg-btn" data-align="right">Right</button>
               </div>
             </div>
-
             <div class="row two">
               <label>Vertical</label>
               <div class="seg">
-                <button class="seg-btn" data-valign="top">Top</button>
                 <button class="seg-btn active" data-valign="middle">Middle</button>
+                <button class="seg-btn" data-valign="top">Top</button>
                 <button class="seg-btn" data-valign="bottom">Bottom</button>
               </div>
             </div>
@@ -201,75 +180,55 @@
         <details id="accAnim" class="acc">
           <summary><span class="subttl">Animations</span></summary>
           <div class="acc-body">
-            <!-- Optional “external” bulk buttons that proxy to the internal ones -->
             <div class="row two-eq" style="margin-bottom:6px;">
               <button id="applySelectedAnimBtn" class="button tiny primary">Apply to Selection</button>
               <button id="applyAllAnimBtn" class="button tiny">Apply to All Words</button>
             </div>
-
-            <!-- JS will build the full animation list here -->
             <div id="animList"></div>
           </div>
         </details>
-
-        <!-- Config -->
-        <details id="accConfig" class="acc">
-          <summary><span class="subttl">Config</span></summary>
-          <div class="acc-body">
-            <div class="row two-eq center">
-              <label class="upload-btn block center">
-                <input type="file" id="loadJsonInput" accept="application/json" hidden />
-                <span class="button block center">Import Config</span>
-              </label>
-              <button id="saveJsonBtn" class="button block center primary">Download Config</button>
-            </div>
-          </div>
-        </details>
-
-        <!-- Render -->
-        <details id="accRender" class="acc">
-          <summary><span class="subttl">Render GIF</span></summary>
-          <div class="acc-body">
-            <div class="row two-eq">
-              <label for="fileName">File Name</label>
-              <input type="text" id="fileName" placeholder="animation" />
-            </div>
-
-            <div class="row two-eq">
-              <label for="fps">FPS</label>
-              <input type="number" id="fps" min="1" max="30" value="15" />
-            </div>
-
-            <div class="row two-eq">
-              <label for="seconds">Seconds</label>
-              <input type="number" id="seconds" min="1" max="60" value="8" />
-            </div>
-
-            <div class="row two-eq">
-              <button id="previewRenderBtn" class="button block primary">Render Preview</button>
-              <button id="gifRenderBtn" class="button block">Download GIF</button>
-            </div>
-
-            <img id="gifPreview" class="gif-preview hidden" alt="GIF Preview" />
-          </div>
-        </details>
       </div>
-    </aside>
-  </main>
+    </section>
 
-  <!-- ===== About Modal (optional) ===== -->
-  <div id="aboutModal" class="modal hidden">
-    <div class="modal-content glass">
-      <h3>About</h3>
-      <p>Created by <strong>TheSkyLincoln</strong> — LED Backpack Animator</p>
-      <button id="aboutClose" class="button primary">Close</button>
-    </div>
-  </div>
+    <!-- ===== Config (standalone) ===== -->
+    <section class="panel glass">
+      <h3 class="section-title">Config</h3>
+      <div class="row two-eq stack-sm">
+        <label class="upload-btn block">
+          <input type="file" id="loadJsonInput" accept="application/json" hidden />
+          <span class="button block">Import Config</span>
+        </label>
+        <button id="saveJsonBtn" class="button block primary">Download Config</button>
+      </div>
+    </section>
+
+    <!-- ===== Render GIF (standalone) ===== -->
+    <section class="panel glass">
+      <h3 class="section-title">Render GIF</h3>
+      <div class="row two-eq">
+        <label>File Name</label>
+        <input type="text" id="fileName" placeholder="animation" />
+      </div>
+      <div class="row two-eq">
+        <label>FPS</label>
+        <input type="number" id="fps" min="1" max="30" value="15" />
+      </div>
+      <div class="row two-eq">
+        <label>Seconds</label>
+        <input type="number" id="seconds" min="1" max="60" value="8" />
+      </div>
+      <div class="row two-eq">
+        <button id="previewRenderBtn" class="button block primary">Render Preview</button>
+        <button id="gifRenderBtn" class="button block">Download GIF</button>
+      </div>
+      <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF" />
+    </section>
+
+  </main>
 
   <!-- ===== Scripts ===== -->
   <script src="app.js"></script>
-
-  <!-- Local GIF encoder libs (kept local so export works offline) -->
+  <!-- local GIF libs (optional if you also load them dynamically inside app.js) -->
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
   <script defer src="assets/libs/jsgif/LZWEncoder.js"></script>
   <script defer src="assets/libs/jsgif/GIFEncoder.js"></script>
