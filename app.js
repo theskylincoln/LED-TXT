@@ -1,11 +1,22 @@
-window.addEventListener('error', e => {
-  alert('JS error: ' + (e?.error?.message || e.message));
-});
-
 /* =======================================================
    LED Backpack Animator — app.js (Part 1 of 3)
    Boot / UI wiring / background presets / zoom & inspector
    ======================================================= */
+
+/* === UI Alert Placeholder (New) === */
+// Replace this function with your actual UI notification logic (e.g., a toast or modal)
+function notifyUserError(message) {
+  console.error("USER NOTIFICATION:", message);
+  // Example: You would replace the line above with code that shows a toast message:
+  // showToast(message, "error", 5000);
+}
+
+window.addEventListener('error', e => {
+  // FIXED: Replaced disruptive alert() with non-blocking console error and user notification
+  const msg = 'JS error: ' + (e?.error?.message || e.message);
+  console.error(msg, e);
+  notifyUserError("An unexpected error occurred. See console for details.");
+});
 
 /* ---------- helpers ---------- */
 const $  = (q, el=document) => el.querySelector(q);
@@ -728,7 +739,7 @@ canvas.addEventListener("click",(e)=>{
       const w = doc.lines[li].words[wi];
       const ww = measureText(w);
       const bx = x-2, by = (y+lh*0.85)-lh, bw = ww+4, bh = lh+4;
-      if (px>=bx && px<=bx+bw && py>=by && py<=by+bh){ hit = { line:li, word:wi }; break; }
+      if (px>=bx && px<=bx+bw && py>=by && py<=py+bh){ hit = { line:li, word:wi }; break; }
       x += ww + (doc.spacing.wordGap ?? defaults.wordGap);
     }
     if (hit) break;
@@ -1112,7 +1123,9 @@ async function ensureLocalGifLibs() {
     await loadScriptLocal("./assets/libs/jsgif/LZWEncoder.js");
     await loadScriptLocal("./assets/libs/jsgif/GIFEncoder.js");
   } catch (e) {
-    console.error("Local GIF libs failed to load", e);
+    console.error("Local GIF libs failed to load:", e);
+    // FIXED: Replaced alert() with notification helper
+    notifyUserError("GIF encoder library files not found. Check console for details.");
     return false;
   }
   return typeof GIFEncoder !== "undefined";
@@ -1126,7 +1139,10 @@ function encoderToBlob(enc) {
 /* ---------- Render GIF (preview + download) ---------- */
 async function renderGifDownload() {
   const ok = await ensureLocalGifLibs();
-  if (!ok) { alert("GIF encoder not found. Put libs in ./assets/libs/jsgif/."); return; }
+  if (!ok) {
+    // Alert handled by ensureLocalGifLibs
+    return;
+  }
 
   const fps = getFPS();
   const secs = getDuration();
@@ -1180,7 +1196,8 @@ async function renderGifDownload() {
     setTimeout(() => URL.revokeObjectURL(url), 15000);
   } catch (err) {
     console.error("GIF render failed:", err);
-    alert("GIF render failed. Check console for details.");
+    // FIXED: Replaced alert() with notification helper
+    notifyUserError("GIF render failed. Check console for details.");
   } finally {
     if (resume) startPreview();
   }
