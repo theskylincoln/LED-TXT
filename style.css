@@ -7,12 +7,15 @@
   --text: #e7ecf5;
   --muted: #a6b0c3;
 
-  --accent: #67bfff;          /* glow cyan for active switches */
-  --accent-strong: #4cc3ff;
-  --primary: #5b8cff;         /* buttons */
-  --danger: #ff5577;
+  /* purple-leaning accents */
+  --accent: #7a5cff;
+  --accent-strong: #9b6bff;
+  --primary-start:#8A7BFF;
+  --primary-end:#5A4CFF;
+  --danger-start:#FF6B8D;
+  --danger-end:#D64260;
 
-  --ring: rgba(103,191,255,0.4);
+  --ring: rgba(154,132,255,0.45);
   --shadow: 0 10px 22px rgba(0,0,0,0.35);
   --radius: 14px;
   --radius-sm: 10px;
@@ -35,10 +38,13 @@ body.theme-midnight{
   box-shadow: var(--shadow);
 }
 
+/* ===== Sticky Topbar ===== */
 .topbar{
-  margin: 16px;
-  padding: 14px 16px;
+  position: sticky; top: 0; z-index: 40;
+  margin: 0 0 16px; padding: 12px 16px;
+  backdrop-filter: blur(10px);
   display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 .app-title{ margin:0; font-size:22px; letter-spacing:.5px; }
 .top-controls{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
@@ -49,7 +55,7 @@ body.theme-midnight{
   background:#1b2230; color:var(--text);
   padding:8px 12px; border-radius:999px; cursor:pointer;
 }
-.seg-btn.active{ background:#2a3446; border-color:var(--ring); }
+.seg-btn.active{ background:#2a3446; border-color:var(--ring); box-shadow:0 0 0 3px rgba(154,132,255,0.12) inset; }
 
 .zoom-wrap{
   display:flex; gap:10px; align-items:center;
@@ -94,13 +100,13 @@ input[type="color"]{
 
 .button{
   border:1px solid rgba(255,255,255,0.14);
-  background: linear-gradient(180deg, #3a59ff, #2a42c9);
+  background: linear-gradient(180deg, var(--primary-start), var(--primary-end));
   color:#fff; padding:10px 14px; border-radius:10px; cursor:pointer;
 }
 .button.block{ width:100%; }
 .button.tiny{ padding:8px 10px; font-size:14px; }
-.button.primary{ background: linear-gradient(180deg, #6aa8ff, #3d7fff); }
-.button.danger{ background: linear-gradient(180deg, #ff6a85, #d64260); }
+.button.primary{ background: linear-gradient(180deg, #A08BFF, #6B59FF); }
+.button.danger{ background: linear-gradient(180deg, var(--danger-start), var(--danger-end)); }
 .button:disabled{ opacity:0.5; cursor:not-allowed; }
 
 /* ===== Grid / rows ===== */
@@ -110,7 +116,7 @@ input[type="color"]{
 .stack-sm{ grid-template-columns: 1fr; }
 @media (min-width:560px){ .stack-sm{ grid-template-columns: 1fr 1fr; } }
 
-/* ===== Background grid (2×2, square tiles, centered PNGs) ===== */
+/* ===== Background grid (2×2, centered both axes) ===== */
 .bg-grid{
   display:grid; gap:10px; margin-top:10px;
   grid-template-columns: repeat(2, 1fr);
@@ -120,16 +126,16 @@ input[type="color"]{
   border:1px solid rgba(255,255,255,0.12);
   background: radial-gradient(120% 120% at 30% 0%, #222b3c, #141a26);
   overflow:hidden; cursor:pointer;
-  display:grid; place-items:center;
+  display:grid; place-items:center; /* centers horizontally + vertically */
 }
 .bg-tile img{
-  width:82%; height:82%; object-fit:contain; /* centers PNG nicely */
+  max-width:82%; max-height:82%; object-fit:contain;
   filter: drop-shadow(0 6px 18px rgba(0,0,0,0.55));
 }
 .bg-tile.active{ outline:2px solid var(--accent); outline-offset:2px; }
 .bg-tile[data-kind="solid"] img,
 .bg-tile[data-kind="upload"] img{
-  width:92%; height:92%; /* “zoomed” look to feel like a button */
+  max-width:92%; max-height:92%; /* zoomy buttons */
 }
 
 /* ===== Solid color tools ===== */
@@ -164,9 +170,9 @@ input[type="color"]{
   background:#1b2232; color:#dfe7fb; padding:8px 12px; border-radius:999px;
   cursor:pointer; user-select:none;
 }
-.chip.active{ 
-  background:#223043; color:#fff; 
-  box-shadow: inset 0 0 0 1px var(--ring), 0 0 0 4px rgba(103,191,255,0.15);
+.chip.active{
+  background:#2b3650; color:#fff;
+  box-shadow: inset 0 0 0 1px var(--ring), 0 0 0 4px rgba(154,132,255,0.18);
 }
 .tip{ color:var(--muted); font-size:14px; }
 
@@ -182,8 +188,8 @@ input[type="color"]{
 }
 .progress #progress{
   position:absolute; inset:0 100% 0 0;
-  background: linear-gradient(90deg, #49a9ff, #b379ff);
-  border-radius:999px; transform-origin:left; 
+  background: linear-gradient(90deg, #8a7bff, #b379ff);
+  border-radius:999px; transform-origin:left;
   width: calc(var(--p) * 100%);
 }
 .time{ min-width:90px; text-align:right; color:var(--muted); }
