@@ -97,7 +97,7 @@ const PRESETS = {
 };
 function visibleSet(){ return PRESETS[`${doc.res.w}x${doc.res.h}`] || []; }
 
-function showSolidTools(show){ bgSolidTools.classList.toggle("hidden", !show); }
+function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 
 function buildBgGrid(){
   bgGrid.innerHTML = "";
@@ -207,7 +207,7 @@ on(bgSolidColor,"input",()=>{
   render();
 });
 
-/* ---------- rendering ---------- */
+/* ---------- basic render (overridden later) ---------- */
 function render(){
   canvas.width=doc.res.w; canvas.height=doc.res.h;
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -229,15 +229,6 @@ on(resSel,"change",()=>{
   render(); fitZoom();
 });
 
-/* ---------- mode buttons ---------- */
-function setMode(m){
-  mode=m;
-  modeEditBtn.classList.toggle("active",m==="edit");
-  modePrevBtn.classList.toggle("active",m!=="edit");
-}
-on(modeEditBtn,"click",()=>setMode("edit"));
-on(modePrevBtn,"click",()=>setMode("preview"));
-
 /* ---------- init ---------- */
 function init(){
   buildBgGrid();
@@ -245,8 +236,10 @@ function init(){
   render();
   fitZoom();
   accFont.open=true;
+  showSolidTools(doc.bg?.type === "solid");
 }
 init();
+
 /* =======================================================
    LED Backpack Animator — app.js (Part 2 of 3)
    Text editing, selection (multi-select), auto-size,
@@ -636,14 +629,14 @@ function render(t=0, totalDur=null){
       else ctx.shadowBlur = 0;
 
       // compute animated draw position first (needed for gradients)
-       const drawX = base.x + (props.dx||0);
-       const drawY = base.y + (props.dy||0);
+      const drawX = base.x + (props.dx||0);
+      const drawY = base.y + (props.dy||0);
 
-       // gradient
-       let fillStyle = props.color || (w.color || defaults.color);
-       if (props.gradient && txt.length) {
-       const wordWidth = Math.ceil(ctx.measureText(txt).width);
-       if (props.gradient.type === "rainbow") 
+      // gradient
+      let fillStyle = props.color || (w.color || defaults.color);
+      if (props.gradient && txt.length) {
+        const wordWidth = Math.ceil(ctx.measureText(txt).width);
+        if (props.gradient.type === "rainbow") {
           const g = ctx.createLinearGradient(drawX, drawY, drawX + wordWidth, drawY);
           const baseHue = (props.gradient.base + (t * 120 * props.gradient.speed)) % 360;
           for (let i=0;i<=6;i++){ const stop=i/6; const hue=Math.floor((baseHue+stop*360)%360); g.addColorStop(stop, `hsl(${hue}deg 100% 60%)`); }
@@ -659,9 +652,6 @@ function render(t=0, totalDur=null){
         }
       }
       ctx.fillStyle = fillStyle;
-
-      const drawX = base.x + (props.dx||0);
-      const drawY = base.y + (props.dy||0);
 
       if (props.perChar && txt.length) {
         // per-char dy/alpha
@@ -1043,6 +1033,11 @@ function buildAnimationsUI(){
   });
 }
 buildAnimationsUI();
+
+// Bridge optional external buttons to the internal handlers (no-ops if absent)
+$("#applySelectedAnimBtn")?.addEventListener("click", ()=> $("#applyToSel")?.click());
+$("#applyAllAnimBtn")?.addEventListener("click", ()=> $("#applyToAll")?.click());
+
 /* =======================================================
    LED Backpack Animator — app.js (Part 3 of 3)
    Preview loop + local GIF export + controls wiring
