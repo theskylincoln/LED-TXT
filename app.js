@@ -1,11 +1,12 @@
-window.addEventListener('error', e => {
-  alert('JS error: ' + (e?.error?.message || e.message));
-});
-
 /* =======================================================
-   LED Backpack Animator — app.js (Part 1 of 3)
-   Boot / UI wiring / background presets / zoom & inspector
+   LED Backpack Animator — app.js
+   (older UI styling + latest logic, incl. Multi-Select toggle)
    ======================================================= */
+
+window.addEventListener('error', e => {
+  // quieter global error (no blocking alert)
+  console.error('JS error:', e?.error?.message || e.message, e);
+});
 
 /* ---------- helpers ---------- */
 const $  = (q, el=document) => el.querySelector(q);
@@ -42,26 +43,27 @@ const progressBar = $("#progress"),
       tCur = $("#tCur"),
       tEnd = $("#tEnd");
 
-/* ---------- aliases / missing DOM refs for Part 3 ---------- */
-// Name mismatch: code uses modePreviewBtn, we declared modePrevBtn.
-const modePreviewBtn = modePrevBtn;
+const msToggleBtn = $("#msToggleBtn");
+const msHint = $("#msHint");
 
-// progress bar is referenced as progressFill later
-const progressFill = progressBar;
-
-// Render / GIF controls used in Part 3
+// Render / GIF controls
 const fpsInput      = $("#fps");
 const secondsInput  = $("#seconds");
-const secInput      = secondsInput;              // some code reads secInput
+const secInput      = secondsInput;  // alias
 const fileNameInput = $("#fileName");
 const previewBtn    = $("#previewRenderBtn");
 const gifBtn        = $("#gifRenderBtn");
 const gifPreviewImg = $("#gifPreview");
 
+// external “apply” convenience buttons
+const btnApplySel  = $("#applySelectedAnimBtn");
+const btnApplyAll  = $("#applyAllAnimBtn");
+
 /* ---------- state ---------- */
 let mode = "edit";
 let zoom = 1;
 let selected = null;
+let multiMode = false; // NEW: toolbar toggle (touch friendly)
 
 const defaults = {
   font: "Orbitron",
@@ -182,7 +184,7 @@ pillTabs.forEach(p=>{
   });
 });
 
-/* ---------- background color swatches ---------- */
+/* ---------- bg color swatches ---------- */
 const defaultPalette=["#FFFFFF","#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF","#00FFFF","#000000"];
 let customBgPalette=[];
 function rebuildBgSwatches(){
@@ -207,7 +209,7 @@ on(bgSolidColor,"input",()=>{
   render();
 });
 
-/* ---------- basic render (overridden later) ---------- */
+/* ---------- baseline render (overridden later) ---------- */
 function render(){
   canvas.width=doc.res.w; canvas.height=doc.res.h;
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -241,13 +243,10 @@ function init(){
 init();
 
 /* =======================================================
-   LED Backpack Animator — app.js (Part 2 of 3)
    Text editing, selection (multi-select), auto-size,
-   font/color controls, spacing/alignment,
-   full animations panel + bulk apply
+   font/color, spacing/alignment, animations + bulk apply
    ======================================================= */
 
-/* ---------- extra DOM refs used in Part 2 ---------- */
 const addWordBtn   = $("#addWordBtn");
 const addLineBtn   = $("#addLineBtn");
 const delWordBtn   = $("#deleteWordBtn");
@@ -266,20 +265,13 @@ const valignBtns   = $$("[data-valign]");
 
 const animList     = $("#animList");
 
-/* ---------- utilities for selection keys ---------- */
 function keyOf(li, wi){ return `${li}:${wi}`; }
-function keySel(){ return selected ? keyOf(selected.line, selected.word) : null; }
-
-/* ---------- measure helpers ---------- */
 function measureText(w){
   ctx.font = `${w.size || defaults.size}px ${w.font || defaults.font}`;
   return ctx.measureText(w.text || "").width;
 }
 function lineHeight(line){
   return Math.max(12, ...line.words.map(w => (w.size || defaults.size)));
-}
-function totalHeight(){
-  return doc.lines.map(lineHeight).reduce((s,h)=>s+h,0) + (doc.lines.length-1)*(doc.spacing.lineGap||defaults.lineGap);
 }
 function lineWidth(line){
   const gap = doc.spacing.wordGap ?? defaults.wordGap;
@@ -300,7 +292,6 @@ function autoSizeAllIfOn(){
   doc.lines.forEach(line=>{
     let size = Math.floor(perLineH); if (!isFinite(size)) size = defaults.size;
     for(let s=size; s>=6; s-=0.5){
-      // simulate widths with this size
       const gap = doc.spacing.wordGap ?? defaults.wordGap;
       let w= -gap;
       for(const word of line.words){
@@ -312,7 +303,7 @@ function autoSizeAllIfOn(){
   });
 }
 
-/* ---------- ANIMATIONS: defs & conflicts ---------- */
+/* ---------- animations ---------- */
 const ANIMS = [
   { id:"slide",      name:"Slide In",             params:{direction:"Left",  speed:1} },
   { id:"slideaway",  name:"Slide Away",           params:{direction:"Left",  speed:1} },
@@ -341,16 +332,12 @@ const CONFLICTS = [
   ["strobe","flicker"],
   ["rainbow","colorcycle"],
 ];
-
-/* ---------- anim helpers ---------- */
-function animDef(id){ return ANIMS.find(a=>a.id===id); }
 function cloneAnims(src){ return src.map(a=>({ id:a.id, params:{...a.params} })); }
 function resolveWordAnims(word){
-  // prefer per-word anims; fallback to doc-wide anims (doc.anims)
   return (word.anims && word.anims.length) ? word.anims : (doc.anims || []);
 }
 
-/* ---------- color helpers for animated props ---------- */
+/* ---------- animation runtime ---------- */
 function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
 function colorToHue(hex){
   const c = (hex||"#fff").replace("#","");
@@ -364,13 +351,9 @@ function colorToHue(hex){
   }
   return Math.round(h*360);
 }
-
-/* ---------- animation runtime ---------- */
 function animatedProps(base, word, t, totalDur){
   const props = { x:base.x, y:base.y, scale:1, alpha:1, text:word.text||"", color:word.color, dx:0, dy:0, shadow:null, gradient:null, perChar:null };
-
   const active = resolveWordAnims(word);
-
   const get = id => active.find(a=>a.id===id);
 
   // Scroll
@@ -567,11 +550,10 @@ function animatedProps(base, word, t, totalDur){
     for (let i = 0; i < (word.text||"").length; i++) arr.push(Math.sin(2 * Math.PI * freq * t + i * 0.6) * amp);
     props.perChar ??= {}; props.perChar.dy = arr;
   }
-
   return props;
 }
 
-/* ---------- FULL render (overrides Part 1 render) ---------- */
+/* ---------- FULL render ---------- */
 function render(t=0, totalDur=null){
   const W = canvas.width  = doc.res.w;
   const H = canvas.height = doc.res.h;
@@ -588,7 +570,6 @@ function render(t=0, totalDur=null){
     im.onload = ()=>{ doc.bg.image = im; render(t,totalDur); };
   }
 
-  // text
   autoSizeAllIfOn();
 
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
@@ -628,7 +609,6 @@ function render(t=0, totalDur=null){
       if (props.shadow) { ctx.shadowBlur = props.shadow.blur; ctx.shadowColor = props.shadow.color || (w.color||defaults.color); }
       else ctx.shadowBlur = 0;
 
-      // compute animated draw position first (needed for gradients)
       const drawX = base.x + (props.dx||0);
       const drawY = base.y + (props.dy||0);
 
@@ -654,7 +634,6 @@ function render(t=0, totalDur=null){
       ctx.fillStyle = fillStyle;
 
       if (props.perChar && txt.length) {
-        // per-char dy/alpha
         const widths = Array.from(txt).map(ch => { ctx.font = fontSpec; return Math.ceil(ctx.measureText(ch).width); });
         let cx = drawX;
         for (let i=0;i<txt.length;i++){
@@ -692,7 +671,6 @@ function render(t=0, totalDur=null){
         ctx.restore();
       }
 
-      // advance
       x += measureText(w) + wordGap;
       ctx.restore();
     });
@@ -701,7 +679,7 @@ function render(t=0, totalDur=null){
   });
 }
 
-/* ---------- clicking / selection (with multi-select) ---------- */
+/* ---------- selection: click (with Multi-Select mode) ---------- */
 canvas.addEventListener("click",(e)=>{
   const rect=canvas.getBoundingClientRect();
   const px=(e.clientX-rect.left)/zoom, py=(e.clientY-rect.top)/zoom;
@@ -735,26 +713,30 @@ canvas.addEventListener("click",(e)=>{
     y += lh + lineGap;
   }
 
+  const toggleStyle = (multiMode || e.shiftKey || e.metaKey || e.ctrlKey);
+
   if (hit) {
     const k = keyOf(hit.line, hit.word);
-    if (e.shiftKey || e.metaKey || e.ctrlKey) {
-      // toggle multi
+    if (toggleStyle) {
+      // toggle in set
       if (doc.multi.has(k)) doc.multi.delete(k);
       else doc.multi.add(k);
-      selected = hit; // keep focus on last clicked
+      selected = hit;
     } else {
-      // single
+      // single select
       doc.multi.clear();
       selected = hit;
     }
   } else {
-    doc.multi.clear();
-    selected = null;
+    if (!toggleStyle) {
+      doc.multi.clear();
+      selected = null;
+    }
   }
   render(0, null);
 });
 
-/* ---------- typing (simple) ---------- */
+/* ---------- typing ---------- */
 document.addEventListener("keydown",(e)=>{
   if (mode!=="edit") return;
 
@@ -764,7 +746,6 @@ document.addEventListener("keydown",(e)=>{
 
   if (!targets.length) return;
 
-  // Backspace / character typing applied to EACH selected word
   if (e.key.length===1 && !e.metaKey && !e.ctrlKey){
     e.preventDefault();
     targets.forEach(([li,wi])=>{
@@ -887,19 +868,18 @@ valignBtns.forEach(b=> b.addEventListener("click",()=>{
   render(0,null);
 }));
 
-/* ---------- Animations UI (with multi-select + bulk apply) ---------- */
+/* ---------- Animations UI (with bulk apply) ---------- */
 function conflictsFiltered(list){
   return list.filter(a=>{
-    const hasConflict = list.some(b=> b.id!==a.id && CONFLICTS.some(pair=> pair.includes(a.id) && pair.includes(b.id)));
-    // keep both by default but last wins; to simplify, we allow both, runtime effect stacks sensibly
-    return true && !false && !undefined; // keep all (UI can toggle manually)
+    // keep all; the runtime stacks sensibly even if “conflicting”
+    return true;
   });
 }
 
 function buildAnimationsUI(){
   animList.innerHTML = "";
 
-  // Controls bar: Select All / None / Line + Apply to Selection + Apply to All
+  // Controls bar (select / apply)
   const bar = document.createElement("div");
   bar.className = "anim-controls";
   bar.innerHTML = `
@@ -910,7 +890,7 @@ function buildAnimationsUI(){
       <span class="sep"></span>
       <button type="button" class="button tiny" id="applyToSel">Apply Animations → Selection</button>
       <button type="button" class="button tiny" id="applyToAll">Apply Animations → All Words</button>
-      <span class="hint">Multi-select shows <b style="color:#0ff;">cyan</b> outline; single is <b style="color:#f0f;">magenta</b>.</span>
+      <span class="hint">Multi-select shows <b style="color:#0ff;">cyan</b>; single is <b style="color:#f0f;">magenta</b>.</span>
     </div>
   `;
   animList.appendChild(bar);
@@ -919,7 +899,6 @@ function buildAnimationsUI(){
   list.className = "anim-rows";
   animList.appendChild(list);
 
-  // Current global anims model used as "edit buffer"
   doc.anims = doc.anims || [];
 
   ANIMS.forEach(def=>{
@@ -950,7 +929,6 @@ function buildAnimationsUI(){
     params.className = "anim-params";
     params.style.display = chk.checked ? "block" : "none";
 
-    // build params controls
     const cur = doc.anims.find(a=>a.id===def.id)?.params || def.params;
     Object.entries(def.params).forEach(([k,v])=>{
       const p = document.createElement("div"); p.className="p";
@@ -1005,7 +983,7 @@ function buildAnimationsUI(){
     if (!selected) return;
     doc.multi.clear();
     const li = selected.line;
-    doc.lines[li].words.forEach((_,wi)=> doc.multi.add(keyOf(li,wi)));
+    doc.lines[li].words.forEach((_,wi)=> doc.multi.add(`${li}:${wi}`));
     render(0,null);
   });
   $("#msClear").addEventListener("click", ()=>{
@@ -1034,16 +1012,23 @@ function buildAnimationsUI(){
 }
 buildAnimationsUI();
 
-// Bridge optional external buttons to the internal handlers (no-ops if absent)
-$("#applySelectedAnimBtn")?.addEventListener("click", ()=> $("#applyToSel")?.click());
-$("#applyAllAnimBtn")?.addEventListener("click", ()=> $("#applyToAll")?.click());
+/* external convenience buttons → internal handlers */
+btnApplySel?.addEventListener("click", ()=> $("#applyToSel")?.click());
+btnApplyAll?.addEventListener("click", ()=> $("#applyToAll")?.click());
+
+/* ---------- Multi-Select toolbar toggle ---------- */
+msToggleBtn?.addEventListener("click", ()=>{
+  multiMode = !multiMode;
+  msToggleBtn.classList.toggle("active", multiMode);
+  msHint && (msHint.textContent = multiMode
+    ? "Multi-Select ON — tap words to add/remove; tap blank area to keep current selection."
+    : "Tip: enable “Multi-Select” to tap multiple words (or hold Shift/Ctrl on desktop).");
+});
 
 /* =======================================================
-   LED Backpack Animator — app.js (Part 3 of 3)
    Preview loop + local GIF export + controls wiring
    ======================================================= */
 
-/* ---------- Helpers ---------- */
 function getFPS() {
   const v = parseInt(fpsInput?.value || "15", 10);
   return Math.max(1, Math.min(30, v || 15));
@@ -1053,7 +1038,6 @@ function getDuration() {
   return Math.max(1, Math.min(60, v || 8));
 }
 
-/* ---------- Preview Loop ---------- */
 let rafId = null;
 let startT = 0;
 
@@ -1069,7 +1053,7 @@ function startPreview() {
 
     render(tt, dur);
 
-    if (progressFill) progressFill.style.setProperty("--p", (tt / dur));
+    progressBar && progressBar.style.setProperty("--p", (tt / dur));
     if (tCur) tCur.textContent = `${tt.toFixed(1)}s`;
 
     rafId = requestAnimationFrame(loop);
@@ -1082,16 +1066,16 @@ function stopPreview() {
   render(0, getDuration());
 }
 
-/* Mode buttons (preview hides caret boxes) */
+/* Mode buttons */
 function setMode(m) {
   mode = m;
   modeEditBtn?.classList.toggle("active", m === "edit");
-  modePreviewBtn?.classList.toggle("active", m === "preview");
+  modePrevBtn?.classList.toggle("active", m === "preview");
   if (m === "preview") startPreview();
   else stopPreview();
 }
 modeEditBtn && modeEditBtn.addEventListener("click", () => setMode("edit"));
-modePreviewBtn && modePreviewBtn.addEventListener("click", () => setMode("preview"));
+modePrevBtn && modePrevBtn.addEventListener("click", () => setMode("preview"));
 
 /* ---------- Local GIF encoder loader (no CDN) ---------- */
 function loadScriptLocal(src) {
@@ -1107,7 +1091,6 @@ function loadScriptLocal(src) {
 async function ensureLocalGifLibs() {
   if (typeof GIFEncoder !== "undefined") return true;
   try {
-    // Make sure these files exist: ./assets/libs/jsgif/NeuQuant.js, LZWEncoder.js, GIFEncoder.js
     await loadScriptLocal("./assets/libs/jsgif/NeuQuant.js");
     await loadScriptLocal("./assets/libs/jsgif/LZWEncoder.js");
     await loadScriptLocal("./assets/libs/jsgif/GIFEncoder.js");
@@ -1123,10 +1106,10 @@ function encoderToBlob(enc) {
   return new Blob([u8], { type: "image/gif" });
 }
 
-/* ---------- Render GIF (preview + download) ---------- */
+/* ---------- Render GIF ---------- */
 async function renderGifDownload() {
   const ok = await ensureLocalGifLibs();
-  if (!ok) { alert("GIF encoder not found. Put libs in ./assets/libs/jsgif/."); return; }
+  if (!ok) { console.warn("GIF encoder not found."); return; }
 
   const fps = getFPS();
   const secs = getDuration();
@@ -1152,8 +1135,7 @@ async function renderGifDownload() {
       render(t, secs);
       enc.addFrame(ctx);
 
-      // progress UI during export
-      if (progressFill) progressFill.style.setProperty("--p", (t / secs) % 1);
+      progressBar && progressBar.style.setProperty("--p", (t / secs) % 1);
       if (tCur) tCur.textContent = `${(t % secs).toFixed(1)}s`;
     }
 
@@ -1161,14 +1143,12 @@ async function renderGifDownload() {
     const blob = encoderToBlob(enc);
     const url = URL.createObjectURL(blob);
 
-    // Show preview
     if (gifPreviewImg) {
       gifPreviewImg.classList.remove("hidden");
       gifPreviewImg.src = url;
       gifPreviewImg.alt = "Animated GIF preview";
     }
 
-    // Download (desktop) and open in new tab (mobile “Save Image”)
     const name = `${(fileNameInput?.value || "animation").replace(/\.(png|jpe?g|webp|gif)$/i, "")}.gif`;
     const a = document.createElement("a");
     a.href = url;
@@ -1180,7 +1160,6 @@ async function renderGifDownload() {
     setTimeout(() => URL.revokeObjectURL(url), 15000);
   } catch (err) {
     console.error("GIF render failed:", err);
-    alert("GIF render failed. Check console for details.");
   } finally {
     if (resume) startPreview();
   }
@@ -1189,7 +1168,6 @@ async function renderGifDownload() {
 /* ---------- Bind controls ---------- */
 previewBtn && previewBtn.addEventListener("click", () => setMode("preview"));
 gifBtn && gifBtn.addEventListener("click", () => renderGifDownload());
-
 [fpsInput, secondsInput].forEach(inp => inp && inp.addEventListener("input", () => {
   if (mode === "preview") startPreview();
   if (tEnd) tEnd.textContent = `${getDuration().toFixed(1)}s`;
