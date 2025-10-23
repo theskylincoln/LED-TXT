@@ -8,33 +8,38 @@
 </head>
 <body class="theme-midnight">
 
-  <!-- ===== Topbar ===== -->
+  <!-- ===== Topbar (two rows) ===== -->
   <header class="topbar glass">
-    <h1 class="app-title">LED Backpack Animator</h1>
+    <div class="topbar-row1">
+      <h1 class="app-title">LED Backpack Animator</h1>
+      <div class="row-actions">
+        <button id="undoBtn" class="seg-btn">↩ Undo</button>
+        <button id="redoBtn" class="seg-btn">↪ Redo</button>
+        <button id="clearAllBtn" class="seg-btn">🗑 Clear</button>
+        <button id="aboutBtn" class="seg-btn">ℹ️ About</button>
+      </div>
+    </div>
 
-    <div class="top-controls">
+    <div class="topbar-row2">
       <div class="seg">
         <button id="modeEdit" class="seg-btn active">📝 Edit</button>
         <button id="modePreview" class="seg-btn">▶ Preview</button>
       </div>
-
-      <div class="seg">
-        <button id="undoBtn" class="seg-btn">↩ Undo</button>
-        <button id="redoBtn" class="seg-btn">↪ Redo</button>
-        <button id="clearAllBtn" class="seg-btn">🗑 Clear</button>
-      </div>
-
       <div class="zoom-wrap">
         <label for="zoom">Zoom</label>
         <input type="range" id="zoom" min="0.2" max="4" step="0.1" value="1" />
         <button id="fitBtn" class="button tiny">Fit</button>
+      </div>
+      <div class="render-wrap">
+        <button id="previewRenderBtn" class="button tiny primary">Generate Preview</button>
+        <button id="gifRenderBtn" class="button tiny">Download File</button>
       </div>
     </div>
   </header>
 
   <main class="layout">
 
-    <!-- ===== Background & Resolution (collapsible, default open, ABOVE canvas) ===== -->
+    <!-- ===== Background & Resolution (collapsible, open) ===== -->
     <details class="panel glass" open>
       <summary class="panel-title">Background &amp; Resolution</summary>
 
@@ -46,19 +51,19 @@
         </select>
       </div>
 
-      <!-- 2×2 grid; app.js will rebuild tiles dynamically. These placeholders keep layout nice before JS runs -->
-      <div id="bgGrid" class="bg-grid">
-        <!-- Tiles are injected by app.js (uses PRESETS and Solid/Upload) -->
-      </div>
+      <div id="bgGrid" class="bg-grid"><!-- tiles injected --></div>
 
-      <!-- Solid color tools (shown only when Solid is active) -->
+      <!-- Solid color tools -->
       <div id="bgSolidTools" class="bg-solid-tools hidden">
+        <div class="row">
+          <div class="swatches" id="bgSwatches"></div>
+        </div>
         <div class="row two-eq stack-sm">
-          <div class="swatch-bank">
-            <div class="swatches" id="bgSwatches"></div>
-          </div>
           <div class="custom-color">
+            <label for="bgSolidColor">Custom BG color</label>
             <input type="color" id="bgSolidColor" value="#000000" />
+          </div>
+          <div class="custom-actions">
             <button id="addBgSwatchBtn" class="button">Add BG Swatch</button>
           </div>
         </div>
@@ -72,11 +77,11 @@
         <canvas id="led" width="96" height="128"></canvas>
       </div>
 
-      <!-- Controls directly under preview -->
       <div class="stage-controls">
         <div class="multi-tip">
           <button id="multiToggle" class="chip">Multi-select</button>
-          <span class="tip">Tip: Hold Shift/Cmd to multi-select.</span>
+          <button id="dragToggle" class="chip">Manual Drag 🖐️</button>
+          <span class="tip">Tip: Shift/Cmd adds to selection. Drag is free-position.</span>
         </div>
         <div class="word-row">
           <button id="addWordBtn" class="button tiny">+ Word</button>
@@ -85,14 +90,16 @@
         </div>
       </div>
 
-      <!-- Timeline / progress -->
       <div class="progress-wrap">
         <div class="progress"><div id="progress"></div></div>
         <div class="time"><span id="tCur">0.0s</span> / <span id="tEnd">8s</span></div>
       </div>
+
+      <!-- GIF preview (long-press on iPhone to Save Image) -->
+      <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF" />
     </section>
 
-    <!-- ===== Inspector (pills control which section is visible) ===== -->
+    <!-- ===== Inspector (pills show single section) ===== -->
     <section class="panel inspector glass">
       <div class="inspector-head">
         <div class="pillbar">
@@ -103,7 +110,7 @@
       </div>
 
       <div id="inspectorBody" class="inspector-body open">
-        <!-- Font (default visible) -->
+        <!-- Font -->
         <details id="accFont" class="acc" open>
           <summary><span class="subttl">Font &amp; Color</span></summary>
           <div class="acc-body">
@@ -119,17 +126,20 @@
               </select>
             </div>
 
-            <div class="row two">
+            <div class="row two tight">
               <label for="fontSize">Size</label>
               <input type="number" id="fontSize" min="6" max="64" value="22" />
             </div>
 
-            <label class="row checkbox">
-              <input type="checkbox" id="autoSize" checked />
-              <span>Auto-size (per line)</span>
-            </label>
+            <div class="row two tight">
+              <label for="autoSize">Auto-size</label>
+              <label class="checkbox-inline">
+                <input type="checkbox" id="autoSize" checked />
+                <span>Per line</span>
+              </label>
+            </div>
 
-            <!-- Swatches ABOVE custom color + Add -->
+            <!-- Swatches above custom -->
             <div class="row">
               <div class="swatches" id="swatches"></div>
             </div>
@@ -149,27 +159,29 @@
         <details id="accLayout" class="acc">
           <summary><span class="subttl">Spacing &amp; Alignment</span></summary>
           <div class="acc-body">
-            <div class="row two">
+            <div class="row two tight">
               <label>Line Gap</label>
               <input type="number" id="lineGap" min="0" max="40" value="4" />
             </div>
-            <div class="row two">
+            <div class="row two tight">
               <label>Word Gap</label>
               <input type="number" id="wordGap" min="0" max="40" value="6" />
             </div>
-            <div class="row two">
+
+            <div class="row two tight">
               <label>Horizontal</label>
               <div class="seg">
-                <button class="seg-btn active" data-align="center">Center</button>
                 <button class="seg-btn" data-align="left">Left</button>
+                <button class="seg-btn active center-pill" data-align="center">Center</button>
                 <button class="seg-btn" data-align="right">Right</button>
               </div>
             </div>
-            <div class="row two">
+
+            <div class="row two tight">
               <label>Vertical</label>
               <div class="seg">
-                <button class="seg-btn active" data-valign="middle">Middle</button>
                 <button class="seg-btn" data-valign="top">Top</button>
+                <button class="seg-btn active center-pill" data-valign="middle">Middle</button>
                 <button class="seg-btn" data-valign="bottom">Bottom</button>
               </div>
             </div>
@@ -218,17 +230,25 @@
         <input type="number" id="seconds" min="1" max="60" value="8" />
       </div>
       <div class="row two-eq">
-        <button id="previewRenderBtn" class="button block primary">Render Preview</button>
-        <button id="gifRenderBtn" class="button block">Download GIF</button>
+        <button id="previewRenderBtn2" class="button block primary">Generate Preview</button>
+        <button id="gifRenderBtn2" class="button block">Download File</button>
       </div>
-      <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF" />
     </section>
 
   </main>
 
+  <!-- ===== About Modal ===== -->
+  <div id="aboutModal" class="modal hidden">
+    <div class="modal-content glass">
+      <h3>About</h3>
+      <p>Created by <strong>TheSkyLincoln</strong> — LED Backpack Animator v3.1</p>
+      <button id="aboutClose" class="button primary">Close</button>
+    </div>
+  </div>
+
   <!-- ===== Scripts ===== -->
   <script src="app.js"></script>
-  <!-- local GIF libs (optional if you also load them dynamically inside app.js) -->
+  <!-- local GIF libs (also dynamically loaded by app.js if missing) -->
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
   <script defer src="assets/libs/jsgif/LZWEncoder.js"></script>
   <script defer src="assets/libs/jsgif/GIFEncoder.js"></script>
