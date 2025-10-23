@@ -1,83 +1,66 @@
 /* =======================================================
-   LED Backpack Animator — FULL app.js
-   - Backgrounds + Resolution grid (2x2) above canvas
-   - Solid/Upload tiles centered; images decode-safe
-   - Auto-size default ON; font size input syncs to computed size
-   - Selection + Multi-select (sticky toggle + Shift/Cmd works)
-   - Typing, add/line/delete, alignment, spacing
-   - Animations UI + Apply to Selection/All
-   - Preview loop + local GIF export (uses local libs if present)
-   - Config import/export
-   - Undo/Redo, Clear
+   LED Backpack Animator — app.js (complete)
+   - Background presets grid (2×2), solid/upload, centered thumbs
+   - Editor/Preview modes, zoom, multi-select toggle
+   - Text editing (type/backspace), add/line/delete, swatches
+   - Auto-size (default ON) + live size field sync
+   - Full animation runtime (glow, rainbow sweep, wave, etc.)
+   - Preview loop + local GIF encode + inline preview image
    ======================================================= */
-
-window.addEventListener("error", e => {
-  const msg = "JS error: " + (e?.error?.message || e.message);
-  console.error(msg, e);
-});
 
 /* ---------- helpers ---------- */
 const $  = (q, el=document) => el.querySelector(q);
 const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
-const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 
 /* ---------- DOM ---------- */
-const canvas  = $("#led"),
-      ctx     = canvas.getContext("2d"),
-      wrap    = $(".canvas-wrap");
+const canvas  = $("#led"), ctx = canvas.getContext("2d");
+const wrap    = $(".canvas-wrap");
 
-const resSel  = $("#resSelect"),
-      zoomSlider = $("#zoom"),
-      fitBtn  = $("#fitBtn");
+const resSel      = $("#resSelect");
+const zoomSlider  = $("#zoom");
+const fitBtn      = $("#fitBtn");
 
-const modeEditBtn   = $("#modeEdit"),
-      modePrevBtn   = $("#modePreview");
+const modeEditBtn    = $("#modeEdit");
+const modePreviewBtn = $("#modePreview");
 
 const pillTabs  = $$(".pill[data-acc]");
-const accFont   = $("#accFont"),
-      accLayout = $("#accLayout"),
-      accAnim   = $("#accAnim"),
-      inspectorBody = $("#inspectorBody");
+const accFont   = $("#accFont");
+const accLayout = $("#accLayout");
+const accAnim   = $("#accAnim");
+const inspectorBody = $("#inspectorBody");
 
-const bgGrid  = $("#bgGrid"),
-      bgSolidTools = $("#bgSolidTools"),
-      bgSolidColor = $("#bgSolidColor"),
-      addBgSwatchBtn = $("#addBgSwatchBtn"),
-      bgSwatches = $("#bgSwatches"),
-      bgUpload   = $("#bgUpload");
+const bgGrid        = $("#bgGrid");
+const bgSolidTools  = $("#bgSolidTools");
+const bgSolidColor  = $("#bgSolidColor");
+const addBgSwatchBtn= $("#addBgSwatchBtn");
+const bgSwatches    = $("#bgSwatches");
+const bgUpload      = $("#bgUpload");
 
-const progressFill = $("#progress"),
-      tCur = $("#tCur"),
-      tEnd = $("#tEnd");
+const multiToggle   = $("#multiToggle");
+const addWordBtn    = $("#addWordBtn");
+const addLineBtn    = $("#addLineBtn");
+const delWordBtn    = $("#deleteWordBtn");
 
-const addWordBtn   = $("#addWordBtn");
-const addLineBtn   = $("#addLineBtn");
-const delWordBtn   = $("#deleteWordBtn");
-const multiToggle  = $("#multiToggle");
+const fontSelect    = $("#fontSelect");
+const fontSizeInp   = $("#fontSize");
+const autoSizeChk   = $("#autoSize");
+const fontColorInp  = $("#fontColor");
+const addSwatchBtn  = $("#addSwatchBtn");
+const textSwatches  = $("#swatches");
 
-const undoBtn = $("#undoBtn"),
-      redoBtn = $("#redoBtn"),
-      clearAllBtn = $("#clearAllBtn");
+const lineGapInp    = $("#lineGap");
+const wordGapInp    = $("#wordGap");
+const alignBtns     = $$("[data-align]");
+const valignBtns    = $$("[data-valign]");
 
-const fontSelect   = $("#fontSelect");
-const fontSizeInp  = $("#fontSize");
-const autoSizeChk  = $("#autoSize");
-const fontColorInp = $("#fontColor");
-const addSwatchBtn = $("#addSwatchBtn");
-const textSwatches = $("#swatches");
+const animList      = $("#animList");
+const applySelBtn   = $("#applySelectedAnimBtn");
+const applyAllBtn   = $("#applyAllAnimBtn");
 
-const lineGapInp   = $("#lineGap");
-const wordGapInp   = $("#wordGap");
-const alignBtns    = $$("[data-align]");
-const valignBtns   = $$("[data-valign]");
-
-const animList     = $("#animList");
-const applySelBtn  = $("#applySelectedAnimBtn");
-const applyAllBtn  = $("#applyAllAnimBtn");
-
-const loadJsonInput = $("#loadJsonInput");
-const saveJsonBtn   = $("#saveJsonBtn");
+const tCur = $("#tCur"), tEnd = $("#tEnd");
+const progressFill = $("#progress");
 
 const fpsInput      = $("#fps");
 const secondsInput  = $("#seconds");
@@ -89,11 +72,8 @@ const gifPreviewImg = $("#gifPreview");
 /* ---------- state ---------- */
 let mode = "edit";
 let zoom = 1;
-let selected = null;     // { line, word }
-let caretIdx = 0;        // typing caret
-let stickyMulti = false; // from multiToggle
-let history = [];
-let future  = [];
+let selected = null;            // {line, word}
+let multiEnabled = false;
 
 const defaults = {
   font: "Orbitron",
@@ -105,17 +85,26 @@ const defaults = {
   valign: "middle"
 };
 
+/* Default doc with demo copy + animations */
 const doc = {
   res: { w:96, h:128 },
-  lines: [],
-  bg: { type:"image", image:null, preset:"assets/presets/96x128/Preset_A.png", color:"#000000" },
+  lines: [
+    { words:[{text:"WILL",     color:"#62b0ff", font:"Orbitron", size:22}] },
+    { words:[{text:"WHEELIE",  color:"#ffd34d", font:"Orbitron", size:22}] },
+    { words:[{text:"FOR",      color:"#ff66c4", font:"Orbitron", size:22}] },
+    { words:[{text:"BOOKTOK",  color:"#ffffff", font:"Orbitron", size:22,
+      anims:[{id:"rainbow", params:{speed:0.6, start:"#ff00ff"}}]}] },
+    { words:[{text:"GIRLIES",  color:"#ff4956", font:"Orbitron", size:22}] }
+  ],
+  bg: { type:"image", image:null, preset:"assets/presets/96x128/Preset_A.png", color:null },
   spacing:{ lineGap:4, wordGap:6 },
-  style: { align:"center", valign:"middle" },
-  anims: [],   // global edit buffer for animations UI
-  multi: new Set()
+  style:{ align:"center", valign:"middle" },
+  /* Subtle motion + glow for everything by default */
+  anims:[ {id:"glow", params:{intensity:0.6}}, {id:"wave", params:{ax:0.4, ay:0.6, cycles:1.0}} ],
+  multi:new Set()
 };
 
-/* ---------- PRESETS (2 sets keyed by resolution) ---------- */
+/* ---------- Background presets (2×2) ---------- */
 const PRESETS = {
   "96x128": [
     { id:"A", thumb:"assets/thumbs/Preset_A_thumb.png", full:"assets/presets/96x128/Preset_A.png" },
@@ -130,109 +119,68 @@ function visibleSet(){ return PRESETS[`${doc.res.w}x${doc.res.h}`] || []; }
 
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 
-/* =======================================================
-   Seed: “WILL WHEELIE FOR BOOKTOK GIRLIES”
-   - Blue → Yellow → Magenta → Red color cycle for all EXCEPT BOOKTOK
-   - BOOKTOK gets Rainbow + Sweep (plus Glow/Wave like others)
-   - All words get Glow + gentle Wave
-   ======================================================= */
-(function seedPhrase(){
-  const seedWords = "WILL WHEELIE FOR BOOKTOK GIRLIES".split(" ");
-  const seededLines = [
-    { words: seedWords.slice(0,3).map(t=>({ text:t, color:"#FFFFFF", font:defaults.font, size:defaults.size })) },
-    { words: seedWords.slice(3).map(t=>({ text:t, color:"#FFFFFF", font:defaults.font, size:defaults.size })) }
-  ];
-
-  const COLOR_SEQ = ["#4DA3FF", "#FFD24D", "#FF5CF5", "#FF4D4D"]; // Blue → Yellow → Magenta → Red
-  let colorIdx = 0;
-
-  seededLines.forEach(line=>{
-    line.words.forEach(w=>{
-      w.anims = [
-        { id:"glow", params:{ intensity:0.6 } },
-        { id:"wave", params:{ ax:0.6, ay:1.0, cycles:0.5 } }
-      ];
-      if ((w.text||"").toUpperCase()==="BOOKTOK"){
-        w.color = "#FFFFFF"; // gradient overrides fill
-        w.anims.push({ id:"sweep", params:{ speed:0.8, width:0.28 } });
-        w.anims.push({ id:"rainbow", params:{ speed:0.5, start:"#ff00ff" } });
-      } else {
-        w.color = COLOR_SEQ[colorIdx % COLOR_SEQ.length];
-        colorIdx++;
-      }
-    });
-  });
-  doc.lines = seededLines;
-})();
-
-/* ---------- Background grid ---------- */
 function buildBgGrid(){
-  if (!bgGrid) return;
   bgGrid.innerHTML = "";
   const set = visibleSet();
   const tiles = [
     set[0] && { ...set[0], kind:"preset" },
     set[1] && { ...set[1], kind:"preset" },
-    { id:"SOLID",  kind:"solid",  thumb:"assets/thumbs/Solid_thumb.png" },
-    { id:"UPLOAD", kind:"upload", thumb:"assets/thumbs/Upload_thumb.png" }
+    { kind:"solid",  thumb:"assets/thumbs/Solid_thumb.png" },
+    { kind:"upload", thumb:"assets/thumbs/Upload_thumb.png" }
   ].filter(Boolean);
 
   tiles.forEach(t=>{
     const b=document.createElement("button");
-    b.type="button"; b.className="bg-tile"; b.dataset.kind=t.kind; b.title=t.id||t.kind;
+    b.type="button"; b.className="bg-tile"; b.dataset.kind=t.kind;
     const img=document.createElement("img");
-    img.src=t.thumb; img.alt=t.kind;
+    img.src=t.thumb; img.alt=t.kind||t.id; img.loading="eager";
     b.appendChild(img);
 
     on(b,"click",async()=>{
       $$(".bg-tile",bgGrid).forEach(x=>x.classList.remove("active"));
       b.classList.add("active");
-
       if(t.kind==="preset"){
         const im=new Image(); im.crossOrigin="anonymous"; im.src=t.full;
-        doc.bg={type:"image", color:"#000000", image:null, preset:t.full};
+        try{await im.decode();}catch{}
+        doc.bg={type:"image",color:null,image:im,preset:t.full};
         showSolidTools(false);
-        // draw solid fallback now; then image on decode
-        render(0, getDuration());
-        try{ await im.decode(); }catch{}
-        doc.bg.image = im;
-        render(0, getDuration());
+        render();
       }else if(t.kind==="solid"){
-        doc.bg={type:"solid", color:bgSolidColor.value || "#000000", image:null, preset:null};
+        doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null};
         showSolidTools(true);
-        render(0, getDuration());
+        render();
       }else if(t.kind==="upload"){
-        bgUpload?.click();
+        bgUpload.click();
       }
     });
     bgGrid.appendChild(b);
   });
 
-  // auto-activate first tile
+  // Mark current selection
   const first=$(".bg-tile",bgGrid);
-  first && first.classList.add("active");
+  if(first) first.classList.add("active");
 }
 on(bgUpload,"change",e=>{
   const f=e.target.files?.[0]; if(!f)return;
   const url=URL.createObjectURL(f);
   const im=new Image();
   im.onload=()=>{URL.revokeObjectURL(url);
-    doc.bg={type:"image",color:"#000000",image:im,preset:null};
-    showSolidTools(false); render(0, getDuration());
+    doc.bg={type:"image",color:null,image:im,preset:null};
+    showSolidTools(false); render();
   };
   im.src=url;
 });
 
 /* ---------- zoom / fit ---------- */
 function setZoom(z){
-  zoom=z; if (zoomSlider) zoomSlider.value=String(z.toFixed(2));
-  canvas.style.transform=`scale(${z})`;
+  zoom=z; zoomSlider.value=String(z.toFixed(2));
+  canvas.style.transform=`translate(-50%,-50%) scale(${z})`;
 }
 function fitZoom(){
   const pad=18, r=wrap.getBoundingClientRect();
   const availW=Math.max(40,r.width-pad*2);
   const availH=Math.max(40,r.height-pad*2);
-  const s=Math.max(0.3,Math.min(availW/doc.res.w,availH/doc.res.h));
+  const s=Math.max(0.1,Math.min(availW/doc.res.w,availH/doc.res.h));
   setZoom(s);
 }
 on(zoomSlider,"input",e=>setZoom(parseFloat(e.target.value)));
@@ -240,28 +188,34 @@ on(fitBtn,"click",fitZoom);
 window.addEventListener("resize",fitZoom);
 window.addEventListener("orientationchange",()=>setTimeout(fitZoom,200));
 
-/* ---------- Pill inspector (only one open at a time) ---------- */
+/* ---------- inspector pills (only one visible; tap again closes) ---------- */
+let activeAcc = "accFont";
 pillTabs.forEach(p=>{
   on(p,"click",()=>{
-    const id=p.dataset.acc;
-    [accFont,accLayout,accAnim].forEach(a=> a && (a.open = (a.id===id)));
-    pillTabs.forEach(x=>x.classList.toggle("active",x===p));
-    inspectorBody?.classList.add("open");
+    const id = p.dataset.acc;
+    const isSame = (activeAcc === id);
+    pillTabs.forEach(x=>x.classList.toggle("active", !isSame && x===p));
+    [accFont,accLayout,accAnim].forEach(a=>{
+      a.open = (!isSame && a.id===id);
+      a.style.display = (!isSame && a.id===id) ? "block" : "none";
+    });
+    activeAcc = isSame ? "" : id;
   });
 });
+// start with Font visible only
+[accFont,accLayout,accAnim].forEach(a=> a.style.display = (a.id==="accFont")?"block":"none");
 
-/* ---------- swatches (BG + Text) ---------- */
-const defaultBgPalette=["#000000","#FFFFFF","#1A1A1A","#0F2138","#004477","#008866","#552277","#AA2233"];
+/* ---------- background color swatches ---------- */
+const defaultBgPalette=["#000000","#101010","#1f2937","#222244","#004466","#550055","#880000","#ffffff"];
 let customBgPalette=[];
 function rebuildBgSwatches(){
-  if (!bgSwatches) return;
   bgSwatches.innerHTML="";
   [...defaultBgPalette,...customBgPalette].forEach(c=>{
     const b=document.createElement("button");
-    b.className="swatch"; b.style.background=c;
+    b.className="swatch"; b.style.background=c; b.title=c;
     b.addEventListener("click",()=>{
       doc.bg={type:"solid",color:c,image:null,preset:null};
-      showSolidTools(true); render(0, getDuration());
+      showSolidTools(true); render();
     });
     bgSwatches.appendChild(b);
   });
@@ -273,35 +227,12 @@ on(addBgSwatchBtn,"click",()=>{
 });
 on(bgSolidColor,"input",()=>{
   doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null};
-  render(0, getDuration());
+  render();
 });
 
-const defaultTextPalette = ["#FFFFFF","#4DA3FF","#FFD24D","#FF5CF5","#FF4D4D","#00FFFF","#00FF88","#FFCCFF","#000000"];
-let customTextPalette = [];
-function rebuildTextSwatches(){
-  if (!textSwatches) return;
-  textSwatches.innerHTML = "";
-  [...defaultTextPalette, ...customTextPalette].forEach(c=>{
-    const b=document.createElement("button");
-    b.type="button"; b.className="swatch"; b.style.background=c; b.title=c;
-    b.addEventListener("click",()=>{
-      if (fontColorInp) fontColorInp.value = c;
-      forEachSelectedWord(w=>{ w.color = c; });
-      render(0, getDuration());
-    });
-    b.addEventListener("contextmenu",(e)=>{
-      e.preventDefault();
-      const idx = customTextPalette.indexOf(c);
-      if (idx>=0){ customTextPalette.splice(idx,1); rebuildTextSwatches(); }
-    });
-    textSwatches.appendChild(b);
-  });
-}
-on(addSwatchBtn,"click",()=>{
-  const c = fontColorInp.value || defaults.color;
-  if (!defaultTextPalette.includes(c) && !customTextPalette.includes(c)) customTextPalette.push(c);
-  rebuildTextSwatches();
-});
+/* =======================================================
+   RENDER + ANIMATIONS
+   ======================================================= */
 
 /* ---------- measure helpers ---------- */
 function measureText(w){
@@ -319,22 +250,38 @@ function lineWidth(line){
   return line.words.reduce((s,w)=> s + measureText(w), 0) + Math.max(0,line.words.length-1)*gap;
 }
 
-/* ---------- selection helpers ---------- */
-function keyOf(li, wi){ return `${li}:${wi}`; }
-function keySel(){ return selected ? keyOf(selected.line, selected.word) : null; }
-function forEachSelectedWord(fn){
-  if (doc.multi.size){
-    doc.multi.forEach(k=>{
-      const [li,wi] = k.split(":").map(Number);
-      const w = doc.lines[li]?.words[wi]; if (w) fn(w, li, wi);
-    });
-  } else if (selected){
-    const w = doc.lines[selected.line]?.words[selected.word];
-    if (w) fn(w, selected.line, selected.word);
-  }
+/* ---------- auto-size (per line) ---------- */
+function autoSizeAllIfOn(){
+  if(!autoSizeChk?.checked) return;
+  const padX = 6, padY = 6;
+  const maxW = doc.res.w - padX*2;
+  const maxH = doc.res.h - padY*2;
+  const L = Math.max(1, doc.lines.length);
+  const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
+
+  const perLineH = (maxH - (L-1)*lineGap)/L;
+
+  doc.lines.forEach((line, li)=>{
+    let size = Math.floor(perLineH); if (!isFinite(size)) size = defaults.size;
+    for(let s=size; s>=6; s-=0.5){
+      // simulate widths with this size
+      const gap = doc.spacing.wordGap ?? defaults.wordGap;
+      let w= -gap;
+      for(const word of line.words){
+        ctx.font = `${s}px ${word.font || defaults.font}`;
+        w += ctx.measureText(word.text||"").width + gap;
+      }
+      if (w <= maxW){ line.words.forEach(word=> word.size = s); break; }
+    }
+    // If the selected word sits on this line, sync the size input
+    if (selected && selected.line === li) {
+      const w = doc.lines[li].words[selected.word];
+      if (w && fontSizeInp) fontSizeInp.value = Math.round(w.size);
+    }
+  });
 }
 
-/* ---------- Animations defs ---------- */
+/* ---------- ANIMATIONS: defs ---------- */
 const ANIMS = [
   { id:"slide",      name:"Slide In",             params:{direction:"Left",  speed:1} },
   { id:"slideaway",  name:"Slide Away",           params:{direction:"Left",  speed:1} },
@@ -345,7 +292,7 @@ const ANIMS = [
   { id:"jitter",     name:"Jitter",               params:{amp:0.10, freq:2.5} },
   { id:"shake",      name:"Shake",                params:{amp:0.20, freq:2} },
   { id:"colorcycle", name:"Color Cycle",          params:{speed:0.5, start:"#ff0000"} },
-  { id:"rainbow",    name:"Rainbow Sweep",        params:{speed:0.5, start:"#ff00ff"} },
+  { id:"rainbow",    name:"Rainbow Sweep",        params:{speed:0.6, start:"#ff00ff"} },
   { id:"sweep",      name:"Highlight Sweep",      params:{speed:0.7, width:0.25} },
   { id:"flicker",    name:"Flicker",              params:{strength:0.5} },
   { id:"strobe",     name:"Strobe",               params:{rate:3} },
@@ -357,14 +304,12 @@ const ANIMS = [
   { id:"popcorn",    name:"Popcorn",              params:{rate:1} },
   { id:"fadeout",    name:"Fade Out",             params:{} },
 ];
-const CONFLICTS = [
-  ["typewriter","scramble"],
-  ["typewriter","popcorn"],
-  ["strobe","flicker"],
-  ["rainbow","colorcycle"],
-];
+
+function animDef(id){ return ANIMS.find(a=>a.id===id); }
 function cloneAnims(src){ return src.map(a=>({ id:a.id, params:{...a.params} })); }
-function resolveWordAnims(word){ return (word.anims && word.anims.length) ? word.anims : (doc.anims || []); }
+function resolveWordAnims(word){
+  return (word.anims && word.anims.length) ? word.anims : (doc.anims || []);
+}
 
 /* ---------- color helpers ---------- */
 function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
@@ -384,6 +329,7 @@ function colorToHue(hex){
 /* ---------- animation runtime ---------- */
 function animatedProps(base, word, t, totalDur){
   const props = { x:base.x, y:base.y, scale:1, alpha:1, text:word.text||"", color:word.color, dx:0, dy:0, shadow:null, gradient:null, perChar:null };
+
   const active = resolveWordAnims(word);
   const get = id => active.find(a=>a.id===id);
 
@@ -526,7 +472,7 @@ function animatedProps(base, word, t, totalDur){
     props.perChar ??= {}; props.perChar.alpha = alphaArr;
   }
 
-  // Color Cycle (solid)
+  // Color Cycle
   const cc = get("colorcycle");
   if (cc) {
     const sp = Number(cc.params.speed || 0.5);
@@ -536,7 +482,7 @@ function animatedProps(base, word, t, totalDur){
     props.color = `hsl(${hue}deg 100% 60%)`;
   }
 
-  // Gradients
+  // Rainbow gradient
   const rainbow = get("rainbow");
   if (rainbow) {
     const speed = Number(rainbow.params.speed || 0.5);
@@ -544,6 +490,8 @@ function animatedProps(base, word, t, totalDur){
     const hueBase = colorToHue(base);
     props.gradient = { type: "rainbow", speed, base: hueBase };
   }
+
+  // Highlight sweep gradient
   const sweep = get("sweep");
   if (sweep) {
     const speed = Number(sweep.params.speed || 0.7), width = Number(sweep.params.width || 0.25);
@@ -583,24 +531,29 @@ function animatedProps(base, word, t, totalDur){
   return props;
 }
 
-/* ---------- render ---------- */
+/* ---------- FULL render ---------- */
 function render(t=0, totalDur=null){
   const W = canvas.width  = doc.res.w;
   const H = canvas.height = doc.res.h;
 
-  // Always paint a safe background first
+  // BG (always paint something to avoid blank canvas)
   ctx.clearRect(0,0,W,H);
-  const bgColor = doc.bg?.color || "#000000";
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0,0,W,H);
-
-  if (doc.bg?.image) {
-    try { ctx.drawImage(doc.bg.image,0,0,W,H); } catch {}
-  } else if (doc.bg?.preset && !doc.bg.image && doc.bg.type!=="solid") {
-    // async load (already kicked off in grid click); keep solid until ready
+  if (doc.bg?.type === "solid") {
+    ctx.fillStyle = doc.bg.color || "#000";
+    ctx.fillRect(0,0,W,H);
+  } else if (doc.bg?.image) {
+    try { ctx.drawImage(doc.bg.image,0,0,W,H); } catch {
+      ctx.fillStyle = "#000"; ctx.fillRect(0,0,W,H);
+    }
+  } else if (doc.bg?.preset) {
+    ctx.fillStyle = "#000"; ctx.fillRect(0,0,W,H);  // fallback while loading
+    const im = new Image(); im.crossOrigin="anonymous"; im.src = doc.bg.preset;
+    im.onload = ()=>{ doc.bg.image = im; render(t,totalDur); };
+  } else {
+    ctx.fillStyle = "#000"; ctx.fillRect(0,0,W,H);
   }
 
-  // autosize
+  // text
   autoSizeAllIfOn();
 
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
@@ -626,7 +579,6 @@ function render(t=0, totalDur=null){
     line.words.forEach((w, wi)=>{
       const base = { x, y: y + lh*0.85 };
 
-      // animated drawing
       const props = animatedProps(base, w, t, totalDur);
       const txt = props.text || "";
 
@@ -643,7 +595,7 @@ function render(t=0, totalDur=null){
       const drawX = base.x + (props.dx||0);
       const drawY = base.y + (props.dy||0);
 
-      // gradient / fill
+      // fillStyle (color or gradient)
       let fillStyle = props.color || (w.color || defaults.color);
       if (props.gradient && txt.length) {
         const wordWidth = Math.ceil(ctx.measureText(txt).width);
@@ -680,27 +632,28 @@ function render(t=0, totalDur=null){
         ctx.fillText(txt, drawX, drawY);
       }
 
-      // selection boxes
-      const thisKey = keyOf(li, wi);
-      if (doc.multi.has(thisKey)) {
-        const ww = ctx.measureText(w.text||"").width;
-        ctx.save();
-        ctx.strokeStyle = "rgba(0,255,255,0.95)";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3,2]);
-        ctx.strokeRect(x-2, (y+lh*0.85)-lh, ww+4, lh+4);
-        ctx.restore();
-      } else if (selected && selected.line===li && selected.word===wi && mode==="edit") {
-        const ww = ctx.measureText(w.text||"").width;
-        ctx.save();
-        ctx.strokeStyle = "rgba(255,0,255,0.95)";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3,2]);
-        ctx.strokeRect(x-2, (y+lh*0.85)-lh, ww+4, lh+4);
-        ctx.restore();
+      // selection boxes (only in edit)
+      if (mode==="edit") {
+        const thisKey = `${li}:${wi}`;
+        if (doc.multi.has(thisKey)) {
+          const ww = ctx.measureText(w.text||"").width;
+          ctx.save();
+          ctx.strokeStyle = "rgba(0,255,255,0.95)";
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3,2]);
+          ctx.strokeRect(x-2, (y+lh*0.85)-lh, ww+4, lh+4);
+          ctx.restore();
+        } else if (selected && selected.line===li && selected.word===wi) {
+          const ww = ctx.measureText(w.text||"").width;
+          ctx.save();
+          ctx.strokeStyle = "rgba(255,0,255,0.95)";
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3,2]);
+          ctx.strokeRect(x-2, (y+lh*0.85)-lh, ww+4, lh+4);
+          ctx.restore();
+        }
       }
 
-      // advance
       x += measureText(w) + wordGap;
       ctx.restore();
     });
@@ -709,46 +662,23 @@ function render(t=0, totalDur=null){
   });
 }
 
-/* ---------- auto-size (per line) + font size UI sync ---------- */
-function updateFontSizeUIFromSelection() {
-  if (!fontSizeInp || !selected) return;
-  const w = doc.lines?.[selected.line]?.words?.[selected.word];
-  if (!w) return;
-  const sz = Math.round(w.size || defaults.size);
-  if (String(fontSizeInp.value) !== String(sz)) fontSizeInp.value = String(sz);
-}
+/* =======================================================
+   EDITING / SELECTION
+   ======================================================= */
 
-function autoSizeAllIfOn(){
-  if(!autoSizeChk?.checked) return;
-  const padX = 6, padY = 6;
-  const maxW = doc.res.w - padX*2;
-  const maxH = doc.res.h - padY*2;
-  const L = Math.max(1, doc.lines.length);
-  const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
-  const perLineH = (maxH - (L-1)*lineGap)/L;
+/* Multi-select toggle */
+on(multiToggle,"click", ()=>{
+  multiEnabled = !multiEnabled;
+  multiToggle.classList.toggle("active", multiEnabled);
+});
 
-  doc.lines.forEach(line=>{
-    let size = Math.floor(perLineH); if (!isFinite(size)) size = defaults.size;
-    for(let s=size; s>=6; s-=0.5){
-      const gap = doc.spacing.wordGap ?? defaults.wordGap;
-      let wsum= -gap;
-      for(const word of line.words){
-        ctx.font = `${s}px ${word.font || defaults.font}`;
-        wsum += ctx.measureText(word.text||"").width + gap;
-      }
-      if (wsum <= maxW){ line.words.forEach(word=> word.size = s); break; }
-    }
-  });
-
-  updateFontSizeUIFromSelection();
-}
-
-/* ---------- clicking / selection (with multi-select + sticky toggle) ---------- */
+/* Clicking / selection with sticky multi-select */
 canvas.addEventListener("click",(e)=>{
+  if (mode === "preview") { setMode("edit"); return; }
+
   const rect=canvas.getBoundingClientRect();
   const px=(e.clientX-rect.left)/zoom, py=(e.clientY-rect.top)/zoom;
 
-  // hit test
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
   const heights = doc.lines.map(lineHeight);
   const contentH = heights.reduce((s,h)=>s+h,0) + (doc.lines.length-1)*lineGap;
@@ -778,39 +708,32 @@ canvas.addEventListener("click",(e)=>{
   }
 
   if (hit) {
-    const k = keyOf(hit.line, hit.word);
-    if (e.shiftKey || e.metaKey || e.ctrlKey || stickyMulti) {
-      // toggle multi
+    const k = `${hit.line}:${hit.word}`;
+    if (multiEnabled || e.shiftKey || e.metaKey || e.ctrlKey) {
       if (doc.multi.has(k)) doc.multi.delete(k);
       else doc.multi.add(k);
       selected = hit;
     } else {
-      // single
       doc.multi.clear();
       selected = hit;
+      // sync UI to selected word
+      const w = doc.lines[selected.line].words[selected.word];
+      if (w){
+        fontSelect.value = w.font || defaults.font;
+        fontSizeInp.value = Math.round(w.size || defaults.size);
+        fontColorInp.value = w.color || defaults.color;
+      }
     }
-    // caret to end of current word
-    const w = doc.lines[selected.line].words[selected.word];
-    caretIdx = (w.text||"").length;
   } else {
-    if (!stickyMulti) doc.multi.clear();
+    doc.multi.clear();
     selected = null;
   }
-
-  updateFontSizeUIFromSelection();
-  render(0, getDuration());
+  render(0, null);
 });
 
-/* ---------- typing ---------- */
+/* Typing */
 document.addEventListener("keydown",(e)=>{
   if (mode!=="edit") return;
-
-  // hotkeys for undo/redo (Cmd/Ctrl+Z / Shift+Cmd/Ctrl+Z)
-  if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase()==="z"){
-    e.preventDefault();
-    if (e.shiftKey) redo(); else undo();
-    return;
-  }
 
   const targets = doc.multi.size
     ? Array.from(doc.multi).map(k=>k.split(":").map(Number))
@@ -818,126 +741,131 @@ document.addEventListener("keydown",(e)=>{
 
   if (!targets.length) return;
 
-  // snapshot before edit
-  snapshot();
-
-  // Backspace / character typing applied to EACH selected word
   if (e.key.length===1 && !e.metaKey && !e.ctrlKey){
     e.preventDefault();
     targets.forEach(([li,wi])=>{
       const w = doc.lines[li]?.words[wi]; if(!w) return;
-      const at = (selected && li===selected.line && wi===selected.word) ? caretIdx : (w.text||"").length;
-      w.text = (w.text || "");
-      w.text = w.text.slice(0,at) + e.key + w.text.slice(at);
-      if (selected && li===selected.line && wi===selected.word) caretIdx = at+1;
+      w.text = (w.text || "") + e.key;
     });
     autoSizeAllIfOn();
-    render(0,getDuration());
+    render(0,null);
   } else if (e.key==="Backspace"){
     e.preventDefault();
     targets.forEach(([li,wi])=>{
       const w = doc.lines[li]?.words[wi]; if(!w) return;
-      let at = (selected && li===selected.line && wi===selected.word) ? caretIdx : (w.text||"").length;
-      if (at>0){
-        w.text = (w.text||"");
-        w.text = w.text.slice(0,at-1) + w.text.slice(at);
-        if (selected && li===selected.line && wi===selected.word) caretIdx = at-1;
-      }
+      w.text = (w.text || "").slice(0,-1);
     });
     autoSizeAllIfOn();
-    render(0,getDuration());
+    render(0,null);
   }
 });
 
-/* ---------- add / line / delete ---------- */
+/* Add / Line / Delete */
 on(addWordBtn,"click",()=>{
-  snapshot();
-  const li = selected ? selected.line : (doc.lines.length-1>=0?doc.lines.length-1:0);
+  const li = selected ? selected.line : (doc.lines.length-1);
   const line = doc.lines[li] || (doc.lines[li]={words:[]});
-  line.words.push({ text:"NEW", color:defaults.color, font:defaults.font, size:defaults.size, anims: cloneAnims(doc.anims||[]) });
+  line.words.push({ text:"NEW", color:defaults.color, font:defaults.font, size:defaults.size });
   selected = { line: li, word: line.words.length-1 };
-  caretIdx = (line.words[selected.word].text||"").length;
-  render(0,getDuration());
+  autoSizeAllIfOn(); render(0,null);
 });
 on(addLineBtn,"click",()=>{
-  snapshot();
-  doc.lines.push({ words:[{ text:"LINE", color:defaults.color, font:defaults.font, size:defaults.size, anims:cloneAnims(doc.anims||[]) }] });
+  doc.lines.push({ words:[{ text:"LINE", color:defaults.color, font:defaults.font, size:defaults.size }] });
   selected = { line: doc.lines.length-1, word: 0 };
-  caretIdx = (doc.lines[selected.line].words[0].text||"").length;
-  render(0,getDuration());
+  autoSizeAllIfOn(); render(0,null);
 });
 on(delWordBtn,"click",()=>{
   if (!selected) return;
-  snapshot();
   const line = doc.lines[selected.line];
   line.words.splice(selected.word,1);
   if (!line.words.length) doc.lines.splice(selected.line,1);
   doc.multi.clear();
   selected = null;
-  caretIdx = 0;
-  render(0,getDuration());
+  autoSizeAllIfOn(); render(0,null);
 });
 
 /* ---------- font / size / color ---------- */
+function forEachSelectedWord(fn){
+  if (doc.multi.size){
+    doc.multi.forEach(k=>{
+      const [li,wi] = k.split(":").map(Number);
+      const w = doc.lines[li]?.words[wi]; if (w) fn(w, li, wi);
+    });
+  } else if (selected){
+    const w = doc.lines[selected.line]?.words[selected.word];
+    if (w) fn(w, selected.line, selected.word);
+  }
+}
 on(fontSelect,"change",()=>{
-  snapshot();
   forEachSelectedWord(w=>{ w.font = fontSelect.value || defaults.font; });
-  autoSizeAllIfOn(); render(0,getDuration());
+  autoSizeAllIfOn(); render(0,null);
 });
 on(fontSizeInp,"input",()=>{
-  snapshot();
-  const v = clamp(parseInt(fontSizeInp.value||`${defaults.size}`,10) || defaults.size, 6, 64);
+  const v = clamp(parseInt(fontSizeInp.value||`${defaults.size}`,10)||defaults.size, 6, 64);
   forEachSelectedWord(w=>{ w.size = v; });
-  render(0,getDuration());
+  render(0,null);
 });
-on(autoSizeChk,"change",()=>{ autoSizeAllIfOn(); render(0,getDuration()); });
+on(autoSizeChk,"change",()=>{ autoSizeAllIfOn(); render(0,null); });
 on(fontColorInp,"input",()=>{
-  snapshot();
   const c = fontColorInp.value || defaults.color;
   forEachSelectedWord(w=>{ w.color = c; });
-  render(0,getDuration());
+  render(0,null);
 });
+
+/* Text color swatches */
+const defaultTextPalette = ["#FFFFFF","#62b0ff","#ffd34d","#ff66c4","#49c6b5","#3be3ff","#ffb6ff","#000000"];
+let customTextPalette = [];
+function rebuildTextSwatches(){
+  textSwatches.innerHTML = "";
+  [...defaultTextPalette, ...customTextPalette].forEach(c=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="swatch"; b.style.background=c; b.title=c;
+    b.addEventListener("click",()=>{
+      fontColorInp.value = c;
+      forEachSelectedWord(w=>{ w.color = c; });
+      render(0,null);
+    });
+    b.addEventListener("contextmenu",(e)=>{
+      e.preventDefault();
+      const idx = customTextPalette.indexOf(c);
+      if (idx>=0){ customTextPalette.splice(idx,1); rebuildTextSwatches(); }
+    });
+    textSwatches.appendChild(b);
+  });
+}
+on(addSwatchBtn,"click",()=>{
+  const c = fontColorInp.value || defaults.color;
+  if (!defaultTextPalette.includes(c) && !customTextPalette.includes(c)) customTextPalette.push(c);
+  rebuildTextSwatches();
+});
+rebuildTextSwatches();
 
 /* ---------- spacing & alignment ---------- */
 on(lineGapInp,"input",()=>{
-  snapshot();
-  doc.spacing.lineGap = clamp(parseInt(lineGapInp.value||"4",10) || 4, 0, 40);
-  autoSizeAllIfOn(); render(0,getDuration());
+  doc.spacing.lineGap = clamp(parseInt(lineGapInp.value||"4",10)||4, 0, 40);
+  autoSizeAllIfOn(); render(0,null);
 });
 on(wordGapInp,"input",()=>{
-  snapshot();
-  doc.spacing.wordGap = clamp(parseInt(wordGapInp.value||"6",10) || 6, 0, 40);
-  autoSizeAllIfOn(); render(0,getDuration());
+  doc.spacing.wordGap = clamp(parseInt(wordGapInp.value||"6",10)||6, 0, 40);
+  autoSizeAllIfOn(); render(0,null);
 });
 alignBtns.forEach(b=> b.addEventListener("click",()=>{
-  snapshot();
   alignBtns.forEach(x=>x.classList.remove("active"));
   b.classList.add("active");
   doc.style ??= {};
   doc.style.align = b.dataset.align || "center";
-  render(0,getDuration());
+  render(0,null);
 }));
 valignBtns.forEach(b=> b.addEventListener("click",()=>{
-  snapshot();
   valignBtns.forEach(x=>x.classList.remove("active"));
   b.classList.add("active");
   doc.style ??= {};
   doc.style.valign = b.dataset.valign || "middle";
-  render(0,getDuration());
+  render(0,null);
 }));
 
-/* ---------- Animations UI ---------- */
-function conflictsFiltered(list){
-  // Currently we allow any stacks; last-in wins for conflicting effects.
-  return list;
-}
+/* ---------- Animations UI (build list) ---------- */
 function buildAnimationsUI(){
-  if (!animList) return;
   animList.innerHTML = "";
-  const list = document.createElement("div");
-  list.className = "anim-rows";
-  animList.appendChild(list);
-
   doc.anims = doc.anims || [];
 
   ANIMS.forEach(def=>{
@@ -956,13 +884,8 @@ function buildAnimationsUI(){
     lbl.setAttribute("for", chk.id);
     lbl.textContent = def.name;
 
-    const gear = document.createElement("button");
-    gear.type="button"; gear.className="button tiny"; gear.textContent="⚙";
-    gear.title = "Parameters";
-
     left.appendChild(chk);
     left.appendChild(lbl);
-    left.appendChild(gear);
 
     const params = document.createElement("div");
     params.className = "anim-params";
@@ -989,13 +912,12 @@ function buildAnimationsUI(){
       inp.addEventListener("input",()=>{
         const a = doc.anims.find(x=>x.id===def.id);
         if (a) a.params[k] = (inp.type==="number") ? +inp.value : inp.value;
-        render(0,getDuration());
+        render(0,null);
       });
       p.appendChild(la); p.appendChild(inp); params.appendChild(p);
     });
 
     chk.addEventListener("change",()=>{
-      snapshot();
       const has = !!doc.anims.find(a=>a.id===def.id);
       if (chk.checked && !has){
         doc.anims.push({ id:def.id, params:{...def.params} });
@@ -1004,19 +926,16 @@ function buildAnimationsUI(){
         doc.anims = doc.anims.filter(a=>a.id!==def.id);
         params.style.display = "none";
       }
-      render(0,getDuration());
+      render(0,null);
     });
-    gear.addEventListener("click",()=> params.style.display = params.style.display==="none" ? "block" : "none");
 
     row.appendChild(left);
     row.appendChild(params);
-    list.appendChild(row);
+    animList.appendChild(row);
   });
 
-  // bulk buttons
   on(applySelBtn,"click", ()=>{
-    snapshot();
-    const pack = cloneAnims(conflictsFiltered(doc.anims));
+    const pack = cloneAnims(doc.anims);
     if (doc.multi.size){
       doc.multi.forEach(k=>{
         const [li,wi]=k.split(":").map(Number);
@@ -1026,91 +945,23 @@ function buildAnimationsUI(){
       const w = doc.lines[selected.line]?.words[selected.word];
       if (w) w.anims = cloneAnims(pack);
     }
-    render(0,getDuration());
+    render(0,null);
   });
+
   on(applyAllBtn,"click", ()=>{
-    snapshot();
-    const pack = cloneAnims(conflictsFiltered(doc.anims));
+    const pack = cloneAnims(doc.anims);
     doc.lines.forEach(line=> line.words.forEach(w=> w.anims = cloneAnims(pack)));
-    render(0,getDuration());
+    render(0,null);
   });
 }
 buildAnimationsUI();
 
-/* ---------- Multi-select sticky toggle ---------- */
-on(multiToggle, "click", ()=>{
-  stickyMulti = !stickyMulti;
-  multiToggle.classList.toggle("active", stickyMulti);
-});
+/* =======================================================
+   PREVIEW + GIF
+   ======================================================= */
 
-/* ---------- Undo / Redo / Clear ---------- */
-function serializeDoc(){
-  // strip Image object (not serializable); keep preset/color
-  const plain = JSON.parse(JSON.stringify({...doc, bg:{...doc.bg, image: null}}));
-  return JSON.stringify(plain);
-}
-function deserializeDoc(json){
-  const data = JSON.parse(json);
-  Object.assign(doc, data);
-  // if preset set, lazy-load image
-  if (doc.bg?.preset && !doc.bg.image && doc.bg.type !== "solid") {
-    const im = new Image(); im.crossOrigin="anonymous"; im.src = doc.bg.preset;
-    im.onload = ()=>{ doc.bg.image = im; render(0,getDuration()); };
-  }
-}
-function snapshot(){
-  history.push(serializeDoc());
-  if (history.length>200) history.shift();
-  future.length=0;
-}
-function undo(){
-  if (!history.length) return;
-  future.push(serializeDoc());
-  const prev = history.pop();
-  deserializeDoc(prev);
-  render(0,getDuration());
-}
-function redo(){
-  if (!future.length) return;
-  history.push(serializeDoc());
-  const next = future.pop();
-  deserializeDoc(next);
-  render(0,getDuration());
-}
-on(undoBtn,"click", undo);
-on(redoBtn,"click", redo);
-on(clearAllBtn,"click", ()=>{
-  snapshot();
-  doc.lines = [{ words:[{ text:"NEW", color:defaults.color, font:defaults.font, size:defaults.size }] }];
-  selected = { line:0, word:0 }; caretIdx = 3;
-  render(0,getDuration());
-});
-
-/* ---------- Config import/export ---------- */
-on(saveJsonBtn,"click", ()=>{
-  const plain = JSON.parse(serializeDoc());
-  const blob = new Blob([JSON.stringify(plain,null,2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = (fileNameInput?.value || "animation") + ".json";
-  a.click();
-  setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
-});
-on(loadJsonInput,"change", async (e)=>{
-  const f = e.target.files?.[0]; if(!f) return;
-  const txt = await f.text();
-  snapshot();
-  deserializeDoc(txt);
-  // reset selection
-  selected = { line:0, word:0 };
-  caretIdx = (doc.lines[0]?.words[0]?.text||"").length;
-  updateFontSizeUIFromSelection();
-  render(0,getDuration());
-});
-
-/* ---------- Preview Loop ---------- */
-function getFPS(){ return clamp(parseInt(fpsInput?.value || "15",10) || 15, 1, 30); }
-function getDuration(){ return clamp(parseInt(secondsInput?.value || "8",10) || 8, 1, 60); }
+function getFPS(){ return clamp(parseInt(fpsInput?.value || "15", 10)||15,1,30); }
+function getDuration(){ return clamp(parseInt(secondsInput?.value || "8", 10)||8,1,60); }
 
 let rafId = null;
 let startT = 0;
@@ -1126,7 +977,6 @@ function startPreview() {
     const tt = secs % dur;
 
     render(tt, dur);
-
     if (progressFill) progressFill.style.setProperty("--p", (tt / dur));
     if (tCur) tCur.textContent = `${tt.toFixed(1)}s`;
 
@@ -1140,23 +990,21 @@ function stopPreview() {
   render(0, getDuration());
 }
 
-/* Mode buttons */
 function setMode(m) {
   mode = m;
   modeEditBtn?.classList.toggle("active", m === "edit");
-  modePrevBtn?.classList.toggle("active", m === "preview");
+  modePreviewBtn?.classList.toggle("active", m === "preview");
   if (m === "preview") startPreview();
   else stopPreview();
 }
-on(modeEditBtn, "click", ()=> setMode("edit"));
-on(modePrevBtn, "click", ()=> setMode("preview"));
+on(modeEditBtn,"click", () => setMode("edit"));
+on(modePreviewBtn,"click", () => setMode("preview"));
 
-/* ---------- Local GIF encoder loader (fallback if not preloaded) ---------- */
+/* Local GIF libs loader (fallback if scripts not preloaded) */
 function loadScriptLocal(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement("script");
-    s.src = src;
-    s.async = true;
+    s.src = src; s.async = true;
     s.onload = () => resolve(true);
     s.onerror = reject;
     document.head.appendChild(s);
@@ -1165,11 +1013,11 @@ function loadScriptLocal(src) {
 async function ensureLocalGifLibs() {
   if (typeof GIFEncoder !== "undefined") return true;
   try {
-    await loadScriptLocal("assets/libs/jsgif/NeuQuant.js");
-    await loadScriptLocal("assets/libs/jsgif/LZWEncoder.js");
-    await loadScriptLocal("assets/libs/jsgif/GIFEncoder.js");
+    await loadScriptLocal("./assets/libs/jsgif/NeuQuant.js");
+    await loadScriptLocal("./assets/libs/jsgif/LZWEncoder.js");
+    await loadScriptLocal("./assets/libs/jsgif/GIFEncoder.js");
   } catch (e) {
-    console.error("Local GIF libs failed to load:", e);
+    console.error("Local GIF libs failed to load", e);
     return false;
   }
   return typeof GIFEncoder !== "undefined";
@@ -1180,13 +1028,10 @@ function encoderToBlob(enc) {
   return new Blob([u8], { type: "image/gif" });
 }
 
-/* ---------- Render GIF (preview + download) ---------- */
-async function renderGifDownload() {
+/* Render preview + download */
+on(previewBtn,"click", async ()=>{
   const ok = await ensureLocalGifLibs();
-  if (!ok) {
-    alert("GIF encoder library files not found. Make sure /assets/libs/jsgif/* exists.");
-    return;
-  }
+  if (!ok) { alert("GIF encoder not found. Place libs in ./assets/libs/jsgif/."); return; }
 
   const fps = getFPS();
   const secs = getDuration();
@@ -1212,7 +1057,6 @@ async function renderGifDownload() {
       render(t, secs);
       enc.addFrame(ctx);
 
-      // progress UI during export
       if (progressFill) progressFill.style.setProperty("--p", (t / secs) % 1);
       if (tCur) tCur.textContent = `${(t % secs).toFixed(1)}s`;
     }
@@ -1221,68 +1065,76 @@ async function renderGifDownload() {
     const blob = encoderToBlob(enc);
     const url = URL.createObjectURL(blob);
 
-    // Show preview
+    // Show inline preview (long-press to save on iPhone)
     if (gifPreviewImg) {
       gifPreviewImg.classList.remove("hidden");
       gifPreviewImg.src = url;
       gifPreviewImg.alt = "Animated GIF preview";
     }
-
-    // Download + open
-    const name = `${(fileNameInput?.value || "animation").replace(/\.(png|jpe?g|webp|gif)$/i, "")}.gif`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.click();
-
-    setTimeout(() => URL.revokeObjectURL(url), 15000);
   } catch (err) {
     console.error("GIF render failed:", err);
     alert("GIF render failed. Check console for details.");
   } finally {
     if (resume) startPreview();
   }
-}
-
-/* ---------- Bind controls ---------- */
-on(previewBtn, "click", () => setMode("preview"));
-on(gifBtn, "click", () => renderGifDownload());
-
-[fpsInput, secondsInput].forEach(inp => inp && inp.addEventListener("input", () => {
-  if (mode === "preview") startPreview();
-  if (tEnd) tEnd.textContent = `${getDuration().toFixed(1)}s`;
-}));
-
-/* ---------- Resolution change ---------- */
-on(resSel,"change",()=>{
-  snapshot();
-  const [w,h]=resSel.value.split("x").map(Number);
-  doc.res={w,h};
-  buildBgGrid();
-  showSolidTools(doc.bg?.type==="solid");
-  render(0,getDuration());
-  fitZoom();
 });
 
-/* ---------- INIT ---------- */
+on(gifBtn,"click", async ()=>{
+  const ok = await ensureLocalGifLibs();
+  if (!ok) { alert("GIF encoder not found. Place libs in ./assets/libs/jsgif/."); return; }
+
+  const fps = getFPS();
+  const secs = getDuration();
+  const frames = Math.max(1, Math.floor(fps * secs));
+  const delay = Math.max(1, Math.round(1000 / fps));
+  const W = canvas.width = doc.res.w;
+  const H = canvas.height = doc.res.h;
+
+  const resume = (mode === "preview");
+  stopPreview();
+
+  try {
+    const enc = new GIFEncoder();
+    enc.setRepeat(0); enc.setDelay(delay); enc.setQuality(10); enc.setSize(W, H); enc.start();
+    for (let i = 0; i < frames; i++) {
+      const t = i / fps;
+      render(t, secs);
+      enc.addFrame(ctx);
+    }
+    enc.finish();
+    const blob = encoderToBlob(enc);
+    const url = URL.createObjectURL(blob);
+
+    const name = `${(fileNameInput?.value || "animation").replace(/\.(png|jpe?g|webp|gif)$/i, "")}.gif`;
+    const a = document.createElement("a");
+    a.href = url; a.download = name;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 15000);
+  } catch (err) {
+    console.error("GIF download failed:", err);
+    alert("GIF download failed. Check console for details.");
+  } finally {
+    if (resume) startPreview();
+  }
+});
+
+/* ---------- resolution change ---------- */
+on(resSel,"change",()=>{
+  const [w,h]=resSel.value.split("x").map(Number);
+  doc.res={w,h};
+  buildBgGrid(); showSolidTools(doc.bg?.type==="solid");
+  render(); fitZoom();
+});
+
+/* ---------- init ---------- */
 function init(){
-  // default: auto-size ON
-  if (autoSizeChk) autoSizeChk.checked = true;
-
-  // build background grid + swatches
-  buildBgGrid();
   rebuildBgSwatches();
-  rebuildTextSwatches();
-
-  // select first word by default
-  selected = { line:0, word:0 };
-  caretIdx = (doc.lines[0]?.words[0]?.text || "").length;
-  updateFontSizeUIFromSelection();
-
-  // initial paint
-  render(0, getDuration());
+  buildBgGrid();
+  setMode("edit");
   fitZoom();
+
+  // default auto-size ON (HTML already checks it; we also call once)
+  if (autoSizeChk) autoSizeChk.checked = true;
+  render(0, getDuration());
 }
 init();
