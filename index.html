@@ -3,54 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LED Backpack Animator</title>
+  <title>LED Backpack Animator — v1.0</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="theme-midnight">
 
-  <!-- ===== Topbar ===== -->
+  <!-- ===== Header (title + About) ===== -->
   <header class="topbar glass">
-    <h1 class="app-title">LED Backpack Animator</h1>
-
-    <!-- Right aligned About (always at top-right) -->
-    <div class="about-spot">
-      <button id="aboutBtn" class="chip info">ℹ️ About</button>
+    <div class="title-wrap">
+      <h1 class="app-title">LED Backpack Animator <span class="ver-badge">v1.0</span></h1>
     </div>
-
-    <!-- Toolbar row: left: Edit/Preview; right: Zoom/Undo/Redo/Clear -->
-    <div class="toolbar-row">
-      <div class="left-tools">
-        <div class="seg">
-          <button id="modeEdit" class="seg-btn active">📝 Edit</button>
-          <button id="modePreview" class="seg-btn">▶ Preview</button>
-        </div>
-      </div>
-
-      <div class="right-tools">
-        <div class="zoom-wrap">
-          <label for="zoom">Zoom</label>
-          <input type="range" id="zoom" min="0.2" max="4" step="0.1" value="1" />
-          <button id="fitBtn" class="button tiny">Fit</button>
-        </div>
-        <div class="seg">
-          <button id="undoBtn" class="seg-btn">↩ Undo</button>
-          <button id="redoBtn" class="seg-btn">↪ Redo</button>
-          <button id="clearAllBtn" class="seg-btn danger">🗑 Clear</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Render controls (below toolbar, centered) -->
-    <div class="render-row">
-      <button id="previewRenderBtn" class="button primary">Generate Preview</button>
-      <button id="gifRenderBtn" class="button">Download File</button>
-    </div>
-    <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF" />
+    <button id="aboutBtn" class="icon-btn" title="About">ℹ️</button>
   </header>
 
-  <main class="layout">
+  <!-- ===== Control Row above canvas ===== -->
+  <section class="panel glass control-row">
+    <div class="left-controls">
+      <div class="seg">
+        <button id="modeEdit" class="seg-btn active">📝 Edit</button>
+        <button id="modePreview" class="seg-btn">▶ Preview</button>
+      </div>
+    </div>
 
-    <!-- ===== Background & Resolution ===== -->
+    <div class="right-controls">
+      <div class="zoom-wrap">
+        <label for="zoom">Zoom</label>
+        <input type="range" id="zoom" min="0.2" max="4" step="0.1" value="1" />
+        <button id="fitBtn" class="button tiny">Fit</button>
+      </div>
+      <div class="seg">
+        <button id="undoBtn" class="seg-btn">↩ Undo</button>
+        <button id="redoBtn" class="seg-btn">↪ Redo</button>
+        <button id="clearAllBtn" class="seg-btn danger">🗑 Clear</button>
+      </div>
+    </div>
+  </section>
+
+  <main class="layout">
+    <!-- ===== Background & Resolution (collapsible, open) ===== -->
     <details class="panel glass" open>
       <summary class="panel-title">Background &amp; Resolution</summary>
 
@@ -62,31 +52,26 @@
         </select>
       </div>
 
+      <!-- 2×2 grid; tiles injected by app.js -->
       <div id="bgGrid" class="bg-grid"></div>
 
       <!-- Solid color tools -->
       <div id="bgSolidTools" class="bg-solid-tools hidden">
-        <!-- Greys first, then colors -->
-        <div class="swatch-section">
+        <!-- Greyscale (includes white) -->
+        <div class="swatch-bank">
           <div class="swatch-title">Greyscale</div>
-          <div class="swatches" id="bgGreyRow"></div>
+          <div id="bgSwatchesGray" class="swatches"></div>
         </div>
-
-        <div class="swatch-section">
+        <!-- Colors (matches Font palette) -->
+        <div class="swatch-bank">
           <div class="swatch-title">Colors</div>
-          <div class="swatches" id="bgColorRow"></div>
+          <div id="bgSwatches" class="swatches"></div>
         </div>
-
-        <div class="swatch-section compact">
-          <div class="swatch-title">Custom</div>
-          <div class="row two-eq tight">
-            <div class="custom-color-inline">
-              <label for="bgSolidColor">Pick</label>
-              <input type="color" id="bgSolidColor" value="#000000" />
-            </div>
-            <button id="addBgSwatchBtn" class="button">Add BG Swatch</button>
-          </div>
-          <div class="swatches" id="bgSwatches"></div>
+        <!-- Custom (single line: label + color + Add) -->
+        <div class="row custom-line">
+          <label for="bgSolidColor" class="inline-label">Custom color</label>
+          <input type="color" id="bgSolidColor" value="#000000" />
+          <button id="addBgSwatchBtn" class="button tiny">Add BG Swatch</button>
         </div>
         <input type="file" id="bgUpload" accept="image/*" hidden />
       </div>
@@ -98,18 +83,19 @@
         <canvas id="led" width="96" height="128"></canvas>
       </div>
 
-      <!-- Controls under preview -->
+      <!-- controls under preview -->
       <div class="stage-controls">
         <div class="multi-tip">
           <button id="multiToggle" class="chip">Multi-select</button>
-          <button id="manualDragToggle" class="chip">🖐️ Manual Drag</button>
-          <span class="tip hide-on-mobile">Tip: <b>Shift</b> = multi-select, <b>Cmd/Ctrl</b> = drag</span>
+          <span class="tip desktop-only">Tip: Shift = select multiple, ⌘/Ctrl = drag temporarily</span>
         </div>
         <div class="word-row">
           <button id="addWordBtn" class="button tiny">+ Word</button>
           <button id="addLineBtn" class="button tiny">+ Line</button>
-          <button id="emojiBtn" class="button tiny">😊 Emoji</button>
           <button id="deleteWordBtn" class="button tiny danger">× Delete</button>
+
+          <!-- Emoji picker button -->
+          <button id="emojiBtn" class="button tiny">😊 Emoji</button>
         </div>
       </div>
 
@@ -120,21 +106,18 @@
       </div>
     </section>
 
-    <!-- ===== Inspector (pills show one-at-a-time) ===== -->
+    <!-- ===== Inspector (pills show ONE section; clicking active pill hides all) ===== -->
     <section class="panel inspector glass">
-      <div class="inspector-head">
-        <div class="pillbar">
-          <button class="pill active" data-acc="accFont">Font</button>
-          <button class="pill" data-acc="accLayout">Spacing &amp; Alignment</button>
-          <button class="pill" data-acc="accAnim">Animations</button>
-        </div>
-        <div id="animConflict" class="conflict hidden">⚠️ Conflicting animations detected</div>
+      <div class="inspector-head pillbar">
+        <button class="pill active" data-acc="accFont">Font</button>
+        <button class="pill" data-acc="accLayout">Spacing &amp; Alignment</button>
+        <button class="pill" data-acc="accAnim">Animations</button>
       </div>
 
       <div id="inspectorBody" class="inspector-body">
         <!-- Font -->
-        <details id="accFont" class="acc" open>
-          <summary class="hidden">Font</summary>
+        <details id="accFont" class="acc open">
+          <summary><span class="subttl">Font &amp; Color</span></summary>
           <div class="acc-body">
             <div class="row">
               <label for="fontSelect">Font</label>
@@ -148,40 +131,36 @@
               </select>
             </div>
 
-            <div class="row two">
+            <div class="row two-compact">
               <label for="fontSize">Size</label>
               <input type="number" id="fontSize" min="6" max="64" value="22" />
             </div>
 
-            <div class="row auto-inline">
-              <label class="checkbox inline">
+            <div class="row two-eq tight">
+              <label class="checkbox">
                 <input type="checkbox" id="autoSize" checked />
-                <span>Auto-size</span>
+                <span>Auto-size (Line)</span>
               </label>
-              <label class="checkbox inline">
-                <input type="checkbox" id="autoSizePerLine" checked />
-                <span>Per line</span>
-              </label>
+              <button id="autoInfoBtn" class="icon-btn" title="What’s Auto-size?">❔</button>
             </div>
 
-            <!-- Swatches -->
+            <!-- Swatches ABOVE custom (same palette as BG) -->
             <div class="row">
               <div class="swatches" id="swatches"></div>
             </div>
 
-            <div class="row two-eq tight">
-              <div class="custom-color-inline">
-                <label for="fontColor">Custom color</label>
-                <input type="color" id="fontColor" value="#FFFFFF" />
-              </div>
-              <button id="addSwatchBtn" class="button">Add Swatch</button>
+            <!-- Single-line custom color + Add (font) -->
+            <div class="row custom-line">
+              <label for="fontColor" class="inline-label">Custom color</label>
+              <input type="color" id="fontColor" value="#FFFFFF" />
+              <button id="addSwatchBtn" class="button tiny">Add Swatch</button>
             </div>
           </div>
         </details>
 
         <!-- Spacing & Alignment -->
         <details id="accLayout" class="acc">
-          <summary class="hidden">Spacing & Alignment</summary>
+          <summary><span class="subttl">Spacing &amp; Alignment</span></summary>
           <div class="acc-body">
             <div class="row two">
               <label>Line Gap</label>
@@ -191,6 +170,8 @@
               <label>Word Gap</label>
               <input type="number" id="wordGap" min="0" max="40" value="6" />
             </div>
+
+            <div class="block-label">Alignment</div>
             <div class="row two">
               <label>Horizontal</label>
               <div class="seg">
@@ -207,70 +188,109 @@
                 <button class="seg-btn" data-valign="bottom">Bottom</button>
               </div>
             </div>
+
+            <!-- Manual free-drag -->
+            <div class="row">
+              <button id="manualDragToggle" class="chip">🖐️ Manual Drag</button>
+            </div>
           </div>
         </details>
 
         <!-- Animations -->
         <details id="accAnim" class="acc">
-          <summary class="hidden">Animations</summary>
+          <summary><span class="subttl">Animations</span></summary>
           <div class="acc-body">
+            <div id="animConflicts" class="conflicts hidden"></div>
+
             <div class="row two-eq" style="margin-bottom:6px;">
               <button id="applySelectedAnimBtn" class="button tiny primary">Apply to Selection</button>
               <button id="applyAllAnimBtn" class="button tiny">Apply to All Words</button>
             </div>
+
             <div id="animList"></div>
           </div>
         </details>
       </div>
     </section>
 
-    <!-- ===== Config ===== -->
+    <!-- ===== Config (standalone) ===== -->
     <section class="panel glass">
       <h3 class="section-title">Config</h3>
       <div class="row two-eq">
         <label class="upload-btn block">
           <input type="file" id="loadJsonInput" accept="application/json" hidden />
-          <span class="button block">Import Config</span>
+          <span class="button block darker">Import Config</span>
         </label>
         <button id="saveJsonBtn" class="button block primary">Download Config</button>
       </div>
     </section>
 
-  </main>
-
-  <!-- ===== Emoji Picker Modal ===== -->
-  <div id="emojiModal" class="modal hidden">
-    <div class="modal-backdrop"></div>
-    <div class="modal-card glass heavy">
-      <div class="modal-head">
-        <h3>Emoji</h3>
-        <button id="emojiClose" class="chip">✕</button>
+    <!-- ===== Render GIF (standalone at bottom) ===== -->
+    <section class="panel glass">
+      <h3 class="section-title">Render</h3>
+      <div class="row two-eq">
+        <label>File Name</label>
+        <input type="text" id="fileName" placeholder="animation" />
       </div>
-      <div class="emoji-tabs" id="emojiTabs"></div>
-      <div class="emoji-grid" id="emojiGrid"></div>
-    </div>
-  </div>
+      <div class="row two-eq">
+        <label>FPS</label>
+        <input type="number" id="fps" min="1" max="30" value="15" />
+      </div>
+      <div class="row two-eq">
+        <label>Seconds</label>
+        <input type="number" id="seconds" min="1" max="60" value="8" />
+      </div>
+      <div class="row two-eq">
+        <button id="previewRenderBtn" class="button block primary">Generate Preview</button>
+        <button id="gifRenderBtn" class="button block">Download File</button>
+      </div>
+      <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF" />
+    </section>
+  </main>
 
   <!-- ===== About Modal ===== -->
   <div id="aboutModal" class="modal hidden">
     <div class="modal-backdrop"></div>
-    <div class="modal-card glass heavy">
-      <div class="modal-head">
-        <h3>About</h3>
-        <button id="aboutClose" class="chip">✕</button>
+    <div class="modal-content glass strong">
+      <h3>About</h3>
+      <p>Created by <strong>TheSkyLincoln</strong> — LED Backpack Animator v1.0</p>
+      <p>Follow on Instagram:
+        <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>
+      </p>
+      <button id="aboutClose" class="button primary">Close</button>
+    </div>
+  </div>
+
+  <!-- ===== Auto-size Info Modal ===== -->
+  <div id="autoInfoModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content glass strong">
+      <h3>What’s Auto-size (Line)?</h3>
+      <p>Auto-size (Line) keeps each full line within bounds by shrinking its words together if needed, so nothing clips off the LED area.</p>
+      <p>Your individual word sizes can still differ — this simply prevents overflow at the line level.</p>
+      <button id="autoInfoClose" class="button primary">Got it</button>
+    </div>
+  </div>
+
+  <!-- ===== Emoji Picker Modal ===== -->
+  <div id="emojiModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content glass xl">
+      <div class="emoji-head">
+        <div class="tabs" id="emojiTabs"></div>
+        <div class="emoji-search">
+          <input id="emojiSearch" type="search" placeholder="Search emojis…" />
+          <button id="emojiClose" class="icon-btn">✖</button>
+        </div>
       </div>
-      <div class="modal-body">
-        <p>LED Backpack Animator — built for quick text/emoji animations.</p>
-        <p>Follow updates on Instagram:
-          <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener"> @theskylincoln</a>
-        </p>
-      </div>
+      <div id="emojiGrid" class="emoji-grid"></div>
+      <div class="emoji-zoom-hint">Pinch to zoom on mobile • Use resize handle on desktop</div>
     </div>
   </div>
 
   <!-- ===== Scripts ===== -->
   <script src="app.js"></script>
-  <!-- local GIF libs (for on-device encode) -->
+  <!-- local GIF libs -->
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
   <script defer src="assets/libs/jsgif/LZWEncoder.js"></script>
   <script defer src="assets/libs/jsgif/GIFEncoder.js"></script>
