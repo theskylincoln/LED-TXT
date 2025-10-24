@@ -1,148 +1,112 @@
 /* =======================================================
-   LED Backpack Animator — app.js (FULL)
-   - UI wiring
-   - Background presets, Solid, Upload (GIF supported)
-   - Zoom & Preview
-   - Text editing (single/multi-select), autosize (default ON)
-   - Animations (Glow, Rainbow Sweep, Sweep highlight, Zoom, Slide, Scroll, etc.)
-   - GIF render (preview image + file download)
-   - Import/Export config (includes uploaded BGs; GIFs re-decoded at load)
-   - Undo/Redo + Clear
-   ======================================================= */
+ LED Backpack Animator — app.js (complete)
+ Shift = multi-select, Cmd/Ctrl = temporary drag.
+ Manual Drag button is a sticky toggle.
+======================================================= */
 
-/* ---------- helpers ---------- */
+/* ---------- Notify helper (replace with toasts if you want) ---------- */
+function notifyUserError(message) { console.error("[UI]", message); }
+
+/* ---------- tiny DOM helpers ---------- */
 const $  = (q, el=document) => el.querySelector(q);
 const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 
-function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
-
 /* ---------- DOM ---------- */
-const canvas  = $("#led"),
-      ctx     = canvas.getContext("2d", { willReadFrequently:true }),
-      wrap    = $(".canvas-wrap");
+const canvas  = $("#led"), ctx = canvas.getContext("2d"), wrap = $(".canvas-wrap");
 
 const resSel  = $("#resSelect"),
       zoomSlider = $("#zoom"),
       fitBtn  = $("#fitBtn");
 
 const modeEditBtn   = $("#modeEdit"),
-      modePreviewBtn= $("#modePreview");
-
-const undoBtn = $("#undoBtn"),
-      redoBtn = $("#redoBtn"),
-      clearAllBtn = $("#clearAllBtn");
-
-const inspectorBody   = $("#inspectorBody");
-const pillTabs  = $$(".pill[data-acc]");
-const accFont   = $("#accFont"),
-      accLayout = $("#accLayout"),
-      accAnim   = $("#accAnim");
+      modePreviewBtn = $("#modePreview");
 
 const bgGrid  = $("#bgGrid"),
       bgSolidTools = $("#bgSolidTools"),
       bgSolidColor = $("#bgSolidColor"),
       addBgSwatchBtn = $("#addBgSwatchBtn"),
       bgSwatches = $("#bgSwatches"),
-      bgUpload   = $("#bgUpload");
+      bgUpload = $("#bgUpload");
 
-const progressFill = $("#progress"),
+const progressBar = $("#progress"),
       tCur = $("#tCur"),
       tEnd = $("#tEnd");
 
-const multiToggle = $("#multiToggle");
+const previewBtn = $("#previewRenderBtn"),
+      gifBtn = $("#gifRenderBtn"),
+      gifPreviewImg = $("#gifPreview");
 
-/* Stage actions */
-const addWordBtn   = $("#addWordBtn");
-const addLineBtn   = $("#addLineBtn");
-const delWordBtn   = $("#deleteWordBtn");
+const undoBtn = $("#undoBtn"),
+      redoBtn = $("#redoBtn"),
+      clearAllBtn = $("#clearAllBtn");
 
-/* Font/Layout */
-const fontSelect   = $("#fontSelect");
-const fontSizeInp  = $("#fontSize");
-const autoSizeChk  = $("#autoSize");
-const fontColorInp = $("#fontColor");
-const addSwatchBtn = $("#addSwatchBtn");
-const textSwatches = $("#swatches");
+const aboutBtn = $("#aboutBtn"),
+      aboutModal = $("#aboutModal"),
+      aboutClose = $("#aboutClose");
 
-const lineGapInp   = $("#lineGap");
-const wordGapInp   = $("#wordGap");
-const alignBtns    = $$("[data-align]");
-const valignBtns   = $$("[data-valign]");
+const addWordBtn=$("#addWordBtn"),
+      addLineBtn=$("#addLineBtn"),
+      delWordBtn=$("#deleteWordBtn");
 
-/* Animations UI */
-const animList     = $("#animList");
-const applySelBtn  = $("#applySelectedAnimBtn");
-const applyAllBtn  = $("#applyAllAnimBtn");
+const emojiBtn = $("#emojiBtn"),
+      emojiModal = $("#emojiModal"),
+      emojiClose = $("#emojiClose"),
+      emojiTabs  = $("#emojiTabs"),
+      emojiGrid  = $("#emojiGrid"),
+      emojiSearch= $("#emojiSearch"),
+      emojiSize  = $("#emojiSize");
 
-/* Render / GIF controls */
-const fpsInput      = $("#fps");
-const secondsInput  = $("#seconds");
-const fileNameInput = $("#fileName");
-const previewBtn    = $("#previewRenderBtn");
-const gifBtn        = $("#gifRenderBtn");
-const gifPreviewImg = $("#gifPreview");
+const fontSelect=$("#fontSelect"),
+      fontSizeInp=$("#fontSize"),
+      autoSizeChk=$("#autoSize"),
+      fontColorInp=$("#fontColor"),
+      addSwatchBtn=$("#addSwatchBtn"),
+      textSwatches=$("#swatches");
 
-/* Config IO */
-const loadJsonInput = $("#loadJsonInput");
-const saveJsonBtn   = $("#saveJsonBtn");
+const lineGapInp=$("#lineGap"),
+      wordGapInp=$("#wordGap");
+
+const alignBtns=$$("[data-align]"),
+      valignBtns=$$("[data-valign]");
+
+const animList=$("#animList");
+
+const multiToggle=$("#multiToggle"),
+      manualDragBtn=$("#manualDragToggle");
 
 /* ---------- state ---------- */
-let mode = "edit";
-let zoom = 1;
-let selected = null;           // {line, word} or null
-const history = { past:[], future:[] };
+let mode="edit", zoom=1, selected=null;
+let history = [], future = [];
 
-const defaults = {
-  font: "Orbitron",
-  size: 22,
-  color: "#FFFFFF",
-  lineGap: 4,
-  wordGap: 6,
-  align: "center",
-  valign: "middle"
-};
+const defaults = { font:"Orbitron", size:22, color:"#FFFFFF", lineGap:4, wordGap:6, align:"center", valign:"middle" };
 
-/* Seed document with phrase—one letter per line for “WILL WHEELIE FOR BOOKTOK GIRLIES” */
-function linesFromStringLetters(str){
-  const arr = [];
-  for (const ch of str) {
-    arr.push({ words:[{ text: ch === " " ? " " : ch, color: "#FFFFFF", font: "Orbitron", size: 22 }] });
-  }
-  return arr;
-}
+/* ===== PRESET per your spec =====
+   - All words flow + wave
+   - BOOKTOK uses Rainbow Sweep + Glow (and still flows/waves)
+   - Every other word uses Color Cycle with distinct starting hues
+*/
+const FLOW_BASE = [{ id:"flow", params:{amp:3, freq:0.4} }, { id:"wave", params:{ax:0.35, ay:0.55, cycles:0.8} }];
+const COLORCYCLE = (start) => ({ id:"colorcycle", params:{speed:0.6, start} });
+const RAINBOW_GLOW = [{ id:"rainbow", params:{speed:0.75, start:"#0033ff"} }, { id:"glow", params:{intensity:0.7} }];
 
 const doc = {
   res: { w:96, h:128 },
-  // One letter per line by request
-  lines: linesFromStringLetters("WILL WHEELIE FOR BOOKTOK GIRLIES"),
-  bg: { type:"solid", image:null, preset:null, color:"#000000", dataURL:null, gif:null },
-  spacing:{ lineGap:4, wordGap:6 },
-  anims: [ // default global anims: subtle Glow, Scroll to “move all the words”
-    { id:"glow", params:{ intensity:0.6 } },
-    { id:"scroll", params:{ direction:"Left", speed:0.8 } }
+  lines: [
+    { words:[{text:"WILL",     color:"#55a0ff", font:"Orbitron", size:22, anims:[...FLOW_BASE, COLORCYCLE("#2d7dff")] }] },
+    { words:[{text:"WHEELIE",  color:"#ffd95a", font:"Orbitron", size:22, anims:[...FLOW_BASE, COLORCYCLE("#ffd54a")] }] },
+    { words:[{text:"FOR",      color:"#ff7bda", font:"Orbitron", size:22, anims:[...FLOW_BASE, COLORCYCLE("#ff4fd1")] }] },
+    { words:[{text:"BOOKTOK",  color:"#ffffff", font:"Orbitron", size:22, anims:[...FLOW_BASE, ...RAINBOW_GLOW] }] },
+    { words:[{text:"GIRLIES",  color:"#ff6a6a", font:"Orbitron", size:22, anims:[...FLOW_BASE, COLORCYCLE("#00e6ff")] }] },
   ],
-  style: { align:"center", valign:"middle" },
+  bg: { type:"preset", image:null, preset:"assets/presets/96x128/Preset_A.png", color:null },
+  spacing:{ lineGap:4, wordGap:6 },
+  style:{ align:"center", valign:"middle" },
+  anims:[ /* global/base if a word doesn't have its own; we keep it light */ ],
   multi:new Set()
 };
 
-/* Apply rainbow sweep to lines that spell BOOKTOK (per request) */
-(function seedBooktokRainbow(){
-  const phrase = doc.lines.map(l=> (l.words[0]?.text||"")).join("");
-  const idx = phrase.indexOf("BOOKTOK");
-  if (idx >= 0) {
-    for (let i=idx;i<idx+7;i++){
-      const w = doc.lines[i]?.words?.[0];
-      if (!w) continue;
-      w.anims = [
-        { id:"rainbow", params:{ speed:0.7, start:"#0000ff" } }, // starts blue → cycles
-        { id:"glow",    params:{ intensity:0.8 } }
-      ];
-    }
-  }
-})();
-
-/* ---------- Background presets (2×2 visible set) ---------- */
+/* ---------- Background presets ---------- */
 const PRESETS = {
   "96x128": [
     { id:"A", thumb:"assets/thumbs/Preset_A_thumb.png", full:"assets/presets/96x128/Preset_A.png" },
@@ -155,187 +119,93 @@ const PRESETS = {
 };
 function visibleSet(){ return PRESETS[`${doc.res.w}x${doc.res.h}`] || []; }
 
+/* ---------- Multi / Manual-Drag state ---------- */
+let manualDrag = { enabled:false, active:false, startX:0, startY:0, targets:[], startOffsets:[] };
+
+/* ---------- Emoji picker state (loaded on demand) ---------- */
+let EMOJI_DB = null;  // { categories:[{id,title,items:[{title,svg,emoji,category}]}] }
+let CURRENT_EMOJI_SIZE = 24;
+
+/* ---------- Animations catalog (includes custom 'flow') ---------- */
+const ANIMS = [
+  { id:"flow",       name:"Flow",                  params:{amp:3, freq:0.4} }, // gentle horizontal drift
+  { id:"wave",       name:"Wave",                  params:{ax:0.8, ay:1.4, cycles:1.0} },
+  { id:"slide",      name:"Slide In",              params:{direction:"Left",  speed:1} },
+  { id:"slideaway",  name:"Slide Away",            params:{direction:"Left",  speed:1} },
+  { id:"zoom",       name:"Zoom",                  params:{direction:"In",    speed:1} },
+  { id:"scroll",     name:"Scroll / Marquee",      params:{direction:"Left",  speed:1} },
+  { id:"pulse",      name:"Pulse / Breathe",       params:{scale:0.03, vy:4} },
+  { id:"jitter",     name:"Jitter",                params:{amp:0.10, freq:2.5} },
+  { id:"shake",      name:"Shake",                 params:{amp:0.20, freq:2} },
+  { id:"colorcycle", name:"Color Cycle",           params:{speed:0.6, start:"#0033ff"} },
+  { id:"rainbow",    name:"Rainbow Sweep",         params:{speed:0.75, start:"#0033ff"} },
+  { id:"sweep",      name:"Highlight Sweep",       params:{speed:0.7, width:0.25} },
+  { id:"flicker",    name:"Flicker",               params:{strength:0.5} },
+  { id:"strobe",     name:"Strobe",                params:{rate:3} },
+  { id:"glow",       name:"Glow Pulse",            params:{intensity:0.6} },
+  { id:"heartbeat",  name:"Heartbeat",             params:{rate:1.2} },
+  { id:"ripple",     name:"Ripple",                params:{amp:1.0, freq:2.0} },
+  { id:"typewriter", name:"Typewriter",            params:{rate:1} },
+  { id:"scramble",   name:"Scramble / Decode",     params:{rate:1} },
+  { id:"popcorn",    name:"Popcorn",               params:{rate:1} },
+  { id:"fadeout",    name:"Fade Out",              params:{} },
+];
+
+/* =======================================================
+   UI build: BG Grid, Zoom/Fit, Pills, Swatches
+======================================================= */
+
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 
 function buildBgGrid(){
-  bgGrid.innerHTML = "";
+  bgGrid.innerHTML="";
   const set = visibleSet();
   const tiles = [
-    set[0] && { ...set[0], kind:"preset" },
-    set[1] && { ...set[1], kind:"preset" },
+    ...set.map(p=>({kind:"preset", thumb:p.thumb, full:p.full})),
     { kind:"solid",  thumb:"assets/thumbs/Solid_thumb.png" },
     { kind:"upload", thumb:"assets/thumbs/Upload_thumb.png" }
-  ].filter(Boolean);
-
+  ];
   tiles.forEach(t=>{
     const b=document.createElement("button");
     b.type="button"; b.className="bg-tile"; b.dataset.kind=t.kind;
     const img=document.createElement("img");
     img.src=t.thumb; img.alt=t.kind;
     b.appendChild(img);
-
     on(b,"click",async()=>{
       $$(".bg-tile",bgGrid).forEach(x=>x.classList.remove("active"));
       b.classList.add("active");
       if(t.kind==="preset"){
         const im=new Image(); im.crossOrigin="anonymous"; im.src=t.full;
         try{await im.decode();}catch{}
-        doc.bg={type:"image",color:null,image:im,preset:t.full,dataURL:null,gif:null};
-        showSolidTools(false);
-        pushHistory();
-        render();
+        doc.bg={type:"preset",color:null,image:im,preset:t.full};
+        showSolidTools(false); render();
       }else if(t.kind==="solid"){
-        doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null,dataURL:null,gif:null};
-        showSolidTools(true);
-        pushHistory();
-        render();
-      }else if(t.kind==="upload"){
+        doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null};
+        showSolidTools(true); render();
+      }else{
         bgUpload.click();
       }
     });
     bgGrid.appendChild(b);
   });
-
-  // Mark active tile if matches current bg
-  if (doc.bg?.preset) {
-    const set = visibleSet();
-    const idx = set.findIndex(p=>p.full===doc.bg.preset);
-    const tile = $$(".bg-tile",bgGrid)[idx];
-    tile && tile.classList.add("active");
-  } else if (doc.bg?.type==="solid") {
-    const tile = $$(".bg-tile",bgGrid).find(x=>x.dataset.kind==="solid");
-    tile && tile.classList.add("active");
+  // set active if current is preset
+  if (doc.bg?.type==="preset") {
+    const first = $(".bg-tile[data-kind='preset']", bgGrid);
+    first && first.classList.add("active");
   }
 }
-
-/* ---------- Swatch helpers ---------- */
-const defaultBgPalette=["#FFFFFF","#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF","#00FFFF","#000000"];
-let customBgPalette=[];
-function rebuildBgSwatches(){
-  bgSwatches.innerHTML="";
-  [...defaultBgPalette,...customBgPalette].forEach(c=>{
-    const b=document.createElement("button");
-    b.type="button"; b.className="swatch"; b.style.background=c; b.title=c;
-    b.addEventListener("click",()=>{
-      doc.bg={type:"solid",color:c,image:null,preset:null,dataURL:null,gif:null};
-      showSolidTools(true); pushHistory(); render();
-    });
-    bgSwatches.appendChild(b);
-  });
-}
-on(addBgSwatchBtn,"click",()=>{
-  const c=bgSolidColor.value;
-  if(!defaultBgPalette.includes(c)&&!customBgPalette.includes(c)) customBgPalette.push(c);
-  rebuildBgSwatches();
-});
-on(bgSolidColor,"input",()=>{
-  doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null,dataURL:null,gif:null};
-  pushHistory(); render();
-});
-
-/* ---------- Upload: PNG/JPG/GIF (animated) ---------- */
-function loadScriptLocal(src) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = src;
-    s.async = true;
-    s.onload = () => resolve(true);
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-}
-/* gifuct decoder lazy loader */
-function ensureGifDecodeLib() {
-  if (window.gifuct) return Promise.resolve(true);
-  return loadScriptLocal("./assets/libs/gifuct/gifuct.min.js")
-    .then(() => !!window.gifuct)
-    .catch(e => { console.error("gifuct load failed", e); return false; });
-}
-async function dataURLToU8(dataURL) {
-  const res = await fetch(dataURL);
-  return new Uint8Array(await res.arrayBuffer());
-}
-async function decodeGifBackground(dataURL, maxFrames=200) {
-  const ok = await ensureGifDecodeLib();
-  if (!ok) return null;
-
-  const u8 = await dataURLToU8(dataURL);
-  const { Gif } = window.gifuct;
-  const gif = new Gif(u8);
-  const frames = gif.decompressFrames(true);
-
-  const W = gif.raw.lsd.width, H = gif.raw.lsd.height;
-  const off = document.createElement("canvas");
-  off.width = W; off.height = H;
-  const ox = off.getContext("2d", { willReadFrequently:true });
-
-  const bitmaps = [];
-  const delays = [];
-  let total = 0;
-
-  for (let i=0;i<frames.length && i<maxFrames;i++){
-    const f = frames[i];
-    if (f.disposalType === 2) ox.clearRect(0,0,W,H);
-    const imgData = ox.createImageData(f.dims.width, f.dims.height);
-    imgData.data.set(f.patch);
-    ox.putImageData(imgData, f.dims.left, f.dims.top);
-
-    let bmp;
-    if (window.createImageBitmap) bmp = await createImageBitmap(off);
-    else {
-      const url = off.toDataURL("image/png");
-      bmp = await new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=url; });
-    }
-
-    bitmaps.push(bmp);
-    const delayMs = Math.max(10, (f.delay || 10) * 10);
-    delays.push(delayMs);
-    total += delayMs;
-  }
-  return { W, H, bitmaps, delays, totalMs: Math.max(total, 10) };
-}
-function gifFrameAt(g, tSec) {
-  if (!g?.bitmaps?.length) return 0;
-  const ms = Math.max(0, (tSec*1000) % g.totalMs);
-  let acc = 0;
-  for (let i=0;i<g.delays.length;i++){
-    acc += g.delays[i];
-    if (ms < acc) return i;
-  }
-  return g.bitmaps.length-1;
-}
-
-on(bgUpload,"change", async (e)=>{
-  const f = e.target.files?.[0]; if(!f) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const dataURL = String(reader.result || "");
-    try {
-      if (/^image\/gif$/i.test(f.type) || dataURL.startsWith("data:image/gif")) {
-        const decoded = await decodeGifBackground(dataURL);
-        if (decoded?.bitmaps?.length) {
-          doc.bg = { type:"gif", color:null, image:null, preset:null, dataURL, gif:decoded };
-        } else {
-          const im = new Image();
-          im.onload=()=>{ doc.bg={type:"image", color:null, image:im, preset:null, dataURL, gif:null}; render(); };
-          im.src = dataURL;
-        }
-      } else {
-        const im = new Image();
-        im.onload=()=>{ doc.bg={type:"image", color:null, image:im, preset:null, dataURL, gif:null}; render(); };
-        im.src = dataURL;
-      }
-      showSolidTools(false);
-      pushHistory();
-      render();
-    } catch (err) {
-      console.error("BG load failed:", err);
-    }
+on(bgUpload,"change",e=>{
+  const f=e.target.files?.[0]; if(!f)return;
+  const url=URL.createObjectURL(f);
+  const im=new Image();
+  im.onload=()=>{URL.revokeObjectURL(url);
+    doc.bg={type:"image",color:null,image:im,preset:null};
+    showSolidTools(false); render();
   };
-  reader.readAsDataURL(f);
+  im.src=url;
 });
 
-/* ---------- zoom / fit ---------- */
+/* zoom / fit */
 function setZoom(z){
   zoom=z; zoomSlider.value=String(z.toFixed(2));
   canvas.style.transform=`translate(-50%,-50%) scale(${z})`;
@@ -350,36 +220,84 @@ function fitZoom(){
 on(zoomSlider,"input",e=>setZoom(parseFloat(e.target.value)));
 on(fitBtn,"click",fitZoom);
 window.addEventListener("resize",fitZoom);
-window.addEventListener("orientationchange",()=>setTimeout(fitZoom,150));
 
-/* ---------- inspector pills (only one open section visible) ---------- */
+/* pills (only one open at a time) */
+const pillTabs = $$(".pill[data-acc]");
+const accFont   = $("#accFont"), accLayout = $("#accLayout"), accAnim = $("#accAnim");
 pillTabs.forEach(p=>{
   on(p,"click",()=>{
     const id=p.dataset.acc;
-    [accFont,accLayout,accAnim].forEach(a=>a.open = (a.id===id));
-    pillTabs.forEach(x=>x.classList.toggle("active",x===p));
-    inspectorBody.classList.add("open");
+    const target = $("#"+id);
+    const wasOpen = target.open;
+    [accFont,accLayout,accAnim].forEach(x=>x.open=false);
+    pillTabs.forEach(x=>x.classList.remove("active"));
+    if(!wasOpen){ target.open=true; p.classList.add("active"); }
   });
 });
 
-/* ---------- measure helpers ---------- */
-function measureTextWord(w, fontSizeOverride=null){
-  const size = fontSizeOverride ?? (w.size || defaults.size);
-  ctx.font = `${size}px ${w.font || defaults.font}`;
+/* text swatches */
+const defaultTextPalette = ["#FFFFFF","#FF3B30","#00E25B","#1E5BFF","#FFE45A","#FF65D5","#40F2F2","#000000"];
+let customTextPalette = [];
+function rebuildTextSwatches(){
+  textSwatches.innerHTML="";
+  [...defaultTextPalette, ...customTextPalette].forEach(c=>{
+    const b=document.createElement("button");
+    b.className="swatch"; b.style.background=c; b.title=c;
+    b.addEventListener("click",()=>{
+      fontColorInp.value = c;
+      forEachSelectedWord(w=>{ w.color = c; });
+      render();
+    });
+    textSwatches.appendChild(b);
+  });
+}
+addSwatchBtn && addSwatchBtn.addEventListener("click",()=>{
+  const c = fontColorInp.value || defaults.color;
+  if (!defaultTextPalette.includes(c) && !customTextPalette.includes(c)) customTextPalette.push(c);
+  rebuildTextSwatches();
+});
+rebuildTextSwatches();
+
+/* BG swatches */
+const defaultBgPalette=["#000000","#101010","#1a1a1a","#222222","#333333","#444444","#555555","#666666"];
+let customBgPalette=[];
+function rebuildBgSwatches(){
+  bgSwatches.innerHTML="";
+  [...defaultBgPalette,...customBgPalette].forEach(c=>{
+    const b=document.createElement("button");
+    b.className="swatch"; b.style.background=c; b.title=c;
+    b.addEventListener("click",()=>{
+      doc.bg={type:"solid",color:c,image:null,preset:null};
+      showSolidTools(true); render();
+    });
+    bgSwatches.appendChild(b);
+  });
+}
+on(addBgSwatchBtn,"click",()=>{
+  const c=bgSolidColor.value;
+  if(!defaultBgPalette.includes(c)&&!customBgPalette.includes(c)) customBgPalette.push(c);
+  rebuildBgSwatches();
+});
+on(bgSolidColor,"input",()=>{
+  doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null};
+  render();
+});
+rebuildBgSwatches();
+
+/* =======================================================
+   Metrics / auto-size
+======================================================= */
+function measureText(w){
+  ctx.font = `${w.size || defaults.size}px ${w.font || defaults.font}`;
   return ctx.measureText(w.text || "").width;
 }
-function lineHeight(line){
-  return Math.max(12, ...line.words.map(w => (w.size || defaults.size)));
-}
-function totalHeight(){
-  return doc.lines.map(lineHeight).reduce((s,h)=>s+h,0) + (doc.lines.length-1)*(doc.spacing.lineGap||defaults.lineGap);
-}
+function lineHeight(line){ return Math.max(12, ...line.words.map(w => (w.size || defaults.size))); }
 function lineWidth(line){
   const gap = doc.spacing.wordGap ?? defaults.wordGap;
-  return line.words.reduce((s,w)=> s + measureTextWord(w), 0) + Math.max(0,line.words.length-1)*gap;
+  return line.words.reduce((s,w)=> s + measureText(w), 0) + Math.max(0,line.words.length-1)*gap;
 }
 
-/* ---------- auto-size (per line, default ON) ---------- */
+/* Auto-size (per line) with live reflection in Size input */
 function autoSizeAllIfOn(){
   if(!autoSizeChk?.checked) return;
   const padX = 6, padY = 6;
@@ -387,12 +305,10 @@ function autoSizeAllIfOn(){
   const maxH = doc.res.h - padY*2;
   const L = Math.max(1, doc.lines.length);
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
-
   const perLineH = (maxH - (L-1)*lineGap)/L;
 
   doc.lines.forEach(line=>{
     let size = Math.floor(perLineH); if (!isFinite(size)) size = defaults.size;
-    let chosen = size;
     for(let s=size; s>=6; s-=0.5){
       const gap = doc.spacing.wordGap ?? defaults.wordGap;
       let w= -gap;
@@ -400,46 +316,20 @@ function autoSizeAllIfOn(){
         ctx.font = `${s}px ${word.font || defaults.font}`;
         w += ctx.measureText(word.text||"").width + gap;
       }
-      if (w <= maxW){ chosen = s; break; }
+      if (w <= maxW){
+        line.words.forEach(word=> word.size = s);
+        break;
+      }
     }
-    line.words.forEach(word=> word.size = chosen);
   });
 
-  // reflect the active selected word size in UI
-  if (selected) {
-    const w = doc.lines[selected.line]?.words[selected.word];
-    if (w && fontSizeInp) fontSizeInp.value = String(Math.round(w.size||defaults.size));
-  }
+  const wSel = selected ? doc.lines[selected.line]?.words[selected.word] : doc.lines[0]?.words?.[0];
+  if (wSel && fontSizeInp) fontSizeInp.value = Math.round(wSel.size || defaults.size);
 }
 
-/* ---------- ANIMATIONS ---------- */
-const ANIMS = [
-  { id:"slide",      name:"Slide In",             params:{direction:"Left",  speed:1} },
-  { id:"slideaway",  name:"Slide Away",           params:{direction:"Left",  speed:1} },
-  { id:"zoom",       name:"Zoom",                 params:{direction:"In",    speed:1} },
-  { id:"scroll",     name:"Scroll / Marquee",     params:{direction:"Left",  speed:1} },
-  { id:"pulse",      name:"Pulse / Breathe",      params:{scale:0.03, vy:4} },
-  { id:"wave",       name:"Wave",                 params:{ax:0.8, ay:1.4, cycles:1.0} },
-  { id:"jitter",     name:"Jitter",               params:{amp:0.10, freq:2.5} },
-  { id:"shake",      name:"Shake",                params:{amp:0.20, freq:2} },
-  { id:"colorcycle", name:"Color Cycle",          params:{speed:0.5, start:"#ff0000"} },
-  { id:"rainbow",    name:"Rainbow Sweep",        params:{speed:0.7, start:"#0000ff"} },
-  { id:"sweep",      name:"Highlight Sweep",      params:{speed:0.7, width:0.25} },
-  { id:"flicker",    name:"Flicker",              params:{strength:0.5} },
-  { id:"strobe",     name:"Strobe",               params:{rate:3} },
-  { id:"glow",       name:"Glow Pulse",           params:{intensity:0.6} },
-  { id:"heartbeat",  name:"Heartbeat",            params:{rate:1.2} },
-  { id:"ripple",     name:"Ripple",               params:{amp:1.0, freq:2.0} },
-  { id:"typewriter", name:"Typewriter",           params:{rate:1} },
-  { id:"scramble",   name:"Scramble / Decode",    params:{rate:1} },
-  { id:"popcorn",    name:"Popcorn",              params:{rate:1} },
-  { id:"fadeout",    name:"Fade Out",             params:{} },
-];
-function animDef(id){ return ANIMS.find(a=>a.id===id); }
-function cloneAnims(src){ return src.map(a=>({ id:a.id, params:{...a.params} })); }
-function resolveWordAnims(word){
-  return (word.anims && word.anims.length) ? word.anims : (doc.anims || []);
-}
+/* =======================================================
+   Animation runtime
+======================================================= */
 function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
 function colorToHue(hex){
   const c = (hex||"#fff").replace("#","");
@@ -453,34 +343,29 @@ function colorToHue(hex){
   }
   return Math.round(h*360);
 }
+function resolveWordAnims(word){ return (word.anims && word.anims.length) ? word.anims : (doc.anims || []); }
 
-/* The runtime parameterization */
 function animatedProps(base, word, t, totalDur){
   const props = { x:base.x, y:base.y, scale:1, alpha:1, text:word.text||"", color:word.color, dx:0, dy:0, shadow:null, gradient:null, perChar:null };
-  const active = resolveWordAnims(word);
-  const get = id => active.find(a=>a.id===id);
+  const get = id => resolveWordAnims(word).find(a=>a.id===id);
 
-  // Scroll
-  const scroll = get("scroll");
-  if (scroll) {
-    const dir = (scroll.params.direction || "Left");
-    const sp  = Number(scroll.params.speed || 1);
-    const v = 20 * sp;
-    if(dir==="Left")  props.dx -= (t * v) % (doc.res.w + 200);
-    if(dir==="Right") props.dx += (t * v) % (doc.res.w + 200);
-    if(dir==="Up")    props.dy -= (t * v) % (doc.res.h + 200);
-    if(dir==="Down")  props.dy += (t * v) % (doc.res.h + 200);
+  // Flow (gentle horizontal drift)
+  const flow = get("flow");
+  if (flow) {
+    const amp = Number(flow.params.amp || 3);
+    const freq= Number(flow.params.freq || 0.4);
+    props.dx += Math.sin(t * 2 * Math.PI * freq) * amp;
   }
 
-  // Zoom
-  const zm = get("zoom");
-  if (zm) {
-    const dir = (zm.params.direction || "In");
-    const sp  = Number(zm.params.speed || 1);
-    const k = 0.4 * sp;
-    props.scale *= (dir === "In")
-      ? (1 + k * easeOutCubic(Math.min(1, t / 1)))
-      : Math.max(0.2, 1 + k * (1 - Math.min(1, t / 1)) * (-1));
+  // Wave
+  const wave = get("wave");
+  if (wave) {
+    const ax = Number(wave.params.ax || 0.8);
+    const ay = Number(wave.params.ay || 1.4);
+    const cyc= Number(wave.params.cycles || 1.0);
+    const ph = cyc * 2 * Math.PI * t;
+    props.dx += Math.sin(ph + base.x * 0.05) * ax * 4;
+    props.dy += Math.sin(ph + base.y * 0.06) * ay * 4;
   }
 
   // Slide In
@@ -515,17 +400,30 @@ function animatedProps(base, word, t, totalDur){
     }
   }
 
-  // Fade Out
-  const fout = get("fadeout");
-  if (fout && totalDur) {
-    const tail = 0.2 * totalDur;
-    if (t > totalDur - tail) {
-      const r = (t - (totalDur - tail)) / tail;
-      props.alpha *= Math.max(0, 1 - r);
-    }
+  // Zoom
+  const zm = get("zoom");
+  if (zm) {
+    const dir = (zm.params.direction || "In");
+    const sp  = Number(zm.params.speed || 1);
+    const k = 0.4 * sp;
+    props.scale *= (dir === "In")
+      ? (1 + k * easeOutCubic(Math.min(1, t / 1)))
+      : Math.max(0.2, 1 + k * (1 - Math.min(1, t / 1)) * (-1));
   }
 
-  // Pulse
+  // Scroll
+  const scroll = get("scroll");
+  if (scroll) {
+    const dir = (scroll.params.direction || "Left");
+    const sp  = Number(scroll.params.speed || 1);
+    const v = 20 * sp;
+    if(dir==="Left")  props.dx -= (t * v) % (doc.res.w + 200);
+    if(dir==="Right") props.dx += (t * v) % (doc.res.w + 200);
+    if(dir==="Up")    props.dy -= (t * v) % (doc.res.h + 200);
+    if(dir==="Down")  props.dy += (t * v) % (doc.res.h + 200);
+  }
+
+  // Pulse (scale + slight vertical bob)
   const pulse = get("pulse");
   if (pulse) {
     const s = Number(pulse.params.scale || 0.03);
@@ -534,32 +432,7 @@ function animatedProps(base, word, t, totalDur){
     props.dy    += Math.sin(t * 2 * Math.PI) * vy;
   }
 
-  // Wave
-  const wave = get("wave");
-  if (wave) {
-    const ax = Number(wave.params.ax || 0.8);
-    const ay = Number(wave.params.ay || 1.4);
-    const cyc= Number(wave.params.cycles || 1.0);
-    const ph = cyc * 2 * Math.PI * t;
-    props.dx += Math.sin(ph + base.x * 0.05) * ax * 4;
-    props.dy += Math.sin(ph + base.y * 0.06) * ay * 4;
-  }
-
-  // Jitter / Shake
-  const jit = get("jitter");
-  if (jit) {
-    const a = Number(jit.params.amp || 0.10), f = Number(jit.params.freq || 2.5);
-    props.dx += Math.sin(t * 2 * Math.PI * f) * a * 3;
-    props.dy += Math.cos(t * 2 * Math.PI * f) * a * 3;
-  }
-  const shake = get("shake");
-  if (shake) {
-    const a = Number(shake.params.amp || 0.20) * 5, f = Number(shake.params.freq || 2);
-    props.dx += Math.sin(t * 2 * Math.PI * f) * a;
-    props.dy += Math.cos(t * 2 * Math.PI * f) * a * 0.6;
-  }
-
-  // Typewriter / Scramble / Popcorn
+  // Typewriter / Scramble / Popcorn per-char
   const type = get("typewriter");
   if (type && props.text) {
     const rate = Number(type.params.rate || 1);
@@ -593,24 +466,28 @@ function animatedProps(base, word, t, totalDur){
     props.perChar ??= {}; props.perChar.alpha = alphaArr;
   }
 
-  // Color Cycle / Rainbow gradient / Sweep
+  // Color Cycle (per-word)
   const cc = get("colorcycle");
   if (cc) {
-    const sp = Number(cc.params.speed || 0.5);
-    const base = (cc.params.start || "#ff0000");
+    const sp = Number(cc.params.speed || 0.6);
+    const base = (cc.params.start || "#0033ff");
     const hueBase = colorToHue(base);
     const hue = Math.floor((hueBase + (t * 60 * sp)) % 360);
     props.color = `hsl(${hue}deg 100% 60%)`;
   }
+
+  // Rainbow gradient (BOOKTOK)
   const rainbow = get("rainbow");
-  if (rainbow) {
-    const speed = Number(rainbow.params.speed || 0.5);
-    const base = (rainbow.params.start || "#ff00ff");
+  if (rainbow && (props.text||"").length) {
+    const speed = Number(rainbow.params.speed || 0.75);
+    const base = (rainbow.params.start || "#0033ff");
     const hueBase = colorToHue(base);
     props.gradient = { type: "rainbow", speed, base: hueBase };
   }
+
+  // Highlight sweep
   const sweep = get("sweep");
-  if (sweep) {
+  if (sweep && (props.text||"").length) {
     const speed = Number(sweep.params.speed || 0.7), width = Number(sweep.params.width || 0.25);
     props.gradient = { type: "sweep", speed, width };
   }
@@ -618,7 +495,7 @@ function animatedProps(base, word, t, totalDur){
   // Flicker / Strobe / Glow
   const flicker = get("flicker");
   if (flicker) {
-    const str = clamp(Number(flicker.params.strength || 0.5), 0, 1);
+    const str = Math.max(0, Math.min(1, Number(flicker.params.strength || 0.5)));
     const n = (Math.sin(t * 23.7) + Math.sin(t * 17.3)) * 0.25 + 0.5;
     props.alpha *= (1 - str * 0.6) + n * str * 0.6;
   }
@@ -645,72 +522,68 @@ function animatedProps(base, word, t, totalDur){
     props.perChar ??= {}; props.perChar.dy = arr;
   }
 
+  // Fade out tail
+  const fout = get("fadeout");
+  if (fout && totalDur) {
+    const tail = 0.2 * totalDur;
+    if (t > totalDur - tail) {
+      const r = (t - (totalDur - tail)) / tail;
+      props.alpha *= Math.max(0, 1 - r);
+    }
+  }
+
   return props;
 }
 
-/* ---------- FULL render ---------- */
-function render(t=0, totalDur=null){
+/* =======================================================
+   Render
+======================================================= */
+function render(t=0, totalDur=getDuration()){
   const W = canvas.width  = doc.res.w;
   const H = canvas.height = doc.res.h;
 
-  // BG (always paint a base so preview isn’t blank during image loads)
+  // BG (solid base protects against flicker while images load)
   ctx.clearRect(0,0,W,H);
-
-  if (doc.bg?.type === "solid") {
-    ctx.fillStyle = doc.bg.color || "#000";
-    ctx.fillRect(0,0,W,H);
-
-  } else if (doc.bg?.type === "gif" && doc.bg.gif?.bitmaps?.length) {
-    ctx.fillStyle = "#000"; ctx.fillRect(0,0,W,H);
-    const tt = Number.isFinite(t) ? t : ((performance.now() % (doc.bg.gif.totalMs||1000)) / 1000);
-    const idx = gifFrameAt(doc.bg.gif, tt);
-    const bmp = doc.bg.gif.bitmaps[idx];
-    try { ctx.drawImage(bmp, 0, 0, W, H); } catch{}
-
-  } else if (doc.bg?.image) {
-    try { ctx.drawImage(doc.bg.image,0,0,W,H); } catch{}
-
-  } else if (doc.bg?.preset) {
+  ctx.fillStyle = (doc.bg?.type==="solid" ? (doc.bg.color||"#000") : "#000");
+  ctx.fillRect(0,0,W,H);
+  if (doc.bg?.image) { try { ctx.drawImage(doc.bg.image,0,0,W,H); } catch {} }
+  else if (doc.bg?.preset && doc.bg.type==="preset") {
     const im = new Image(); im.crossOrigin="anonymous"; im.src = doc.bg.preset;
     im.onload = ()=>{ doc.bg.image = im; render(t,totalDur); };
-    ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
-  } else {
-    ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
   }
 
-  // text
+  // text & auto-size
   autoSizeAllIfOn();
 
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
   const wordGap = doc.spacing.wordGap ?? defaults.wordGap;
 
-  const heights = doc.lines.map(lineHeight);
+  const heights = doc.lines.map(line => Math.max(12, ...line.words.map(w => (w.size || defaults.size))));
   const contentH = heights.reduce((s,h)=>s+h,0) + (doc.lines.length-1)*lineGap;
 
   let y;
-  const vAlign = (doc.style?.valign||defaults.valign);
-  if (vAlign === "top") y = 4;
-  else if (vAlign === "bottom") y = H - contentH - 4;
+  const valign = (doc.style?.valign||defaults.valign);
+  if (valign === "top") y = 4;
+  else if (valign === "bottom") y = H - contentH - 4;
   else y = (H - contentH)/2;
-
-  const hAlign = (doc.style?.align || defaults.align);
 
   doc.lines.forEach((line, li)=>{
     const lh = heights[li];
     const wLine = lineWidth(line);
-
     let x;
-    if (hAlign === "left") x = 4;
-    else if (hAlign === "right") x = W - wLine - 4;
+    const align = (doc.style?.align || defaults.align);
+    if (align === "left") x = 4;
+    else if (align === "right") x = W - wLine - 4;
     else x = (W - wLine)/2;
 
     line.words.forEach((w, wi)=>{
       const base = { x, y: y + lh*0.85 };
+
       const props = animatedProps(base, w, t, totalDur);
       const txt = props.text || "";
 
       ctx.save();
-      ctx.globalAlpha = clamp(props.alpha, 0, 1);
+      ctx.globalAlpha = Math.max(0, Math.min(1, props.alpha));
       ctx.textBaseline="alphabetic";
       const fsize = (w.size||defaults.size) * (props.scale||1);
       const fontSpec = `${fsize}px ${w.font||defaults.font}`;
@@ -719,8 +592,9 @@ function render(t=0, totalDur=null){
       if (props.shadow) { ctx.shadowBlur = props.shadow.blur; ctx.shadowColor = props.shadow.color || (w.color||defaults.color); }
       else ctx.shadowBlur = 0;
 
-      const drawX = base.x + (props.dx||0);
-      const drawY = base.y + (props.dy||0);
+      const fx = Number(w.fx || 0), fy = Number(w.fy || 0);
+      const drawX = base.x + (props.dx||0) + fx;
+      const drawY = base.y + (props.dy||0) + fy;
 
       let fillStyle = props.color || (w.color || defaults.color);
       if (props.gradient && txt.length) {
@@ -731,7 +605,7 @@ function render(t=0, totalDur=null){
           for (let i=0;i<=6;i++){ const stop=i/6; const hue=Math.floor((baseHue+stop*360)%360); g.addColorStop(stop, `hsl(${hue}deg 100% 60%)`); }
           fillStyle = g;
         } else if (props.gradient.type === "sweep") {
-          const band = clamp(props.gradient.width || 0.25, 0.05, 0.8);
+          const band = Math.max(0.05, Math.min(0.8, props.gradient.width || 0.25));
           const pos  = (t * (props.gradient.speed || 0.7) * 1.2) % 1;
           const g = ctx.createLinearGradient(drawX, drawY, drawX + wordWidth, drawY);
           const a = Math.max(0, pos - band/2), b = Math.min(1, pos + band/2);
@@ -758,24 +632,24 @@ function render(t=0, totalDur=null){
         ctx.fillText(txt, drawX, drawY);
       }
 
-      // selection boxes (visible in edit mode)
-      if (mode==="edit") {
-        const thisKey = `${li}:${wi}`;
+      const thisKey = `${li}:${wi}`;
+      if (doc.multi.has(thisKey)) {
         const ww = ctx.measureText(w.text||"").width;
         ctx.save();
-        if (doc.multi.has(thisKey)) {
-          ctx.strokeStyle = "rgba(0,255,255,0.95)"; // cyan
-        } else if (selected && selected.line===li && selected.word===wi) {
-          ctx.strokeStyle = "rgba(255,0,255,0.95)"; // magenta
-        } else ctx.strokeStyle = "rgba(0,0,0,0)";
-        if (ctx.strokeStyle !== "rgba(0,0,0,0)") {
-          ctx.lineWidth = 1; ctx.setLineDash([3,2]);
-          ctx.strokeRect(x-2, (y+lh*0.85)-lh, ww+4, lh+4);
-        }
+        ctx.strokeStyle = "rgba(0,255,255,0.95)";
+        ctx.lineWidth = 1; ctx.setLineDash([3,2]);
+        ctx.strokeRect(drawX-2, (drawY)-lh, ww+4, lh+4);
+        ctx.restore();
+      } else if (selected && selected.line===li && selected.word===wi && mode==="edit") {
+        const ww = ctx.measureText(w.text||"").width;
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,0,255,0.95)";
+        ctx.lineWidth = 1; ctx.setLineDash([3,2]);
+        ctx.strokeRect(drawX-2, (drawY)-lh, ww+4, lh+4);
         ctx.restore();
       }
 
-      x += measureTextWord(w) + wordGap;
+      x += measureText(w) + wordGap;
       ctx.restore();
     });
 
@@ -783,20 +657,31 @@ function render(t=0, totalDur=null){
   });
 }
 
-/* ---------- selection / multi-select ---------- */
+/* =======================================================
+   Selection / input / typing / dragging
+======================================================= */
 function keyOf(li, wi){ return `${li}:${wi}`; }
-canvas.addEventListener("click",(e)=>{
-  const rect=canvas.getBoundingClientRect();
-  const px=(e.clientX-rect.left)/zoom, py=(e.clientY-rect.top)/zoom;
-
+function forEachSelectedWord(fn){
+  if (doc.multi.size){
+    doc.multi.forEach(k=>{
+      const [li,wi] = k.split(":").map(Number);
+      const w = doc.lines[li]?.words[wi]; if (w) fn(w, li, wi);
+    });
+  } else if (selected){
+    const w = doc.lines[selected.line]?.words[selected.word];
+    if (w) fn(w, selected.line, selected.word);
+  }
+}
+function hitTestWord(px, py){
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
-  const heights = doc.lines.map(lineHeight);
+
+  const heights = doc.lines.map(line => Math.max(12, ...line.words.map(w => (w.size || defaults.size))));
   const contentH = heights.reduce((s,h)=>s+h,0) + (doc.lines.length-1)*lineGap;
+
   let y;
   const valign = (doc.style?.valign || defaults.valign);
   if (valign==="top") y=4; else if (valign==="bottom") y=doc.res.h-contentH-4; else y=(doc.res.h-contentH)/2;
 
-  let hit = null;
   for (let li=0; li<doc.lines.length; li++){
     const lh = heights[li];
     const wLine = lineWidth(doc.lines[li]);
@@ -808,43 +693,43 @@ canvas.addEventListener("click",(e)=>{
 
     for (let wi=0; wi<doc.lines[li].words.length; wi++){
       const w = doc.lines[li].words[wi];
-      const ww = measureTextWord(w);
-      const bx = x-2, by = (y+lh*0.85)-lh, bw = ww+4, bh = lh+4;
-      if (px>=bx && px<=bx+bw && py>=by && py<=by+bh){ hit = { line:li, word:wi }; break; }
+      const ww = measureText(w);
+      const fx = Number(w.fx || 0), fy = Number(w.fy || 0);
+      const bx = x-2 + fx, by = (y+lh*0.85)-lh + fy, bw = ww+4, bh = lh+4;
+      if (px>=bx && px<=bx+bw && py>=by && py<=by+bh) return { line:li, word:wi };
       x += ww + (doc.spacing.wordGap ?? defaults.wordGap);
     }
-    if (hit) break;
     y += lh + lineGap;
   }
+  return null;
+}
+
+/* Click to select (Shift toggles multi) */
+canvas.addEventListener("click",(e)=>{
+  const rect=canvas.getBoundingClientRect();
+  const px=(e.clientX-rect.left)/zoom, py=(e.clientY-rect.top)/zoom;
+  const hit = hitTestWord(px, py);
 
   if (hit) {
     const k = keyOf(hit.line, hit.word);
-    if (multiToggle?.classList.contains("active") || e.shiftKey || e.metaKey || e.ctrlKey) {
+    if (e.shiftKey) {
       if (doc.multi.has(k)) doc.multi.delete(k);
       else doc.multi.add(k);
       selected = hit;
     } else {
-      doc.multi.clear();
-      selected = hit;
+      doc.multi.clear(); selected = hit;
     }
-  } else {
-    if (!multiToggle?.classList.contains("active")){
-      doc.multi.clear();
-      selected = null;
-    }
+    buildAnimationsUI(); // refresh selection
+    render(mode==="preview" ? ((performance.now()-startT)/1000)%getDuration() : 0);
   }
-  render(0, null);
-  buildAnimationsUI(); // refresh anim panel per selection
 });
 
-/* ---------- typing ---------- */
+/* Typing */
 document.addEventListener("keydown",(e)=>{
   if (mode!=="edit") return;
-
   const targets = doc.multi.size
     ? Array.from(doc.multi).map(k=>k.split(":").map(Number))
     : (selected ? [[selected.line, selected.word]] : []);
-
   if (!targets.length) return;
 
   if (e.key.length===1 && !e.metaKey && !e.ctrlKey){
@@ -853,164 +738,146 @@ document.addEventListener("keydown",(e)=>{
       const w = doc.lines[li]?.words[wi]; if(!w) return;
       w.text = (w.text || "") + e.key;
     });
-    pushHistory();
-    autoSizeAllIfOn();
-    render(0,null);
+    autoSizeAllIfOn(); render();
   } else if (e.key==="Backspace"){
     e.preventDefault();
     targets.forEach(([li,wi])=>{
       const w = doc.lines[li]?.words[wi]; if(!w) return;
       w.text = (w.text || "").slice(0,-1);
     });
-    pushHistory();
-    autoSizeAllIfOn();
-    render(0,null);
+    autoSizeAllIfOn(); render();
   }
 });
 
-/* ---------- stage actions ---------- */
-addWordBtn && addWordBtn.addEventListener("click",()=>{
+/* Add/line/delete */
+addWordBtn?.addEventListener("click",()=>{
   const li = selected ? selected.line : (doc.lines.length-1);
   const line = doc.lines[li] || (doc.lines[li]={words:[]});
-  line.words.push({ text:"NEW", color:defaults.color, font:defaults.font, size:defaults.size });
+  line.words.push({ text:"NEW", color:defaults.color, font:defaults.font, size:defaults.size, anims:[...FLOW_BASE, COLORCYCLE("#49a9ff")] });
   selected = { line: li, word: line.words.length-1 };
-  pushHistory(); render(0,null);
+  render();
 });
-addLineBtn && addLineBtn.addEventListener("click",()=>{
-  doc.lines.push({ words:[{ text:"LINE", color:defaults.color, font:defaults.font, size:defaults.size }] });
+addLineBtn?.addEventListener("click",()=>{
+  doc.lines.push({ words:[{ text:"LINE", color:defaults.color, font:defaults.font, size:defaults.size, anims:[...FLOW_BASE, COLORCYCLE("#ff65d5")] }] });
   selected = { line: doc.lines.length-1, word: 0 };
-  pushHistory(); render(0,null);
+  render();
 });
-delWordBtn && delWordBtn.addEventListener("click",()=>{
+delWordBtn?.addEventListener("click",()=>{
   if (!selected) return;
   const line = doc.lines[selected.line];
   line.words.splice(selected.word,1);
   if (!line.words.length) doc.lines.splice(selected.line,1);
-  doc.multi.clear();
-  selected = null;
-  pushHistory(); render(0,null);
+  doc.multi.clear(); selected = null;
+  render();
 });
 
-/* ---------- Multi-toggle ---------- */
-multiToggle?.addEventListener("click",()=>{
+/* Font / size / color inputs */
+fontSelect?.addEventListener("change",()=>{ forEachSelectedWord(w=>{ w.font = fontSelect.value || defaults.font; }); autoSizeAllIfOn(); render(); });
+fontSizeInp?.addEventListener("input",()=>{ const v = Math.max(6, Math.min(64, parseInt(fontSizeInp.value||`${defaults.size}`,10))); forEachSelectedWord(w=>{ w.size = v; }); render(); });
+autoSizeChk?.addEventListener("change",()=>{ autoSizeAllIfOn(); render(); });
+fontColorInp?.addEventListener("input",()=>{ const c = fontColorInp.value || defaults.color; forEachSelectedWord(w=>{ w.color = c; }); render(); });
+
+/* Spacing & alignment */
+lineGapInp?.addEventListener("input",()=>{ doc.spacing.lineGap = Math.max(0, Math.min(40, parseInt(lineGapInp.value||"4",10))); autoSizeAllIfOn(); render(); });
+wordGapInp?.addEventListener("input",()=>{ doc.spacing.wordGap = Math.max(0, Math.min(40, parseInt(wordGapInp.value||"6",10))); autoSizeAllIfOn(); render(); });
+alignBtns.forEach(b=> b.addEventListener("click",()=>{
+  if (manualDrag.enabled) return;
+  alignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active");
+  doc.style ??= {}; doc.style.align = b.dataset.align || "center"; render();
+}));
+valignBtns.forEach(b=> b.addEventListener("click",()=>{
+  if (manualDrag.enabled) return;
+  valignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active");
+  doc.style ??= {}; doc.style.valign = b.dataset.valign || "middle"; render();
+}));
+
+/* Multi toggle visual only (Shift still toggles selection) */
+multiToggle?.addEventListener("click", ()=> {
   multiToggle.classList.toggle("active");
 });
 
-/* ---------- font / size / color ---------- */
-function forEachSelectedWord(fn){
-  if (doc.multi.size){
-    doc.multi.forEach(k=>{
-      const [li,wi] = k.split(":").map(Number);
-      const w = doc.lines[li]?.words[wi]; if (w) fn(w, li, wi);
-    });
-  } else if (selected){
-    const w = doc.lines[selected.line]?.words[selected.word];
-    if (w) fn(w, selected.line, selected.word);
-  }
-  pushHistory();
-}
-fontSelect && fontSelect.addEventListener("change",()=>{
-  forEachSelectedWord(w=>{ w.font = fontSelect.value || defaults.font; });
-  autoSizeAllIfOn(); render(0,null);
-});
-fontSizeInp && fontSizeInp.addEventListener("input",()=>{
-  const v = clamp(parseInt(fontSizeInp.value||`${defaults.size}`,10)||defaults.size,6,64);
-  forEachSelectedWord(w=>{ w.size = v; });
-  render(0,null);
-});
-autoSizeChk && autoSizeChk.addEventListener("change",()=>{ autoSizeAllIfOn(); render(0,null); });
-fontColorInp && fontColorInp.addEventListener("input",()=>{
-  const c = fontColorInp.value || defaults.color;
-  forEachSelectedWord(w=>{ w.color = c; });
-  render(0,null);
-});
-
-/* ---------- text color swatches ---------- */
-const defaultTextPalette = ["#FFFFFF","#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF","#00FFFF","#000000"];
-let customTextPalette = [];
-function rebuildTextSwatches(){
-  textSwatches.innerHTML = "";
-  [...defaultTextPalette, ...customTextPalette].forEach(c=>{
-    const b=document.createElement("button");
-    b.type="button"; b.className="swatch"; b.style.background=c; b.title=c;
-    b.addEventListener("click",()=>{
-      fontColorInp.value = c;
-      forEachSelectedWord(w=>{ w.color = c; });
-      render(0,null);
-    });
-    b.addEventListener("contextmenu",(e)=>{
-      e.preventDefault();
-      const idx = customTextPalette.indexOf(c);
-      if (idx>=0){ customTextPalette.splice(idx,1); rebuildTextSwatches(); }
-    });
-    textSwatches.appendChild(b);
+/* Manual drag toggle */
+manualDragBtn?.addEventListener("click", () => {
+  manualDrag.enabled = !manualDrag.enabled;
+  manualDragBtn.classList.toggle("active", manualDrag.enabled);
+  document.querySelector(".stage .canvas-wrap")?.classList.toggle("drag-ready", manualDrag.enabled);
+  // Disable alignment buttons when manual drag is enabled
+  document.querySelectorAll("[data-align],[data-valign]").forEach(b => {
+    b.disabled = manualDrag.enabled;
+    b.classList.toggle("disabled", manualDrag.enabled);
   });
-}
-addSwatchBtn && addSwatchBtn.addEventListener("click",()=>{
-  const c = fontColorInp.value || defaults.color;
-  if (!defaultTextPalette.includes(c) && !customTextPalette.includes(c)) customTextPalette.push(c);
-  rebuildTextSwatches();
 });
-rebuildTextSwatches();
 
-/* ---------- spacing & alignment ---------- */
-lineGapInp && lineGapInp.addEventListener("input",()=>{
-  doc.spacing.lineGap = clamp(parseInt(lineGapInp.value||"4",10)||4,0,40);
-  autoSizeAllIfOn(); pushHistory(); render(0,null);
-});
-wordGapInp && wordGapInp.addEventListener("input",()=>{
-  doc.spacing.wordGap = clamp(parseInt(wordGapInp.value||"6",10)||6,0,40);
-  autoSizeAllIfOn(); pushHistory(); render(0,null);
-});
-alignBtns.forEach(b=> b.addEventListener("click",()=>{
-  alignBtns.forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  doc.style ??= {};
-  doc.style.align = b.dataset.align || "center";
-  pushHistory(); render(0,null);
-}));
-valignBtns.forEach(b=> b.addEventListener("click",()=>{
-  valignBtns.forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  doc.style ??= {};
-  doc.style.valign = b.dataset.valign || "middle";
-  pushHistory(); render(0,null);
-}));
+/* Cmd/Ctrl = temporary drag */
+canvas.addEventListener("pointerdown", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / zoom;
+  const py = (e.clientY - rect.top) / zoom;
 
-/* ---------- Animations UI ---------- */
+  let willDrag = manualDrag.enabled || e.ctrlKey || e.metaKey;
+  if (!willDrag) return;
+
+  const pick = hitTestWord(px, py);
+  if (!selected && !doc.multi.size && pick) selected = {line:pick.line, word:pick.word};
+
+  const targets = doc.multi.size
+    ? Array.from(doc.multi).map(k => k.split(":").map(Number))
+    : (selected ? [[selected.line, selected.word]] : []);
+  if (!targets.length) return;
+
+  manualDrag.active = true;
+  manualDrag.startX = e.clientX;
+  manualDrag.startY = e.clientY;
+  manualDrag.targets = targets;
+  manualDrag.startOffsets = targets.map(([li, wi]) => {
+    const w = doc.lines[li]?.words[wi];
+    return { fx: Number(w?.fx || 0), fy: Number(w?.fy || 0) };
+  });
+
+  canvas.setPointerCapture(e.pointerId);
+  document.body.classList.add("dragging");
+  e.preventDefault();
+});
+window.addEventListener("pointermove", (e) => {
+  if (!manualDrag.active) return;
+  const dx = (e.clientX - manualDrag.startX) / zoom;
+  const dy = (e.clientY - manualDrag.startY) / zoom;
+  manualDrag.targets.forEach(([li, wi], i) => {
+    const w = doc.lines[li]?.words[wi]; if (!w) return;
+    const start = manualDrag.startOffsets[i];
+    w.fx = (start.fx + dx);
+    w.fy = (start.fy + dy);
+  });
+  render(mode === "preview" ? ((performance.now() - startT) / 1000) % getDuration() : 0);
+});
+window.addEventListener("pointerup", (e) => {
+  if (!manualDrag.active) return;
+  manualDrag.active = false; manualDrag.targets = []; manualDrag.startOffsets = [];
+  document.body.classList.remove("dragging");
+  try { canvas.releasePointerCapture(e.pointerId); } catch {}
+});
+
+/* =======================================================
+   Animations UI (live update)
+======================================================= */
+function cloneAnims(src){ return src.map(a=>({ id:a.id, params:{...a.params} })); }
 function buildAnimationsUI(){
   animList.innerHTML = "";
-
-  // choose “edit buffer”: prefer focused word, else global doc.anims
-  let bufferSource = null, buffer = null;
-  if (selected) {
-    const w = doc.lines[selected.line]?.words[selected.word];
-    if (w) { bufferSource = w; buffer = w.anims || []; }
-  }
-  if (!buffer) { bufferSource = doc; buffer = doc.anims || []; }
+  doc.anims = doc.anims || [];
 
   ANIMS.forEach(def=>{
-    const row = document.createElement("div");
-    row.className = "anim-row";
+    const row = document.createElement("div"); row.className="anim-row";
+    const left = document.createElement("div"); left.className="anim-left";
+    const chk = document.createElement("input"); chk.type="checkbox"; chk.id = `anim_${def.id}`;
+    chk.checked = !!doc.anims.find(a=>a.id===def.id);
+    const lbl = document.createElement("label"); lbl.setAttribute("for", chk.id); lbl.textContent = def.name;
+    const gear = document.createElement("button"); gear.type="button"; gear.className="button tiny"; gear.textContent="⚙";
 
-    const left = document.createElement("div");
-    left.className = "anim-left";
-
-    const chk = document.createElement("input");
-    chk.type = "checkbox";
-    chk.id = `anim_${def.id}`;
-    chk.checked = !!buffer.find(a=>a.id===def.id);
-
-    const lbl = document.createElement("label");
-    lbl.setAttribute("for", chk.id);
-    lbl.textContent = def.name;
-
-    const params = document.createElement("div");
-    params.className = "anim-params";
+    left.appendChild(chk); left.appendChild(lbl); left.appendChild(gear);
+    const params = document.createElement("div"); params.className="anim-params";
     params.style.display = chk.checked ? "block" : "none";
 
-    // params controls
-    const currentParams = (buffer.find(a=>a.id===def.id)?.params) || def.params;
+    const cur = doc.anims.find(a=>a.id===def.id)?.params || def.params;
     Object.entries(def.params).forEach(([k,v])=>{
       const p = document.createElement("div"); p.className="p";
       const la = document.createElement("label"); la.textContent = k[0].toUpperCase()+k.slice(1);
@@ -1020,338 +887,273 @@ function buildAnimationsUI(){
         const opts = (def.id==="zoom") ? ["In","Out"] : ["Left","Right","Up","Down"];
         opts.forEach(op=>{
           const o=document.createElement("option"); o.value=op; o.textContent=op;
-          if ((currentParams[k]??v)===op) o.selected = true;
+          if ((cur[k]??v)===op) o.selected = true;
           inp.appendChild(o);
         });
       } else if (k==="start"){
-        inp = document.createElement("input"); inp.type="color"; inp.value = currentParams[k] ?? v;
+        inp = document.createElement("input"); inp.type="color"; inp.value = cur[k] ?? v;
       } else {
-        inp = document.createElement("input"); inp.type="number"; inp.step="0.1"; inp.value = currentParams[k] ?? v;
+        inp = document.createElement("input"); inp.type="number"; inp.step="0.1"; inp.value = cur[k] ?? v;
       }
       inp.addEventListener("input",()=>{
-        // real-time update
-        const arr = bufferSource === doc ? (doc.anims ||= []) : (bufferSource.anims ||= []);
-        let a = arr.find(x=>x.id===def.id);
-        if (!a) { a = { id:def.id, params:{...def.params} }; arr.push(a); }
-        a.params[k] = (inp.type==="number") ? +inp.value : inp.value;
-        render(mode==="preview" ? (performance.now()-startT)/1000 % getDuration() : 0, getDuration());
+        const a = doc.anims.find(x=>x.id===def.id);
+        if (a) a.params[k] = (inp.type==="number") ? +inp.value : inp.value;
+        render(mode==="preview" ? ((performance.now()-startT)/1000)%getDuration() : 0);
       });
       p.appendChild(la); p.appendChild(inp); params.appendChild(p);
     });
 
     chk.addEventListener("change",()=>{
-      const arr = bufferSource === doc ? (doc.anims ||= []) : (bufferSource.anims ||= []);
-      const has = !!arr.find(a=>a.id===def.id);
-      if (chk.checked && !has){
-        arr.push({ id:def.id, params:{...def.params} });
-        params.style.display = "block";
-      } else if (!chk.checked && has){
-        const idx = arr.findIndex(a=>a.id===def.id);
-        if (idx>=0) arr.splice(idx,1);
-        params.style.display = "none";
-      }
-      pushHistory();
-      render(mode==="preview" ? (performance.now()-startT)/1000 % getDuration() : 0, getDuration());
+      const has = !!doc.anims.find(a=>a.id===def.id);
+      if (chk.checked && !has){ doc.anims.push({ id:def.id, params:{...def.params} }); params.style.display = "block"; }
+      else if (!chk.checked && has){ doc.anims = doc.anims.filter(a=>a.id!==def.id); params.style.display = "none"; }
+      render(mode==="preview" ? ((performance.now()-startT)/1000)%getDuration() : 0);
     });
+    gear.addEventListener("click",()=> params.style.display = params.style.display==="none" ? "block" : "none");
 
-    left.appendChild(chk);
-    left.appendChild(lbl);
+    row.appendChild(left); row.appendChild(params); animList.appendChild(row);
+  });
 
-    row.appendChild(left);
-    row.appendChild(params);
-    animList.appendChild(row);
+  // Bulk apply
+  $("#applySelectedAnimBtn")?.addEventListener("click", ()=>{
+    const pack = cloneAnims(doc.anims);
+    if (doc.multi.size){
+      doc.multi.forEach(k=>{
+        const [li,wi]=k.split(":").map(Number);
+        const w = doc.lines[li]?.words[wi]; if (w) w.anims = cloneAnims(pack);
+      });
+    } else if (selected){
+      const w = doc.lines[selected.line]?.words[selected.word];
+      if (w) w.anims = cloneAnims(pack);
+    }
+    render();
+  });
+  $("#applyAllAnimBtn")?.addEventListener("click", ()=>{
+    const pack = cloneAnims(doc.anims);
+    doc.lines.forEach(line=> line.words.forEach(w=> w.anims = cloneAnims(pack)));
+    render();
   });
 }
-applySelBtn?.addEventListener("click", ()=>{
-  if (!selected && !doc.multi.size) return;
-  // use doc.anims as template
-  const pack = cloneAnims(doc.anims||[]);
-  if (doc.multi.size){
-    doc.multi.forEach(k=>{
-      const [li,wi]=k.split(":").map(Number);
-      const w = doc.lines[li]?.words[wi]; if (w) w.anims = cloneAnims(pack);
-    });
-  } else if (selected){
-    const w = doc.lines[selected.line]?.words[selected.word];
-    if (w) w.anims = cloneAnims(pack);
-  }
-  pushHistory(); render(0,null);
-  buildAnimationsUI();
-});
-applyAllBtn?.addEventListener("click", ()=>{
-  const pack = cloneAnims(doc.anims||[]);
-  doc.lines.forEach(line=> line.words.forEach(w=> w.anims = cloneAnims(pack)));
-  pushHistory(); render(0,null);
-  buildAnimationsUI();
-});
+buildAnimationsUI();
 
-/* ---------- Undo / Redo / Clear ---------- */
-function deepCloneDocForHistory(d){
-  const j = JSON.stringify({...d, multi:[]}); // ignore Set
-  return JSON.parse(j);
-}
-function pushHistory(){
-  history.past.push(deepCloneDocForHistory(doc));
-  history.future = [];
-  updateUndoRedo();
-}
-function restoreDocFromState(s){
-  // assign primitives; rebuild images/gifs on demand if present
-  doc.res = s.res;
-  doc.lines = s.lines;
-  doc.spacing = s.spacing;
-  doc.anims = s.anims || [];
-  doc.style = s.style || {};
-  doc.multi = new Set();
-  if (s.bg?.type === "gif" && s.bg.dataURL) {
-    decodeGifBackground(s.bg.dataURL).then(decoded=>{
-      doc.bg = { ...s.bg, gif: decoded || null, image:null };
-      buildBgGrid(); showSolidTools(doc.bg?.type==="solid"); render(0,getDuration());
-    });
-  } else if (s.bg?.type==="image" && s.bg.dataURL) {
-    const im=new Image(); im.onload=()=>{ doc.bg={...s.bg, image:im, gif:null}; buildBgGrid(); showSolidTools(false); render(0,getDuration()); };
-    im.src = s.bg.dataURL;
-  } else {
-    doc.bg = s.bg || { type:"solid", color:"#000", image:null, preset:null, dataURL:null, gif:null };
-    buildBgGrid(); showSolidTools(doc.bg?.type==="solid"); render(0,getDuration());
-  }
-}
-function updateUndoRedo(){
-  if (undoBtn) undoBtn.disabled = history.past.length<=1;
-  if (redoBtn) redoBtn.disabled = history.future.length===0;
-}
-undoBtn?.addEventListener("click", ()=>{
-  if (history.past.length>1){
-    const cur = history.past.pop(); // current
-    history.future.push(cur);
-    const prev = history.past[history.past.length-1];
-    restoreDocFromState(prev);
-    updateUndoRedo();
-  }
-});
-redoBtn?.addEventListener("click", ()=>{
-  if (history.future.length){
-    const next = history.future.pop();
-    history.past.push(next);
-    restoreDocFromState(next);
-    updateUndoRedo();
-  }
-});
-clearAllBtn?.addEventListener("click", ()=>{
-  doc.lines = [{ words:[{ text:"", color:defaults.color, font:defaults.font, size:defaults.size }] }];
-  selected = { line:0, word:0 }; doc.multi.clear();
-  pushHistory(); render(0,null);
-});
+/* =======================================================
+   Preview loop + GIF (preview image under controls)
+======================================================= */
+function getFPS(){ const v = parseInt($("#fps")?.value || "15",10); return Math.max(1,Math.min(30,v||15)); }
+function getDuration(){ const v=parseInt($("#seconds")?.value || "8",10); return Math.max(1,Math.min(60,v||8)); }
 
-/* ---------- Config Import / Export ---------- */
-function safeDocForExport() {
-  const copy = JSON.parse(JSON.stringify(doc));
-  if (copy.bg && copy.bg.gif) delete copy.bg.gif; // runtime cache only
-  return copy;
-}
-saveJsonBtn?.addEventListener("click", ()=>{
-  const payload = safeDocForExport();
-  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "led-backpack-config.json";
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(url), 8000);
-});
-loadJsonInput?.addEventListener("change", async (e)=>{
-  const f = e.target.files?.[0]; if(!f) return;
-  const txt = await f.text().catch(()=>null);
-  if (!txt) return;
-  let json = null;
-  try { json = JSON.parse(txt); } catch{ return; }
-  pushHistory(); // snapshot before load
-  await applyImportedDoc(json);
-  buildAnimationsUI();
-});
-async function applyImportedDoc(newDoc) {
-  restoreDocFromState(newDoc);
-}
+let rafId=null, startT=0;
+function startPreview(){
+  stopPreview(); startT = performance.now();
+  const dur = getDuration(); tEnd && (tEnd.textContent = `${dur.toFixed(1)}s`);
 
-/* ---------- Preview Loop ---------- */
-let rafId = null;
-let startT = 0;
-
-function getFPS() {
-  const v = parseInt(fpsInput?.value || "15", 10);
-  return clamp(v||15,1,30);
-}
-function getDuration() {
-  const v = parseInt(secondsInput?.value || "8", 10);
-  return clamp(v||8,1,60);
-}
-function startPreview() {
-  stopPreview();
-  startT = performance.now();
-  const dur = getDuration();
-  if (tEnd) tEnd.textContent = `${dur.toFixed(1)}s`;
-
-  function loop(now) {
-    const secs = (now - startT) / 1000;
-    const tt = secs % dur;
-
+  function loop(now){
+    const secs = (now - startT) / 1000; const tt = secs % dur;
     render(tt, dur);
-
-    if (progressFill) progressFill.style.setProperty("--p", (tt / dur));
+    if (progressBar) progressBar.style.setProperty("--p", (tt / dur));
     if (tCur) tCur.textContent = `${tt.toFixed(1)}s`;
-
     rafId = requestAnimationFrame(loop);
   }
   rafId = requestAnimationFrame(loop);
 }
-function stopPreview() {
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = null;
-  render(0, getDuration());
-}
+function stopPreview(){ if (rafId) cancelAnimationFrame(rafId); rafId=null; render(0, getDuration()); }
+function setMode(m){ mode = m; modeEditBtn?.classList.toggle("active", m==="edit"); modePreviewBtn?.classList.toggle("active", m==="preview"); if (m==="preview") startPreview(); else stopPreview(); }
+modeEditBtn?.addEventListener("click",()=>setMode("edit")); modePreviewBtn?.addEventListener("click",()=>setMode("preview"));
 
-function setMode(m) {
-  mode = m;
-  modeEditBtn?.classList.toggle("active", m === "edit");
-  modePreviewBtn?.classList.toggle("active", m === "preview");
-  if (m === "preview") startPreview();
-  else stopPreview();
-}
-modeEditBtn && modeEditBtn.addEventListener("click", () => setMode("edit"));
-modePreviewBtn && modePreviewBtn.addEventListener("click", () => setMode("preview"));
+/* About modal */
+aboutBtn?.addEventListener("click",()=> aboutModal?.classList.remove("hidden"));
+aboutClose?.addEventListener("click",()=> aboutModal?.classList.add("hidden"));
 
-/* ---------- GIF Encoder (local) ---------- */
-async function ensureLocalGifLibs() {
+/* local GIF libs loader */
+function loadScriptLocal(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.async=true; s.onload=()=>res(true); s.onerror=rej; document.head.appendChild(s); }); }
+async function ensureLocalGifLibs(){
   if (typeof GIFEncoder !== "undefined") return true;
-  try {
+  try{
     await loadScriptLocal("./assets/libs/jsgif/NeuQuant.js");
     await loadScriptLocal("./assets/libs/jsgif/LZWEncoder.js");
     await loadScriptLocal("./assets/libs/jsgif/GIFEncoder.js");
-  } catch (e) {
-    console.error("Local GIF libs failed to load", e);
-    return false;
-  }
+  }catch(e){ notifyUserError("GIF encoder library files not found."); return false; }
   return typeof GIFEncoder !== "undefined";
 }
-function encoderToBlob(enc) {
-  const bytes = enc.stream().bin || enc.stream().getData();
-  const u8 = (bytes instanceof Uint8Array) ? bytes : new Uint8Array(bytes);
-  return new Blob([u8], { type: "image/gif" });
+function encoderToBlob(enc){ const bytes = enc.stream().bin || enc.stream().getData(); const u8 = (bytes instanceof Uint8Array) ? bytes : new Uint8Array(bytes); return new Blob([u8], { type: "image/gif" }); }
+
+async function renderGifDownload(){
+  const ok = await ensureLocalGifLibs(); if (!ok) return;
+
+  const fps = getFPS(), secs = getDuration();
+  const frames = Math.max(1, Math.floor(fps * secs));
+  const delay = Math.max(1, Math.round(1000 / fps));
+
+  const W = canvas.width = doc.res.w, H = canvas.height = doc.res.h;
+  const resume = (mode === "preview"); stopPreview();
+
+  try{
+    const enc = new GIFEncoder(); enc.setRepeat(0); enc.setDelay(delay); enc.setQuality(10); enc.setSize(W, H); enc.start();
+    for (let i = 0; i < frames; i++) { const t = i / fps; render(t, secs); enc.addFrame(ctx); if (progressBar) progressBar.style.setProperty("--p", (t / secs) % 1); if (tCur) tCur.textContent = `${(t % secs).toFixed(1)}s`; }
+    enc.finish();
+    const blob = encoderToBlob(enc); const url = URL.createObjectURL(blob);
+
+    // Show preview under controls so iPhone can long-press → Save
+    if (gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=url; gifPreviewImg.alt="Animated GIF preview"; }
+
+    // Also trigger file download (desktop)
+    const a=document.createElement("a"); a.href=url; a.download=`${($("#fileName")?.value||"animation").replace(/\.(png|jpe?g|webp|gif)$/i,"")}.gif`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),15000);
+  }catch(err){ console.error(err); notifyUserError("GIF render failed."); }
+  finally{ if(resume) startPreview(); }
 }
 
-/* ---------- Render GIF (Preview image + Download file) ---------- */
-previewBtn && previewBtn.addEventListener("click", async ()=>{
-  const ok = await ensureLocalGifLibs(); if (!ok) return;
-  const fps = getFPS();
-  const secs = getDuration();
-  const frames = Math.max(1, Math.floor(fps * secs));
-  const delay = Math.max(1, Math.round(1000 / fps));
+previewBtn?.addEventListener("click", ()=> setMode("preview"));
+gifBtn?.addEventListener("click", ()=> renderGifDownload());
+[$("#fps"), $("#seconds")].forEach(inp => inp && inp.addEventListener("input", () => { if (mode === "preview") startPreview(); tEnd && (tEnd.textContent = `${getDuration().toFixed(1)}s`); }));
 
-  const W = canvas.width = doc.res.w;
-  const H = canvas.height = doc.res.h;
-
-  const wasPreview = (mode === "preview");
-  stopPreview();
-
-  try {
-    const enc = new GIFEncoder();
-    enc.setRepeat(0);
-    enc.setDelay(delay);
-    enc.setQuality(10);
-    enc.setSize(W, H);
-    enc.start();
-
-    for (let i = 0; i < frames; i++) {
-      const t = i / fps;
-      render(t, secs);
-      enc.addFrame(ctx);
-
-      if (progressFill) progressFill.style.setProperty("--p", (t / secs) % 1);
-      if (tCur) tCur.textContent = `${(t % secs).toFixed(1)}s`;
-    }
-
-    enc.finish();
-    const blob = encoderToBlob(enc);
-    const url = URL.createObjectURL(blob);
-
-    // Show preview image under the controls (no new tab)
-    if (gifPreviewImg) {
-      gifPreviewImg.classList.remove("hidden");
-      gifPreviewImg.src = url;
-      gifPreviewImg.alt = "Animated GIF preview";
-    }
-
-  } catch (err) {
-    console.error("GIF render failed:", err);
-  } finally {
-    if (wasPreview) startPreview();
-  }
-});
-gifBtn && gifBtn.addEventListener("click", async ()=>{
-  const ok = await ensureLocalGifLibs(); if (!ok) return;
-  const fps = getFPS();
-  const secs = getDuration();
-  const frames = Math.max(1, Math.floor(fps * secs));
-  const delay = Math.max(1, Math.round(1000 / fps));
-
-  const W = canvas.width = doc.res.w;
-  const H = canvas.height = doc.res.h;
-
-  const wasPreview = (mode === "preview");
-  stopPreview();
-
-  try {
-    const enc = new GIFEncoder();
-    enc.setRepeat(0);
-    enc.setDelay(delay);
-    enc.setQuality(10);
-    enc.setSize(W, H);
-    enc.start();
-
-    for (let i = 0; i < frames; i++) {
-      const t = i / fps;
-      render(t, secs);
-      enc.addFrame(ctx);
-    }
-
-    enc.finish();
-    const blob = encoderToBlob(enc);
-    const url = URL.createObjectURL(blob);
-    const name = `${(fileNameInput?.value || "animation").replace(/\.(png|jpe?g|webp|gif)$/i, "")}.gif`;
-
-    const a = document.createElement("a");
-    a.href = url; a.download = name;
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(url), 15000);
-  } catch (err) {
-    console.error("GIF download failed:", err);
-  } finally {
-    if (wasPreview) startPreview();
-  }
-});
-
-/* ---------- resolution change ---------- */
+/* ---------- Resolution change ---------- */
 on(resSel,"change",()=>{
   const [w,h]=resSel.value.split("x").map(Number);
-  doc.res={w,h};
-  buildBgGrid(); showSolidTools(doc.bg?.type==="solid");
-  pushHistory(); render(); fitZoom();
+  doc.res={w,h}; buildBgGrid(); showSolidTools(doc.bg?.type==="solid"); render(); fitZoom();
 });
 
-/* ---------- init ---------- */
+/* ---------- Undo/Redo/Clear ---------- */
+function snapshot(){ return JSON.parse(JSON.stringify(doc)); }
+function pushHistory(){ history.push(snapshot()); future.length=0; }
+undoBtn?.addEventListener("click",()=>{ if (!history.length) return; future.push(snapshot()); const last=history.pop(); Object.assign(doc,last); render(); });
+redoBtn?.addEventListener("click",()=>{ if (!future.length) return; history.push(snapshot()); const next=future.pop(); Object.assign(doc,next); render(); });
+clearAllBtn?.addEventListener("click",()=>{ pushHistory(); doc.lines=[{words:[{text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color, anims:[...FLOW_BASE, COLORCYCLE("#49a9ff")]}]}]; render(); });
+
+/* ---------- Config in/out ---------- */
+$("#saveJsonBtn")?.addEventListener("click",()=>{
+  const data = snapshot();
+  if (data.bg?.image && data.bg.type==="image"){
+    try{
+      const tmp=document.createElement("canvas"); tmp.width=doc.res.w; tmp.height=doc.res.h;
+      const tctx=tmp.getContext("2d"); tctx.drawImage(doc.bg.image,0,0,tmp.width,tmp.height);
+      data.bg.dataURL = tmp.toDataURL("image/png");
+    }catch{}
+  }
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="led_anim_config.json"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+});
+$("#loadJsonInput")?.addEventListener("change",async(e)=>{
+  const f=e.target.files?.[0]; if(!f) return;
+  try{
+    const txt=await f.text(); const obj=JSON.parse(txt);
+    Object.assign(doc,obj);
+    if (obj.bg?.dataURL){ const im=new Image(); im.src=obj.bg.dataURL; im.onload=()=>{ doc.bg.image=im; render(); }; }
+    buildBgGrid(); render(); fitZoom();
+  }catch(err){ notifyUserError("Invalid config file."); }
+});
+
+/* =======================================================
+   Emoji picker (uses pre-built assets under assets/openmoji/*)
+======================================================= */
+async function detectEmojiBase(){
+  // quick detection of base path
+  const guess = ["assets/openemoji","assets/openmoji"];
+  for (const g of guess){
+    try{
+      const r = await fetch(`${g}/manifest.json`, {cache:"no-store"});
+      if (r.ok){ EMOJI_DB = await r.json(); return g; }
+    }catch{}
+  }
+  return null;
+}
+async function openEmojiPicker(){
+  try{
+    if (!EMOJI_DB){
+      const base = await detectEmojiBase();
+      if (!base){ notifyUserError("Emoji manifest not found under assets/openemoji or assets/openmoji."); return; }
+    }
+    buildEmojiTabsAndGrid();
+    emojiModal?.classList.remove("hidden");
+  }catch(e){ notifyUserError("Failed to load emoji list."); }
+}
+function buildEmojiTabsAndGrid(){
+  if (!EMOJI_DB) return;
+  emojiTabs.innerHTML = "";
+  const cats = EMOJI_DB.categories || [];
+  cats.forEach((c, idx)=>{
+    const b=document.createElement("button"); b.className="chip"; b.textContent=c.title || c.id || `Cat ${idx+1}`;
+    if (idx===0) b.classList.add("active");
+    b.addEventListener("click", ()=>{
+      [...emojiTabs.children].forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      renderEmojiGrid(c.items||[]);
+    });
+    emojiTabs.appendChild(b);
+  });
+  // initial grid
+  renderEmojiGrid((cats[0] && cats[0].items) || []);
+}
+function renderEmojiGrid(items){
+  emojiGrid.innerHTML="";
+  const q = (emojiSearch?.value || "").trim().toLowerCase();
+  const list = q ? items.filter(it => (it.title||"").toLowerCase().includes(q) || (it.emoji||"").includes(q)) : items;
+  list.forEach(it=>{
+    const cell=document.createElement("button"); cell.className="emoji-cell";
+    const img=document.createElement("img"); img.loading="lazy";
+    img.src = it.svg; img.alt = it.title || it.emoji || "emoji";
+    cell.appendChild(img);
+    cell.addEventListener("click", ()=>{
+      // Add as "emoji word": rasterize SVG to bitmap at CURRENT_EMOJI_SIZE
+      addEmojiWordFromSVG(it.svg, CURRENT_EMOJI_SIZE).then(()=> {
+        emojiModal?.classList.add("hidden");
+      }).catch(()=> notifyUserError("Failed to insert emoji."));
+    });
+    emojiGrid.appendChild(cell);
+  });
+}
+emojiBtn?.addEventListener("click", openEmojiPicker);
+emojiClose?.addEventListener("click", ()=> emojiModal?.classList.add("hidden"));
+emojiSearch?.addEventListener("input", ()=>{
+  const activeTab = emojiTabs.querySelector(".active");
+  if (!EMOJI_DB || !activeTab) return;
+  const cats = EMOJI_DB.categories || [];
+  const idx = [...emojiTabs.children].indexOf(activeTab);
+  renderEmojiGrid((cats[idx] && cats[idx].items) || []);
+});
+emojiSize?.addEventListener("input", ()=> {
+  const v = parseInt(emojiSize.value||"24",10);
+  CURRENT_EMOJI_SIZE = Math.max(8, Math.min(96, v||24));
+});
+
+/* rasterize an SVG path/url to a canvas bitmap and add as a "word" (image word) */
+async function addEmojiWordFromSVG(svgUrl, targetH=24){
+  const svgText = await (await fetch(svgUrl)).text();
+  const img = new Image();
+  const svgBlob = new Blob([svgText], {type:"image/svg+xml"});
+  const url = URL.createObjectURL(svgBlob);
+  await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+  // compute scale to targetH
+  const scale = targetH / img.height;
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+  const tmp = document.createElement("canvas"); tmp.width = w; tmp.height = h;
+  const tctx = tmp.getContext("2d");
+  tctx.clearRect(0,0,w,h);
+  tctx.drawImage(img,0,0,w,h);
+  URL.revokeObjectURL(url);
+  // Add as word with bitmap dataURL for portability
+  const dataURL = tmp.toDataURL("image/png");
+  const li = selected ? selected.line : (doc.lines.length-1);
+  const line = doc.lines[li] || (doc.lines[li]={words:[]});
+  line.words.push({
+    text:"", font:defaults.font, size:targetH, color:"#fff",
+    image:dataURL, // special: when image exists we draw it instead of text
+    anims:[...FLOW_BASE] // let emoji flow/wave by default
+  });
+  selected = {line:li, word: line.words.length-1};
+  render();
+}
+
+/* =======================================================
+   Init
+======================================================= */
 function init(){
   buildBgGrid();
-  rebuildBgSwatches();
-
-  // default ON
-  if (autoSizeChk) autoSizeChk.checked = true;
-
-  // Make sure UI reflects first selected element
-  selected = { line:0, word:0 };
-
-  pushHistory();
   render();
   fitZoom();
-  buildAnimationsUI();
+  if (autoSizeChk) autoSizeChk.checked = true;
+  autoSizeAllIfOn(); render();
 }
 init();
