@@ -1,79 +1,38 @@
 /* =======================================================
- LED Backpack Animator — app.js (complete)
+ LED Backpack Animator — app.js (all-in-one, fully wired)
  Shift = multi-select, Cmd/Ctrl = temporary drag.
  Manual Drag button is a sticky toggle.
 ======================================================= */
 
-/* ---------- Notify helper (replace with toasts if you want) ---------- */
-function notifyUserError(message) { console.error("[UI]", message); }
+/* ---------- UI notify (placeholder) ---------- */
+function notifyUserError(message) {
+  console.error("[UI]", message);
+}
 
-/* ---------- tiny DOM helpers ---------- */
+/* ---------- helpers ---------- */
 const $  = (q, el=document) => el.querySelector(q);
 const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 
 /* ---------- DOM ---------- */
 const canvas  = $("#led"), ctx = canvas.getContext("2d"), wrap = $(".canvas-wrap");
+const resSel  = $("#resSelect"), zoomSlider = $("#zoom"), fitBtn  = $("#fitBtn");
+const modeEditBtn   = $("#modeEdit"), modePreviewBtn = $("#modePreview");
+const bgGrid  = $("#bgGrid"), bgSolidTools = $("#bgSolidTools"), bgSolidColor = $("#bgSolidColor"),
+      addBgSwatchBtn = $("#addBgSwatchBtn"), bgSwatches = $("#bgSwatches"), bgUpload = $("#bgUpload");
+const progressBar = $("#progress"), tCur = $("#tCur"), tEnd = $("#tEnd");
+const previewBtn = $("#previewRenderBtn"), gifBtn = $("#gifRenderBtn"), gifPreviewImg = $("#gifPreview");
+const undoBtn = $("#undoBtn"), redoBtn = $("#redoBtn"), clearAllBtn = $("#clearAllBtn");
+const aboutBtn = $("#aboutBtn"), aboutModal = $("#aboutModal"), aboutClose = $("#aboutClose");
 
-const resSel  = $("#resSelect"),
-      zoomSlider = $("#zoom"),
-      fitBtn  = $("#fitBtn");
-
-const modeEditBtn   = $("#modeEdit"),
-      modePreviewBtn = $("#modePreview");
-
-const bgGrid  = $("#bgGrid"),
-      bgSolidTools = $("#bgSolidTools"),
-      bgSolidColor = $("#bgSolidColor"),
-      addBgSwatchBtn = $("#addBgSwatchBtn"),
-      bgSwatches = $("#bgSwatches"),
-      bgUpload = $("#bgUpload");
-
-const progressBar = $("#progress"),
-      tCur = $("#tCur"),
-      tEnd = $("#tEnd");
-
-const previewBtn = $("#previewRenderBtn"),
-      gifBtn = $("#gifRenderBtn"),
-      gifPreviewImg = $("#gifPreview");
-
-const undoBtn = $("#undoBtn"),
-      redoBtn = $("#redoBtn"),
-      clearAllBtn = $("#clearAllBtn");
-
-const aboutBtn = $("#aboutBtn"),
-      aboutModal = $("#aboutModal"),
-      aboutClose = $("#aboutClose");
-
-const addWordBtn=$("#addWordBtn"),
-      addLineBtn=$("#addLineBtn"),
-      delWordBtn=$("#deleteWordBtn");
-
-const emojiBtn = $("#emojiBtn"),
-      emojiModal = $("#emojiModal"),
-      emojiClose = $("#emojiClose"),
-      emojiTabs  = $("#emojiTabs"),
-      emojiGrid  = $("#emojiGrid"),
-      emojiSearch= $("#emojiSearch"),
-      emojiSize  = $("#emojiSize");
-
-const fontSelect=$("#fontSelect"),
-      fontSizeInp=$("#fontSize"),
+const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn"), delWordBtn=$("#deleteWordBtn");
+const fontSelect=$("#fontSelect"), fontSizeInp=$("#fontSize"),
       autoSizeChk=$("#autoSize"),
-      fontColorInp=$("#fontColor"),
-      addSwatchBtn=$("#addSwatchBtn"),
-      textSwatches=$("#swatches");
-
-const lineGapInp=$("#lineGap"),
-      wordGapInp=$("#wordGap");
-
-const alignBtns=$$("[data-align]"),
-      valignBtns=$$("[data-valign]");
-
-const animList=$("#animList");
-
-const multiToggle=$("#multiToggle"),
-      manualDragBtn=$("#manualDragToggle");
+      fontColorInp=$("#fontColor"), addSwatchBtn=$("#addSwatchBtn"), textSwatches=$("#swatches");
+const lineGapInp=$("#lineGap"), wordGapInp=$("#wordGap");
+const alignBtns=$$("[data-align]"), valignBtns=$$("[data-valign]");
+const animList=$("#animList"), animConflicts=$("#animConflicts");
+const multiToggle=$("#multiToggle"), manualDragBtn=$("#manualDragToggle");
 
 /* ---------- state ---------- */
 let mode="edit", zoom=1, selected=null;
@@ -81,28 +40,22 @@ let history = [], future = [];
 
 const defaults = { font:"Orbitron", size:22, color:"#FFFFFF", lineGap:4, wordGap:6, align:"center", valign:"middle" };
 
-/* ===== PRESET per your spec =====
-   - All words flow + wave
-   - BOOKTOK uses Rainbow Sweep + Glow (and still flows/waves)
-   - Every other word uses Color Cycle with distinct starting hues
-*/
-const FLOW_BASE = [{ id:"flow", params:{amp:3, freq:0.4} }, { id:"wave", params:{ax:0.35, ay:0.55, cycles:0.8} }];
-const COLORCYCLE = (start) => ({ id:"colorcycle", params:{speed:0.6, start} });
-const RAINBOW_GLOW = [{ id:"rainbow", params:{speed:0.75, start:"#0033ff"} }, { id:"glow", params:{intensity:0.7} }];
-
+/* Preset content: one word per line; colorcycle starts at different hues. */
+const presetColorSeeds = ["#55a0ff","#ffd95a","#ff7bda","#ff6a6a","#a7ff6a"];
 const doc = {
   res: { w:96, h:128 },
   lines: [
-    { words:[{text:"WILL",     color:"#55a0ff", font:"Orbitron", size:22, anims:[...FLOW_BASE, COLORCYCLE("#2d7dff")] }] },
-    { words:[{text:"WHEELIE",  color:"#ffd95a", font:"Orbitron", size:22, anims:[...FLOW_BASE, COLORCYCLE("#ffd54a")] }] },
-    { words:[{text:"FOR",      color:"#ff7bda", font:"Orbitron", size:22, anims:[...FLOW_BASE, COLORCYCLE("#ff4fd1")] }] },
-    { words:[{text:"BOOKTOK",  color:"#ffffff", font:"Orbitron", size:22, anims:[...FLOW_BASE, ...RAINBOW_GLOW] }] },
-    { words:[{text:"GIRLIES",  color:"#ff6a6a", font:"Orbitron", size:22, anims:[...FLOW_BASE, COLORCYCLE("#00e6ff")] }] },
+    { words:[{text:"WILL", color:"#55a0ff", font:"Orbitron", size:22}] },
+    { words:[{text:"WHEELIE", color:"#ffd95a", font:"Orbitron", size:22}] },
+    { words:[{text:"FOR", color:"#ff7bda", font:"Orbitron", size:22}] },
+    { words:[{text:"BOOKTOK", color:"#ffffff", font:"Orbitron", size:22, anims:[{id:"glow",params:{intensity:0.7}},{id:"rainbow",params:{speed:0.6,start:"#0000ff"}}]}] },
+    { words:[{text:"GIRLIES", color:"#ff6a6a", font:"Orbitron", size:22}] },
   ],
   bg: { type:"preset", image:null, preset:"assets/presets/96x128/Preset_A.png", color:null },
   spacing:{ lineGap:4, wordGap:6 },
   style:{ align:"center", valign:"middle" },
-  anims:[ /* global/base if a word doesn't have its own; we keep it light */ ],
+  // global anims (flow + wave; colorcycle per-word will be applied when "Apply to All")
+  anims:[ {id:"glow",params:{intensity:0.6}}, {id:"wave",params:{ax:0.4,ay:0.6,cycles:1}} ],
   multi:new Set()
 };
 
@@ -122,37 +75,38 @@ function visibleSet(){ return PRESETS[`${doc.res.w}x${doc.res.h}`] || []; }
 /* ---------- Multi / Manual-Drag state ---------- */
 let manualDrag = { enabled:false, active:false, startX:0, startY:0, targets:[], startOffsets:[] };
 
-/* ---------- Emoji picker state (loaded on demand) ---------- */
-let EMOJI_DB = null;  // { categories:[{id,title,items:[{title,svg,emoji,category}]}] }
-let CURRENT_EMOJI_SIZE = 24;
-
-/* ---------- Animations catalog (includes custom 'flow') ---------- */
+/* ---------- Animations model ---------- */
 const ANIMS = [
-  { id:"flow",       name:"Flow",                  params:{amp:3, freq:0.4} }, // gentle horizontal drift
-  { id:"wave",       name:"Wave",                  params:{ax:0.8, ay:1.4, cycles:1.0} },
-  { id:"slide",      name:"Slide In",              params:{direction:"Left",  speed:1} },
-  { id:"slideaway",  name:"Slide Away",            params:{direction:"Left",  speed:1} },
-  { id:"zoom",       name:"Zoom",                  params:{direction:"In",    speed:1} },
-  { id:"scroll",     name:"Scroll / Marquee",      params:{direction:"Left",  speed:1} },
-  { id:"pulse",      name:"Pulse / Breathe",       params:{scale:0.03, vy:4} },
-  { id:"jitter",     name:"Jitter",                params:{amp:0.10, freq:2.5} },
-  { id:"shake",      name:"Shake",                 params:{amp:0.20, freq:2} },
-  { id:"colorcycle", name:"Color Cycle",           params:{speed:0.6, start:"#0033ff"} },
-  { id:"rainbow",    name:"Rainbow Sweep",         params:{speed:0.75, start:"#0033ff"} },
-  { id:"sweep",      name:"Highlight Sweep",       params:{speed:0.7, width:0.25} },
-  { id:"flicker",    name:"Flicker",               params:{strength:0.5} },
-  { id:"strobe",     name:"Strobe",                params:{rate:3} },
-  { id:"glow",       name:"Glow Pulse",            params:{intensity:0.6} },
-  { id:"heartbeat",  name:"Heartbeat",             params:{rate:1.2} },
-  { id:"ripple",     name:"Ripple",                params:{amp:1.0, freq:2.0} },
-  { id:"typewriter", name:"Typewriter",            params:{rate:1} },
-  { id:"scramble",   name:"Scramble / Decode",     params:{rate:1} },
-  { id:"popcorn",    name:"Popcorn",               params:{rate:1} },
-  { id:"fadeout",    name:"Fade Out",              params:{} },
+  { id:"slide",      name:"Slide In",             params:{direction:"Left",  speed:1} },
+  { id:"slideaway",  name:"Slide Away",           params:{direction:"Left",  speed:1} },
+  { id:"zoom",       name:"Zoom",                 params:{direction:"In",    speed:1} },
+  { id:"scroll",     name:"Scroll / Marquee",     params:{direction:"Left",  speed:1} },
+  { id:"pulse",      name:"Pulse / Breathe",      params:{scale:0.03, vy:4} },
+  { id:"wave",       name:"Wave",                 params:{ax:0.8, ay:1.4, cycles:1.0} },
+  { id:"jitter",     name:"Jitter",               params:{amp:0.10, freq:2.5} },
+  { id:"shake",      name:"Shake",                params:{amp:0.20, freq:2} },
+  { id:"colorcycle", name:"Color Cycle",          params:{speed:0.5, start:"#ff0000"} },
+  { id:"rainbow",    name:"Rainbow Sweep",        params:{speed:0.5, start:"#ff00ff"} },
+  { id:"sweep",      name:"Highlight Sweep",      params:{speed:0.7, width:0.25} },
+  { id:"flicker",    name:"Flicker",              params:{strength:0.5} },
+  { id:"strobe",     name:"Strobe",               params:{rate:3} },
+  { id:"glow",       name:"Glow Pulse",           params:{intensity:0.6} },
+  { id:"heartbeat",  name:"Heartbeat",            params:{rate:1.2} },
+  { id:"ripple",     name:"Ripple",               params:{amp:1.0, freq:2.0} },
+  { id:"typewriter", name:"Typewriter",           params:{rate:1} },
+  { id:"scramble",   name:"Scramble / Decode",    params:{rate:1} },
+  { id:"popcorn",    name:"Popcorn",              params:{rate:1} },
+  { id:"fadeout",    name:"Fade Out",             params:{} },
+];
+const CONFLICTS = [
+  ["typewriter","scramble"],
+  ["typewriter","popcorn"],
+  ["strobe","flicker"],
+  ["rainbow","colorcycle"]
 ];
 
 /* =======================================================
-   UI build: BG Grid, Zoom/Fit, Pills, Swatches
+   Build UI pieces
 ======================================================= */
 
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
@@ -169,8 +123,8 @@ function buildBgGrid(){
     const b=document.createElement("button");
     b.type="button"; b.className="bg-tile"; b.dataset.kind=t.kind;
     const img=document.createElement("img");
-    img.src=t.thumb; img.alt=t.kind;
-    b.appendChild(img);
+    img.src=t.thumb; img.alt=t.kind; b.appendChild(img);
+
     on(b,"click",async()=>{
       $$(".bg-tile",bgGrid).forEach(x=>x.classList.remove("active"));
       b.classList.add("active");
@@ -186,14 +140,16 @@ function buildBgGrid(){
         bgUpload.click();
       }
     });
+
     bgGrid.appendChild(b);
   });
-  // set active if current is preset
-  if (doc.bg?.type==="preset") {
-    const first = $(".bg-tile[data-kind='preset']", bgGrid);
-    first && first.classList.add("active");
-  }
+
+  // set active based on current bg
+  const kind = (doc.bg?.type === "preset" || doc.bg?.preset) ? "preset" : (doc.bg?.type || "preset");
+  const first = $(`.bg-tile[data-kind="${kind}"]`, bgGrid) || $(".bg-tile", bgGrid);
+  first && first.classList.add("active");
 }
+
 on(bgUpload,"change",e=>{
   const f=e.target.files?.[0]; if(!f)return;
   const url=URL.createObjectURL(f);
@@ -205,9 +161,9 @@ on(bgUpload,"change",e=>{
   im.src=url;
 });
 
-/* zoom / fit */
+/* ---------- zoom / fit ---------- */
 function setZoom(z){
-  zoom=z; zoomSlider.value=String(z.toFixed(2));
+  zoom=z; if (zoomSlider) zoomSlider.value=String(z.toFixed(2));
   canvas.style.transform=`translate(-50%,-50%) scale(${z})`;
 }
 function fitZoom(){
@@ -221,13 +177,12 @@ on(zoomSlider,"input",e=>setZoom(parseFloat(e.target.value)));
 on(fitBtn,"click",fitZoom);
 window.addEventListener("resize",fitZoom);
 
-/* pills (only one open at a time) */
+/* ---------- pills behavior: only one details open ---------- */
 const pillTabs = $$(".pill[data-acc]");
 const accFont   = $("#accFont"), accLayout = $("#accLayout"), accAnim = $("#accAnim");
 pillTabs.forEach(p=>{
   on(p,"click",()=>{
-    const id=p.dataset.acc;
-    const target = $("#"+id);
+    const id=p.dataset.acc; const target = $("#"+id);
     const wasOpen = target.open;
     [accFont,accLayout,accAnim].forEach(x=>x.open=false);
     pillTabs.forEach(x=>x.classList.remove("active"));
@@ -235,7 +190,7 @@ pillTabs.forEach(p=>{
   });
 });
 
-/* text swatches */
+/* ---------- swatches ---------- */
 const defaultTextPalette = ["#FFFFFF","#FF3B30","#00E25B","#1E5BFF","#FFE45A","#FF65D5","#40F2F2","#000000"];
 let customTextPalette = [];
 function rebuildTextSwatches(){
@@ -258,7 +213,7 @@ addSwatchBtn && addSwatchBtn.addEventListener("click",()=>{
 });
 rebuildTextSwatches();
 
-/* BG swatches */
+/* ---------- BG swatches ---------- */
 const defaultBgPalette=["#000000","#101010","#1a1a1a","#222222","#333333","#444444","#555555","#666666"];
 let customBgPalette=[];
 function rebuildBgSwatches(){
@@ -285,19 +240,20 @@ on(bgSolidColor,"input",()=>{
 rebuildBgSwatches();
 
 /* =======================================================
-   Metrics / auto-size
+   Text metrics / layout
 ======================================================= */
 function measureText(w){
   ctx.font = `${w.size || defaults.size}px ${w.font || defaults.font}`;
   return ctx.measureText(w.text || "").width;
 }
 function lineHeight(line){ return Math.max(12, ...line.words.map(w => (w.size || defaults.size))); }
+function totalHeight(){ return doc.lines.map(lineHeight).reduce((s,h)=>s+h,0) + (doc.lines.length-1)*(doc.spacing.lineGap||defaults.lineGap); }
 function lineWidth(line){
   const gap = doc.spacing.wordGap ?? defaults.wordGap;
   return line.words.reduce((s,w)=> s + measureText(w), 0) + Math.max(0,line.words.length-1)*gap;
 }
 
-/* Auto-size (per line) with live reflection in Size input */
+/* Auto-size (per line) */
 function autoSizeAllIfOn(){
   if(!autoSizeChk?.checked) return;
   const padX = 6, padY = 6;
@@ -323,12 +279,13 @@ function autoSizeAllIfOn(){
     }
   });
 
-  const wSel = selected ? doc.lines[selected.line]?.words[selected.word] : doc.lines[0]?.words?.[0];
+  // reflect live size of the first selected (or first word)
+  const wSel = selected ? doc.lines[selected.line].words[selected.word] : doc.lines[0].words[0];
   if (wSel && fontSizeInp) fontSizeInp.value = Math.round(wSel.size || defaults.size);
 }
 
 /* =======================================================
-   Animation runtime
+   Animations runtime
 ======================================================= */
 function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
 function colorToHue(hex){
@@ -349,23 +306,27 @@ function animatedProps(base, word, t, totalDur){
   const props = { x:base.x, y:base.y, scale:1, alpha:1, text:word.text||"", color:word.color, dx:0, dy:0, shadow:null, gradient:null, perChar:null };
   const get = id => resolveWordAnims(word).find(a=>a.id===id);
 
-  // Flow (gentle horizontal drift)
-  const flow = get("flow");
-  if (flow) {
-    const amp = Number(flow.params.amp || 3);
-    const freq= Number(flow.params.freq || 0.4);
-    props.dx += Math.sin(t * 2 * Math.PI * freq) * amp;
+  // Scroll
+  const scroll = get("scroll");
+  if (scroll) {
+    const dir = (scroll.params.direction || "Left");
+    const sp  = Number(scroll.params.speed || 1);
+    const v = 20 * sp;
+    if(dir==="Left")  props.dx -= (t * v) % (doc.res.w + 200);
+    if(dir==="Right") props.dx += (t * v) % (doc.res.w + 200);
+    if(dir==="Up")    props.dy -= (t * v) % (doc.res.h + 200);
+    if(dir==="Down")  props.dy += (t * v) % (doc.res.h + 200);
   }
 
-  // Wave
-  const wave = get("wave");
-  if (wave) {
-    const ax = Number(wave.params.ax || 0.8);
-    const ay = Number(wave.params.ay || 1.4);
-    const cyc= Number(wave.params.cycles || 1.0);
-    const ph = cyc * 2 * Math.PI * t;
-    props.dx += Math.sin(ph + base.x * 0.05) * ax * 4;
-    props.dy += Math.sin(ph + base.y * 0.06) * ay * 4;
+  // Zoom
+  const zm = get("zoom");
+  if (zm) {
+    const dir = (zm.params.direction || "In");
+    const sp  = Number(zm.params.speed || 1);
+    const k = 0.4 * sp;
+    props.scale *= (dir === "In")
+      ? (1 + k * easeOutCubic(Math.min(1, t / 1)))
+      : Math.max(0.2, 1 + k * (1 - Math.min(1, t / 1)) * (-1));
   }
 
   // Slide In
@@ -400,30 +361,17 @@ function animatedProps(base, word, t, totalDur){
     }
   }
 
-  // Zoom
-  const zm = get("zoom");
-  if (zm) {
-    const dir = (zm.params.direction || "In");
-    const sp  = Number(zm.params.speed || 1);
-    const k = 0.4 * sp;
-    props.scale *= (dir === "In")
-      ? (1 + k * easeOutCubic(Math.min(1, t / 1)))
-      : Math.max(0.2, 1 + k * (1 - Math.min(1, t / 1)) * (-1));
+  // Fade Out
+  const fout = get("fadeout");
+  if (fout && totalDur) {
+    const tail = 0.2 * totalDur;
+    if (t > totalDur - tail) {
+      const r = (t - (totalDur - tail)) / tail;
+      props.alpha *= Math.max(0, 1 - r);
+    }
   }
 
-  // Scroll
-  const scroll = get("scroll");
-  if (scroll) {
-    const dir = (scroll.params.direction || "Left");
-    const sp  = Number(scroll.params.speed || 1);
-    const v = 20 * sp;
-    if(dir==="Left")  props.dx -= (t * v) % (doc.res.w + 200);
-    if(dir==="Right") props.dx += (t * v) % (doc.res.w + 200);
-    if(dir==="Up")    props.dy -= (t * v) % (doc.res.h + 200);
-    if(dir==="Down")  props.dy += (t * v) % (doc.res.h + 200);
-  }
-
-  // Pulse (scale + slight vertical bob)
+  // Pulse
   const pulse = get("pulse");
   if (pulse) {
     const s = Number(pulse.params.scale || 0.03);
@@ -432,7 +380,34 @@ function animatedProps(base, word, t, totalDur){
     props.dy    += Math.sin(t * 2 * Math.PI) * vy;
   }
 
-  // Typewriter / Scramble / Popcorn per-char
+  // Wave
+  const wave = get("wave");
+  if (wave) {
+    const ax = Number(wave.params.ax || 0.8);
+    const ay = Number(wave.params.ay || 1.4);
+    const cyc= Number(wave.params.cycles || 1.0);
+    const ph = cyc * 2 * Math.PI * t;
+    props.dx += Math.sin(ph + base.x * 0.05) * ax * 4;
+    props.dy += Math.sin(ph + base.y * 0.06) * ay * 4;
+  }
+
+  // Jitter
+  const jit = get("jitter");
+  if (jit) {
+    const a = Number(jit.params.amp || 0.10), f = Number(jit.params.freq || 2.5);
+    props.dx += Math.sin(t * 2 * Math.PI * f) * a * 3;
+    props.dy += Math.cos(t * 2 * Math.PI * f) * a * 3;
+  }
+
+  // Shake
+  const shake = get("shake");
+  if (shake) {
+    const a = Number(shake.params.amp || 0.20) * 5, f = Number(shake.params.freq || 2);
+    props.dx += Math.sin(t * 2 * Math.PI * f) * a;
+    props.dy += Math.cos(t * 2 * Math.PI * f) * a * 0.6;
+  }
+
+  // Typewriter
   const type = get("typewriter");
   if (type && props.text) {
     const rate = Number(type.params.rate || 1);
@@ -440,6 +415,8 @@ function animatedProps(base, word, t, totalDur){
     const shown = Math.max(0, Math.min(props.text.length, Math.floor(t * cps)));
     props.text = props.text.slice(0, shown);
   }
+
+  // Scramble
   const scr = get("scramble");
   if (scr && word.text) {
     const rate = Number(scr.params.rate || 1), cps = 10 * rate;
@@ -455,6 +432,8 @@ function animatedProps(base, word, t, totalDur){
     }
     props.text = out;
   }
+
+  // Popcorn per-char alpha flicker
   const pop = get("popcorn");
   if (pop && word.text) {
     const rate = Number(pop.params.rate || 1);
@@ -466,21 +445,21 @@ function animatedProps(base, word, t, totalDur){
     props.perChar ??= {}; props.perChar.alpha = alphaArr;
   }
 
-  // Color Cycle (per-word)
+  // Color Cycle (used per-word; start differs)
   const cc = get("colorcycle");
   if (cc) {
-    const sp = Number(cc.params.speed || 0.6);
-    const base = (cc.params.start || "#0033ff");
+    const sp = Number(cc.params.speed || 0.5);
+    const base = (cc.params.start || "#ff0000");
     const hueBase = colorToHue(base);
     const hue = Math.floor((hueBase + (t * 60 * sp)) % 360);
     props.color = `hsl(${hue}deg 100% 60%)`;
   }
 
-  // Rainbow gradient (BOOKTOK)
+  // Rainbow gradient sweep
   const rainbow = get("rainbow");
   if (rainbow && (props.text||"").length) {
-    const speed = Number(rainbow.params.speed || 0.75);
-    const base = (rainbow.params.start || "#0033ff");
+    const speed = Number(rainbow.params.speed || 0.5);
+    const base = (rainbow.params.start || "#ff00ff");
     const hueBase = colorToHue(base);
     props.gradient = { type: "rainbow", speed, base: hueBase };
   }
@@ -522,16 +501,6 @@ function animatedProps(base, word, t, totalDur){
     props.perChar ??= {}; props.perChar.dy = arr;
   }
 
-  // Fade out tail
-  const fout = get("fadeout");
-  if (fout && totalDur) {
-    const tail = 0.2 * totalDur;
-    if (t > totalDur - tail) {
-      const r = (t - (totalDur - tail)) / tail;
-      props.alpha *= Math.max(0, 1 - r);
-    }
-  }
-
   return props;
 }
 
@@ -542,7 +511,7 @@ function render(t=0, totalDur=getDuration()){
   const W = canvas.width  = doc.res.w;
   const H = canvas.height = doc.res.h;
 
-  // BG (solid base protects against flicker while images load)
+  // BG (always paint solid first)
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle = (doc.bg?.type==="solid" ? (doc.bg.color||"#000") : "#000");
   ctx.fillRect(0,0,W,H);
@@ -552,13 +521,13 @@ function render(t=0, totalDur=getDuration()){
     im.onload = ()=>{ doc.bg.image = im; render(t,totalDur); };
   }
 
-  // text & auto-size
+  // text
   autoSizeAllIfOn();
 
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
   const wordGap = doc.spacing.wordGap ?? defaults.wordGap;
 
-  const heights = doc.lines.map(line => Math.max(12, ...line.words.map(w => (w.size || defaults.size))));
+  const heights = doc.lines.map(lineHeight);
   const contentH = heights.reduce((s,h)=>s+h,0) + (doc.lines.length-1)*lineGap;
 
   let y;
@@ -592,10 +561,12 @@ function render(t=0, totalDur=getDuration()){
       if (props.shadow) { ctx.shadowBlur = props.shadow.blur; ctx.shadowColor = props.shadow.color || (w.color||defaults.color); }
       else ctx.shadowBlur = 0;
 
+      // manual free-position
       const fx = Number(w.fx || 0), fy = Number(w.fy || 0);
       const drawX = base.x + (props.dx||0) + fx;
       const drawY = base.y + (props.dy||0) + fy;
 
+      // gradient
       let fillStyle = props.color || (w.color || defaults.color);
       if (props.gradient && txt.length) {
         const wordWidth = Math.ceil(ctx.measureText(txt).width);
@@ -632,16 +603,16 @@ function render(t=0, totalDur=getDuration()){
         ctx.fillText(txt, drawX, drawY);
       }
 
+      // selection boxes
       const thisKey = `${li}:${wi}`;
+      const ww = ctx.measureText(w.text||"").width;
       if (doc.multi.has(thisKey)) {
-        const ww = ctx.measureText(w.text||"").width;
         ctx.save();
         ctx.strokeStyle = "rgba(0,255,255,0.95)";
         ctx.lineWidth = 1; ctx.setLineDash([3,2]);
         ctx.strokeRect(drawX-2, (drawY)-lh, ww+4, lh+4);
         ctx.restore();
       } else if (selected && selected.line===li && selected.word===wi && mode==="edit") {
-        const ww = ctx.measureText(w.text||"").width;
         ctx.save();
         ctx.strokeStyle = "rgba(255,0,255,0.95)";
         ctx.lineWidth = 1; ctx.setLineDash([3,2]);
@@ -658,7 +629,7 @@ function render(t=0, totalDur=getDuration()){
 }
 
 /* =======================================================
-   Selection / input / typing / dragging
+   Selection / input
 ======================================================= */
 function keyOf(li, wi){ return `${li}:${wi}`; }
 function forEachSelectedWord(fn){
@@ -672,10 +643,9 @@ function forEachSelectedWord(fn){
     if (w) fn(w, selected.line, selected.word);
   }
 }
-function hitTestWord(px, py){
+function hitTestWord(px, py){ // includes manual offsets
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
-
-  const heights = doc.lines.map(line => Math.max(12, ...line.words.map(w => (w.size || defaults.size))));
+  const heights = doc.lines.map(lineHeight);
   const contentH = heights.reduce((s,h)=>s+h,0) + (doc.lines.length-1)*lineGap;
 
   let y;
@@ -704,7 +674,7 @@ function hitTestWord(px, py){
   return null;
 }
 
-/* Click to select (Shift toggles multi) */
+/* Click to select (Shift adds; Cmd/Ctrl handled in pointerdown for drag) */
 canvas.addEventListener("click",(e)=>{
   const rect=canvas.getBoundingClientRect();
   const px=(e.clientX-rect.left)/zoom, py=(e.clientY-rect.top)/zoom;
@@ -712,14 +682,14 @@ canvas.addEventListener("click",(e)=>{
 
   if (hit) {
     const k = keyOf(hit.line, hit.word);
-    if (e.shiftKey) {
+    if (e.shiftKey) { // multi-select toggle
       if (doc.multi.has(k)) doc.multi.delete(k);
       else doc.multi.add(k);
       selected = hit;
     } else {
       doc.multi.clear(); selected = hit;
     }
-    buildAnimationsUI(); // refresh selection
+    buildAnimationsUI(); // refresh params for new selection
     render(mode==="preview" ? ((performance.now()-startT)/1000)%getDuration() : 0);
   }
 });
@@ -753,12 +723,12 @@ document.addEventListener("keydown",(e)=>{
 addWordBtn?.addEventListener("click",()=>{
   const li = selected ? selected.line : (doc.lines.length-1);
   const line = doc.lines[li] || (doc.lines[li]={words:[]});
-  line.words.push({ text:"NEW", color:defaults.color, font:defaults.font, size:defaults.size, anims:[...FLOW_BASE, COLORCYCLE("#49a9ff")] });
+  line.words.push({ text:"NEW", color:defaults.color, font:defaults.font, size:defaults.size });
   selected = { line: li, word: line.words.length-1 };
   render();
 });
 addLineBtn?.addEventListener("click",()=>{
-  doc.lines.push({ words:[{ text:"LINE", color:defaults.color, font:defaults.font, size:defaults.size, anims:[...FLOW_BASE, COLORCYCLE("#ff65d5")] }] });
+  doc.lines.push({ words:[{ text:"LINE", color:defaults.color, font:defaults.font, size:defaults.size }] });
   selected = { line: doc.lines.length-1, word: 0 };
   render();
 });
@@ -771,7 +741,7 @@ delWordBtn?.addEventListener("click",()=>{
   render();
 });
 
-/* Font / size / color inputs */
+/* Font / size / color */
 fontSelect?.addEventListener("change",()=>{ forEachSelectedWord(w=>{ w.font = fontSelect.value || defaults.font; }); autoSizeAllIfOn(); render(); });
 fontSizeInp?.addEventListener("input",()=>{ const v = Math.max(6, Math.min(64, parseInt(fontSizeInp.value||`${defaults.size}`,10))); forEachSelectedWord(w=>{ w.size = v; }); render(); });
 autoSizeChk?.addEventListener("change",()=>{ autoSizeAllIfOn(); render(); });
@@ -791,10 +761,8 @@ valignBtns.forEach(b=> b.addEventListener("click",()=>{
   doc.style ??= {}; doc.style.valign = b.dataset.valign || "middle"; render();
 }));
 
-/* Multi toggle visual only (Shift still toggles selection) */
-multiToggle?.addEventListener("click", ()=> {
-  multiToggle.classList.toggle("active");
-});
+/* Multi toggle (visual sticky) */
+multiToggle?.addEventListener("click", ()=> multiToggle.classList.toggle("active"));
 
 /* Manual drag toggle */
 manualDragBtn?.addEventListener("click", () => {
@@ -808,14 +776,14 @@ manualDragBtn?.addEventListener("click", () => {
   });
 });
 
-/* Cmd/Ctrl = temporary drag */
+/* Cmd/Ctrl = temporary drag (no toggle needed) */
 canvas.addEventListener("pointerdown", (e) => {
   const rect = canvas.getBoundingClientRect();
   const px = (e.clientX - rect.left) / zoom;
   const py = (e.clientY - rect.top) / zoom;
 
   let willDrag = manualDrag.enabled || e.ctrlKey || e.metaKey;
-  if (!willDrag) return;
+  if (!willDrag) return; // selection handled by click
 
   const pick = hitTestWord(px, py);
   if (!selected && !doc.multi.size && pick) selected = {line:pick.line, word:pick.word};
@@ -857,10 +825,15 @@ window.addEventListener("pointerup", (e) => {
   try { canvas.releasePointerCapture(e.pointerId); } catch {}
 });
 
-/* =======================================================
-   Animations UI (live update)
-======================================================= */
+/* ---------- Animations UI ---------- */
 function cloneAnims(src){ return src.map(a=>({ id:a.id, params:{...a.params} })); }
+
+function showConflictBanner(){
+  const active = doc.anims.map(a=>a.id);
+  const bad = CONFLICTS.some(pair => pair.every(p => active.includes(p)));
+  if (animConflicts) animConflicts.classList.toggle("hidden", !bad);
+}
+
 function buildAnimationsUI(){
   animList.innerHTML = "";
   doc.anims = doc.anims || [];
@@ -898,6 +871,7 @@ function buildAnimationsUI(){
       inp.addEventListener("input",()=>{
         const a = doc.anims.find(x=>x.id===def.id);
         if (a) a.params[k] = (inp.type==="number") ? +inp.value : inp.value;
+        showConflictBanner();
         render(mode==="preview" ? ((performance.now()-startT)/1000)%getDuration() : 0);
       });
       p.appendChild(la); p.appendChild(inp); params.appendChild(p);
@@ -907,6 +881,7 @@ function buildAnimationsUI(){
       const has = !!doc.anims.find(a=>a.id===def.id);
       if (chk.checked && !has){ doc.anims.push({ id:def.id, params:{...def.params} }); params.style.display = "block"; }
       else if (!chk.checked && has){ doc.anims = doc.anims.filter(a=>a.id!==def.id); params.style.display = "none"; }
+      showConflictBanner();
       render(mode==="preview" ? ((performance.now()-startT)/1000)%getDuration() : 0);
     });
     gear.addEventListener("click",()=> params.style.display = params.style.display==="none" ? "block" : "none");
@@ -914,7 +889,7 @@ function buildAnimationsUI(){
     row.appendChild(left); row.appendChild(params); animList.appendChild(row);
   });
 
-  // Bulk apply
+  // Bulk apply: Apply edit-buffer anims to selection/all
   $("#applySelectedAnimBtn")?.addEventListener("click", ()=>{
     const pack = cloneAnims(doc.anims);
     if (doc.multi.size){
@@ -928,16 +903,29 @@ function buildAnimationsUI(){
     }
     render();
   });
+
   $("#applyAllAnimBtn")?.addEventListener("click", ()=>{
+    // colorcycle seed per word to different start hues:
     const pack = cloneAnims(doc.anims);
-    doc.lines.forEach(line=> line.words.forEach(w=> w.anims = cloneAnims(pack)));
+    let idx = 0;
+    doc.lines.forEach(line=> line.words.forEach(w=>{
+      w.anims = cloneAnims(pack);
+      // ensure colorcycle present with distinct start
+      const existing = w.anims.find(a=>a.id==="colorcycle");
+      const seed = presetColorSeeds[idx % presetColorSeeds.length];
+      if (existing) existing.params.start = seed;
+      else w.anims.push({id:"colorcycle", params:{speed:0.5, start:seed}});
+      idx++;
+    }));
     render();
   });
+
+  showConflictBanner();
 }
 buildAnimationsUI();
 
 /* =======================================================
-   Preview loop + GIF (preview image under controls)
+   Preview loop + GIF
 ======================================================= */
 function getFPS(){ const v = parseInt($("#fps")?.value || "15",10); return Math.max(1,Math.min(30,v||15)); }
 function getDuration(){ const v=parseInt($("#seconds")?.value || "8",10); return Math.max(1,Math.min(60,v||8)); }
@@ -964,7 +952,7 @@ modeEditBtn?.addEventListener("click",()=>setMode("edit")); modePreviewBtn?.addE
 aboutBtn?.addEventListener("click",()=> aboutModal?.classList.remove("hidden"));
 aboutClose?.addEventListener("click",()=> aboutModal?.classList.add("hidden"));
 
-/* local GIF libs loader */
+/* GIF render (preview image under buttons) */
 function loadScriptLocal(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.async=true; s.onload=()=>res(true); s.onerror=rej; document.head.appendChild(s); }); }
 async function ensureLocalGifLibs(){
   if (typeof GIFEncoder !== "undefined") return true;
@@ -989,15 +977,24 @@ async function renderGifDownload(){
 
   try{
     const enc = new GIFEncoder(); enc.setRepeat(0); enc.setDelay(delay); enc.setQuality(10); enc.setSize(W, H); enc.start();
-    for (let i = 0; i < frames; i++) { const t = i / fps; render(t, secs); enc.addFrame(ctx); if (progressBar) progressBar.style.setProperty("--p", (t / secs) % 1); if (tCur) tCur.textContent = `${(t % secs).toFixed(1)}s`; }
+    for (let i = 0; i < frames; i++) {
+      const t = i / fps;
+      render(t, secs);
+      enc.addFrame(ctx);
+      if (progressBar) progressBar.style.setProperty("--p", (t / secs) % 1);
+      if (tCur) tCur.textContent = `${(t % secs).toFixed(1)}s`;
+    }
     enc.finish();
     const blob = encoderToBlob(enc); const url = URL.createObjectURL(blob);
 
-    // Show preview under controls so iPhone can long-press → Save
+    // Show preview for long-press save on iPhone
     if (gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=url; gifPreviewImg.alt="Animated GIF preview"; }
 
-    // Also trigger file download (desktop)
-    const a=document.createElement("a"); a.href=url; a.download=`${($("#fileName")?.value||"animation").replace(/\.(png|jpe?g|webp|gif)$/i,"")}.gif`; a.click();
+    // One-click download
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=`${($("#fileName")?.value||"animation").replace(/\.(png|jpe?g|webp|gif)$/i,"")}.gif`;
+    a.click();
     setTimeout(()=>URL.revokeObjectURL(url),15000);
   }catch(err){ console.error(err); notifyUserError("GIF render failed."); }
   finally{ if(resume) startPreview(); }
@@ -1018,11 +1015,12 @@ function snapshot(){ return JSON.parse(JSON.stringify(doc)); }
 function pushHistory(){ history.push(snapshot()); future.length=0; }
 undoBtn?.addEventListener("click",()=>{ if (!history.length) return; future.push(snapshot()); const last=history.pop(); Object.assign(doc,last); render(); });
 redoBtn?.addEventListener("click",()=>{ if (!future.length) return; history.push(snapshot()); const next=future.pop(); Object.assign(doc,next); render(); });
-clearAllBtn?.addEventListener("click",()=>{ pushHistory(); doc.lines=[{words:[{text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color, anims:[...FLOW_BASE, COLORCYCLE("#49a9ff")]}]}]; render(); });
+clearAllBtn?.addEventListener("click",()=>{ pushHistory(); doc.lines=[{words:[{text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color}]}]; render(); });
 
 /* ---------- Config in/out ---------- */
 $("#saveJsonBtn")?.addEventListener("click",()=>{
   const data = snapshot();
+  // If uploaded image exists, embed as dataURL
   if (data.bg?.image && data.bg.type==="image"){
     try{
       const tmp=document.createElement("canvas"); tmp.width=doc.res.w; tmp.height=doc.res.h;
@@ -1044,116 +1042,21 @@ $("#loadJsonInput")?.addEventListener("change",async(e)=>{
   }catch(err){ notifyUserError("Invalid config file."); }
 });
 
-/* =======================================================
-   Emoji picker (uses pre-built assets under assets/openmoji/*)
-======================================================= */
-async function detectEmojiBase(){
-  // quick detection of base path
-  const guess = ["assets/openemoji","assets/openmoji"];
-  for (const g of guess){
-    try{
-      const r = await fetch(`${g}/manifest.json`, {cache:"no-store"});
-      if (r.ok){ EMOJI_DB = await r.json(); return g; }
-    }catch{}
-  }
-  return null;
-}
-async function openEmojiPicker(){
-  try{
-    if (!EMOJI_DB){
-      const base = await detectEmojiBase();
-      if (!base){ notifyUserError("Emoji manifest not found under assets/openemoji or assets/openmoji."); return; }
-    }
-    buildEmojiTabsAndGrid();
-    emojiModal?.classList.remove("hidden");
-  }catch(e){ notifyUserError("Failed to load emoji list."); }
-}
-function buildEmojiTabsAndGrid(){
-  if (!EMOJI_DB) return;
-  emojiTabs.innerHTML = "";
-  const cats = EMOJI_DB.categories || [];
-  cats.forEach((c, idx)=>{
-    const b=document.createElement("button"); b.className="chip"; b.textContent=c.title || c.id || `Cat ${idx+1}`;
-    if (idx===0) b.classList.add("active");
-    b.addEventListener("click", ()=>{
-      [...emojiTabs.children].forEach(x=>x.classList.remove("active"));
-      b.classList.add("active");
-      renderEmojiGrid(c.items||[]);
-    });
-    emojiTabs.appendChild(b);
-  });
-  // initial grid
-  renderEmojiGrid((cats[0] && cats[0].items) || []);
-}
-function renderEmojiGrid(items){
-  emojiGrid.innerHTML="";
-  const q = (emojiSearch?.value || "").trim().toLowerCase();
-  const list = q ? items.filter(it => (it.title||"").toLowerCase().includes(q) || (it.emoji||"").includes(q)) : items;
-  list.forEach(it=>{
-    const cell=document.createElement("button"); cell.className="emoji-cell";
-    const img=document.createElement("img"); img.loading="lazy";
-    img.src = it.svg; img.alt = it.title || it.emoji || "emoji";
-    cell.appendChild(img);
-    cell.addEventListener("click", ()=>{
-      // Add as "emoji word": rasterize SVG to bitmap at CURRENT_EMOJI_SIZE
-      addEmojiWordFromSVG(it.svg, CURRENT_EMOJI_SIZE).then(()=> {
-        emojiModal?.classList.add("hidden");
-      }).catch(()=> notifyUserError("Failed to insert emoji."));
-    });
-    emojiGrid.appendChild(cell);
-  });
-}
-emojiBtn?.addEventListener("click", openEmojiPicker);
-emojiClose?.addEventListener("click", ()=> emojiModal?.classList.add("hidden"));
-emojiSearch?.addEventListener("input", ()=>{
-  const activeTab = emojiTabs.querySelector(".active");
-  if (!EMOJI_DB || !activeTab) return;
-  const cats = EMOJI_DB.categories || [];
-  const idx = [...emojiTabs.children].indexOf(activeTab);
-  renderEmojiGrid((cats[idx] && cats[idx].items) || []);
-});
-emojiSize?.addEventListener("input", ()=> {
-  const v = parseInt(emojiSize.value||"24",10);
-  CURRENT_EMOJI_SIZE = Math.max(8, Math.min(96, v||24));
-});
-
-/* rasterize an SVG path/url to a canvas bitmap and add as a "word" (image word) */
-async function addEmojiWordFromSVG(svgUrl, targetH=24){
-  const svgText = await (await fetch(svgUrl)).text();
-  const img = new Image();
-  const svgBlob = new Blob([svgText], {type:"image/svg+xml"});
-  const url = URL.createObjectURL(svgBlob);
-  await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
-  // compute scale to targetH
-  const scale = targetH / img.height;
-  const w = Math.max(1, Math.round(img.width * scale));
-  const h = Math.max(1, Math.round(img.height * scale));
-  const tmp = document.createElement("canvas"); tmp.width = w; tmp.height = h;
-  const tctx = tmp.getContext("2d");
-  tctx.clearRect(0,0,w,h);
-  tctx.drawImage(img,0,0,w,h);
-  URL.revokeObjectURL(url);
-  // Add as word with bitmap dataURL for portability
-  const dataURL = tmp.toDataURL("image/png");
-  const li = selected ? selected.line : (doc.lines.length-1);
-  const line = doc.lines[li] || (doc.lines[li]={words:[]});
-  line.words.push({
-    text:"", font:defaults.font, size:targetH, color:"#fff",
-    image:dataURL, // special: when image exists we draw it instead of text
-    anims:[...FLOW_BASE] // let emoji flow/wave by default
-  });
-  selected = {line:li, word: line.words.length-1};
-  render();
-}
-
-/* =======================================================
-   Init
-======================================================= */
+/* ---------- Init ---------- */
 function init(){
-  buildBgGrid();
-  render();
-  fitZoom();
+  buildBgGrid(); render(); fitZoom();
   if (autoSizeChk) autoSizeChk.checked = true;
   autoSizeAllIfOn(); render();
+
+  // Make BOOKTOK rainbow glow by default & apply colorcycle per-word seeds
+  let idx=0;
+  doc.lines.forEach(line => line.words.forEach(w => {
+    if (!w.anims) w.anims=[];
+    // ensure unique colorcycle start
+    const seed = presetColorSeeds[idx % presetColorSeeds.length];
+    const cc = w.anims.find(a=>a.id==="colorcycle");
+    if (cc) cc.params.start = seed;
+    idx++;
+  }));
 }
 init();
