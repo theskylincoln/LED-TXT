@@ -60,16 +60,16 @@ body.theme-midnight{
 }
 
 /* ===== Control Row ===== */
+/* existing pattern (kept) */
 .control-row{
   margin: 0 12px 8px;
   display:flex; align-items:center; justify-content:space-between; gap:12px;
 }
-/* NEW: match .top-controls to your existing control-row look */
+/* NEW: match HTML's .top-controls */
 .top-controls{
   margin: 0 12px 8px;
   display:flex; align-items:center; justify-content:space-between; gap:12px;
 }
-
 .left-controls{ display:flex; align-items:center; gap:10px; }
 .right-controls{ display:flex; align-items:center; gap:12px; }
 
@@ -249,4 +249,105 @@ input[type="color"]{
 .modal.hidden{ display:none; }
 .modal-backdrop{ position:absolute; inset:0; background: rgba(8,10,16,0.65); backdrop-filter: blur(6px); }
 .modal-content{
-  position:relative; z-index:1; padding:16px; border-radius:14px; max
+  position:relative; z-index:1; padding:16px; border-radius:14px; max-width:860px; width:min(96vw, 860px);
+}
+.modal-content.xl{ max-width:1000px; width:min(96vw,1000px); }
+
+/* ===== Emoji Picker ===== */
+.emoji-head{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:10px; }
+#emojiTabs{ display:flex; gap:6px; flex-wrap:wrap; }
+
+/* existing tab style (kept for compatibility) */
+#emojiTabs .tab{
+  padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.15);
+  background:#1a2130; color:#fff; cursor:pointer;
+}
+#emojiTabs .tab.active{ background:#2b3650; border-color:var(--ring); }
+
+/* NEW: style .tab-btn used by the updated HTML */
+#emojiTabs .tab-btn{
+  padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.15);
+  background:#1a2130; color:#fff; cursor:pointer;
+}
+#emojiTabs .tab-btn.active{
+  background:#2b3650; border-color:var(--ring);
+}
+
+.emoji-search{ display:flex; gap:8px; align-items:center; }
+#emojiSearch{ min-width:220px; }
+
+/* NEW: animated pane search input */
+#aeSearch{ min-width:220px; }
+
+.emoji-grid{
+  display:grid; gap:10px; grid-template-columns: repeat(auto-fill, minmax(56px,1fr));
+  max-height:60vh; overflow:auto; padding:6px;
+}
+.emoji-item{
+  aspect-ratio:1/1; display:grid; place-items:center;
+  background:#111827; border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px; cursor:pointer; overflow:hidden;
+}
+.emoji-item img{ width:80%; height:80%; object-fit:contain; }
+.emoji-zoom-hint{ color:var(--muted); font-size:12px; margin-top:8px; text-align:center; }
+
+/* ===== GIF preview ===== */
+.gif-preview{
+  display:block; width:180px; height:auto; margin-top:10px; border-radius:10px;
+  border:1px solid rgba(255,255,255,0.12);
+}
+
+/* Utils */
+.hidden{ display:none !important; }
+.center{ text-align:center; }
+.block{ display:block; }
+.micro{ font-size:12px; color:var(--muted); margin-top:4px; }
+
+/* === Animation panel refinements === */
+
+/* Reduce vertical spacing between each animation row */
+.anim-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0; /* ↓ was probably 8–10px */
+  padding: 3px 0;
+}
+
+/* Checkbox + label aligned */
+.anim-row label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+
+/* Make settings gear smaller and more subtle */
+.anim-settings {
+  width: 26px;     /* ↓ was 32px */
+  height: 26px;
+  min-width: 26px;
+  border-radius: 8px;
+  background: var(--accent);
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+.anim-settings:hover {
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* Add a bit more separation between groups of animations */
+.anim-section + .anim-section {
+  margin-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 8px;
+}
+
+/* Keep Apply buttons visually distinct */
+#animControls button {
+  margin-bottom: 8px;
+}
