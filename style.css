@@ -336,3 +336,42 @@ input[type="color"]{
 #animControls button {
   margin-bottom: 8px;
 }
+
+
+/* === APPENDED PATCHES === */
+/* ====== PATCH: Drag pill visibility + active indicator ====== */
+#manualDragBtn { display: inline-flex; }
+.pill[aria-pressed="true"] { background:#263352; border-color: var(--ring); }
+.pill .pill-indicator{ width:.6rem; height:.6rem; border-radius:999px; border:1px solid rgba(255,255,255,0.2); }
+.pill.active .pill-indicator,
+.pill[aria-pressed="true"] .pill-indicator{ background: var(--accent-strong); border-color: transparent; }
+
+/* ====== PATCH: Emoji pager + cell styles ====== */
+.emoji-search { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.emoji-pager { display:inline-flex; align-items:center; gap:8px; padding:2px 6px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); }
+.emoji-pager #emojiPager { min-width:56px; text-align:center; color:var(--muted); }
+.emoji-grid { grid-template-columns: repeat(auto-fill, minmax(42px,1fr)); gap:.4rem; }
+.emoji-cell {
+  display:flex; align-items:center; justify-content:center; padding:.25rem;
+  background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,0.10);
+  border-radius:.6rem; cursor:pointer;
+}
+.emoji-cell img { width:28px; height:28px; image-rendering: pixelated; }
+
+/* ====== PATCH: Animations list rows (title + gear + collapsible settings) ====== */
+.anim-list { display:flex; flex-direction:column; gap:.25rem; }
+.anim-list .anim-row {
+  display:grid; grid-template-columns: 1fr auto; align-items:center;
+  padding:.35rem .5rem; border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03); border-radius:.75rem;
+}
+.anim-list .anim-row .title { font-weight:600; }
+.anim-list .anim-row .gear  { cursor:pointer; border:none; background:transparent; font-size:1rem; color:var(--text); }
+.anim-list .anim-settings { display:none; grid-column:1 / -1; padding:.4rem .5rem .6rem; }
+.anim-list .anim-row.open .anim-settings { display:block; }
+.anim-setting-line { display:flex; align-items:center; gap:.5rem; margin:.25rem 0; }
+.anim-setting-line label { width:150px; text-align:left; opacity:.9; }
+.anim-setting-line input[type="range"] { flex:1; }
+
+/* ====== PATCH: Ensure pills look clickable and consistent ====== */
+.pill:hover { filter: brightness(1.08); }
