@@ -61,8 +61,7 @@ Emoji artwork provided by [OpenMoji](https://openmoji.org).
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 ### Google Noto Animated Emoji  
-Animated emoji data and artwork provided by the [Noto Emoji project](https://github.com/googlefonts/noto-emoji),  
-part of [Google Fonts](https://fonts.google.com/noto).  
+Animated emoji data and artwork provided by the [Noto Emoji project](https://github.com/googlefonts/noto-emoji), part of [Google Fonts](https://fonts.google.com/noto).  
 © 2024 Google LLC. Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ---
