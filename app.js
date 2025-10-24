@@ -73,6 +73,7 @@ const emojiSearch=$("#emojiSearch"), emojiClose=$("#emojiClose");
 let mode="edit", zoom=1, selected=null;
 let history=[], future=[];
 let startT=0, rafId=null;
+const uiLock = { emojiOpen: false };
 const defaults={ font:"Orbitron", size:22, color:"#FFFFFF" };
 
 const doc={
@@ -1096,13 +1097,19 @@ async function filterEmoji(){
   renderEmojiGrid(combined.slice(0,800));
 }
 async function openEmojiModal(){
-  await loadEmojiManifest(); loadNotoIndex();
+  await loadEmojiManifest();
+  loadNotoIndex();
   buildEmojiTabs();
-  emojiSearch.value=""; filterEmoji();
+  emojiSearch.value = "";
+  filterEmoji();
+  uiLock.emojiOpen = true; // <— lock typing while modal is open
   emojiModal.classList.remove("hidden");
 }
 on(emojiBtn,"click",()=>{ selected=null; doc.multi.clear(); render(); openEmojiModal(); });
-on(emojiClose,"click",()=>emojiModal.classList.add("hidden"));
+on(emojiClose,"click",()=>{
+  emojiModal.classList.add("hidden");
+  uiLock.emojiOpen = false; // <— unlock typing again
+});
 on(emojiSearch,"input",filterEmoji);
 
 function insertEmoji(entry){
