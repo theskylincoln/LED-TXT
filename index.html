@@ -278,31 +278,30 @@
     <div class="modal-backdrop"></div>
     <div class="modal-content glass xl">
       <div class="emoji-head">
-        <!-- Tabs: Static | Animated -->
-        <div class="tabs" id="emojiTabs">
-          <button class="tab-btn active" data-tab="static">Static</button>
-          <button class="tab-btn" data-tab="animated">Animated</button>
-        </div>
-        <div class="emoji-search">
-          <!-- Static search (existing) -->
-          <input id="emojiSearch" type="search" placeholder="Search emojis…" />
-          <button id="emojiClose" class="icon-btn">✖</button>
-        </div>
+      <div class="tabs" id="emojiTabs">
+        <button class="tab-btn active" data-tab="static">Static</button>
+        <button class="tab-btn" data-tab="animated">Animated</button>
       </div>
 
-      <!-- Static pane (existing grid) -->
-      <div id="emojiPaneStatic">
-        <div id="emojiGrid" class="emoji-grid"></div>
+      <div class="emoji-search">
+        <!-- Static search -->
+        <input id="emojiSearch" type="search" placeholder="Search static emojis…" />
+        <!-- Animated search -->
+        <input id="aeSearch" type="search" class="hidden" placeholder="Search animated emojis…" />
+        <button id="emojiClose" class="icon-btn">✖</button>
       </div>
+    </div>
 
-      <!-- Animated pane (new) -->
-      <div id="emojiPaneAnimated" class="hidden">
-        <div class="emoji-search alt">
-          <input id="aeSearch" type="search" placeholder="Search animated emoji…" />
-        </div>
-        <div id="aeGrid" class="emoji-grid"></div>
-        <div class="emoji-zoom-hint">Pinch to zoom on mobile • Use resize handle on desktop</div>
-      </div>
+    <!-- Static pane -->
+    <div id="emojiPaneStatic">
+  <div id="emojiGrid" class="emoji-grid"></div>
+</div>
+
+    <!-- Animated pane -->
+    <div id="emojiPaneAnimated" class="hidden">
+  <div id="aeGrid" class="emoji-grid"></div>
+      <div class="micro">Animated Noto Emoji • drawn via Lottie</div>
+    </div>
     </div>
   </div>
 
