@@ -1,0 +1,7007 @@
+{
+  "source": "openmoji",
+  "version": "2025-10-24T01:12:48.007Z",
+  "count": 1000,
+  "items": [
+    {
+      "hexcode": "1F4A4",
+      "annotation": "ZZZ",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4A4.svg"
+    },
+    {
+      "hexcode": "1F9B5",
+      "annotation": "leg",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F9B5.svg"
+    },
+    {
+      "hexcode": "1F402",
+      "annotation": "ox",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F402.svg"
+    },
+    {
+      "hexcode": "1F95A",
+      "annotation": "egg",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F95A.svg"
+    },
+    {
+      "hexcode": "1F6D6",
+      "annotation": "hut",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F6D6.svg"
+    },
+    {
+      "hexcode": "1F3BF",
+      "annotation": "skis",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3BF.svg"
+    },
+    {
+      "hexcode": "1F4C0",
+      "annotation": "dvd",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F4C0.svg"
+    },
+    {
+      "hexcode": "1F549",
+      "annotation": "om",
+      "group": "symbols",
+      "subgroup": "r",
+      "path": "symbols/r/1F549.svg"
+    },
+    {
+      "hexcode": "1F3F4",
+      "annotation": "black flag",
+      "group": "flags",
+      "subgroup": "f",
+      "path": "flags/f/1F3F4.svg"
+    },
+    {
+      "hexcode": "1F479",
+      "annotation": "ogre",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F479.svg"
+    },
+    {
+      "hexcode": "1F442",
+      "annotation": "ear",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F442.svg"
+    },
+    {
+      "hexcode": "1F415",
+      "annotation": "dog",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F415.svg"
+    },
+    {
+      "hexcode": "1F967",
+      "annotation": "pie",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F967.svg"
+    },
+    {
+      "hexcode": "1F68C",
+      "annotation": "bus",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F68C.svg"
+    },
+    {
+      "hexcode": "1F6F7",
+      "annotation": "sled",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F6F7.svg"
+    },
+    {
+      "hexcode": "1F58A",
+      "annotation": "pen",
+      "group": "objects",
+      "subgroup": "w",
+      "path": "objects/w/1F58A.svg"
+    },
+    {
+      "hexcode": "264C",
+      "annotation": "Leo",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/264C.svg"
+    },
+    {
+      "hexcode": "1F3F3",
+      "annotation": "white flag",
+      "group": "flags",
+      "subgroup": "f",
+      "path": "flags/f/1F3F3.svg"
+    },
+    {
+      "hexcode": "1F573",
+      "annotation": "hole",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F573.svg"
+    },
+    {
+      "hexcode": "1F441",
+      "annotation": "eye",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F441.svg"
+    },
+    {
+      "hexcode": "1F98A",
+      "annotation": "fox",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F98A.svg"
+    },
+    {
+      "hexcode": "1F9CA",
+      "annotation": "ice",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F9CA.svg"
+    },
+    {
+      "hexcode": "2600",
+      "annotation": "sun",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/2600.svg"
+    },
+    {
+      "hexcode": "1FA81",
+      "annotation": "kite",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1FA81.svg"
+    },
+    {
+      "hexcode": "1F511",
+      "annotation": "key",
+      "group": "objects",
+      "subgroup": "l",
+      "path": "objects/l/1F511.svg"
+    },
+    {
+      "hexcode": "2795",
+      "annotation": "plus",
+      "group": "symbols",
+      "subgroup": "m",
+      "path": "symbols/m/2795.svg"
+    },
+    {
+      "hexcode": "1F1E8-1F1F6",
+      "annotation": "flag: Sark",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E8-1F1F6.svg"
+    },
+    {
+      "hexcode": "1F480",
+      "annotation": "skull",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F480.svg"
+    },
+    {
+      "hexcode": "1F466",
+      "annotation": "boy",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F466.svg"
+    },
+    {
+      "hexcode": "1F408",
+      "annotation": "cat",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F408.svg"
+    },
+    {
+      "hexcode": "1FAD9",
+      "annotation": "jar",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1FAD9.svg"
+    },
+    {
+      "hexcode": "1F32B",
+      "annotation": "fog",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F32B.svg"
+    },
+    {
+      "hexcode": "1F9F6",
+      "annotation": "yarn",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F9F6.svg"
+    },
+    {
+      "hexcode": "1FA93",
+      "annotation": "axe",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1FA93.svg"
+    },
+    {
+      "hexcode": "2648",
+      "annotation": "Aries",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/2648.svg"
+    },
+    {
+      "hexcode": "1F1E8-1F1FA",
+      "annotation": "flag: Cuba",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E8-1F1FA.svg"
+    },
+    {
+      "hexcode": "1F47B",
+      "annotation": "ghost",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F47B.svg"
+    },
+    {
+      "hexcode": "1F468",
+      "annotation": "man",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468.svg"
+    },
+    {
+      "hexcode": "1F404",
+      "annotation": "cow",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F404.svg"
+    },
+    {
+      "hexcode": "1F34B-200D-1F7E9",
+      "annotation": "lime",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F34B-200D-1F7E9.svg"
+    },
+    {
+      "hexcode": "1FAA8",
+      "annotation": "rock",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1FAA8.svg"
+    },
+    {
+      "hexcode": "1FAA2",
+      "annotation": "knot",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1FAA2.svg"
+    },
+    {
+      "hexcode": "1F9EC",
+      "annotation": "dna",
+      "group": "objects",
+      "subgroup": "s",
+      "path": "objects/s/1F9EC.svg"
+    },
+    {
+      "hexcode": "264D",
+      "annotation": "Virgo",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/264D.svg"
+    },
+    {
+      "hexcode": "1F1EB-1F1EF",
+      "annotation": "flag: Fiji",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EB-1F1EF.svg"
+    },
+    {
+      "hexcode": "1F47D",
+      "annotation": "alien",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F47D.svg"
+    },
+    {
+      "hexcode": "1F9DD",
+      "annotation": "elf",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DD.svg"
+    },
+    {
+      "hexcode": "1F416",
+      "annotation": "pig",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F416.svg"
+    },
+    {
+      "hexcode": "1F350",
+      "annotation": "pear",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F350.svg"
+    },
+    {
+      "hexcode": "1FAB5",
+      "annotation": "wood",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1FAB5.svg"
+    },
+    {
+      "hexcode": "1FA80",
+      "annotation": "yo-yo",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1FA80.svg"
+    },
+    {
+      "hexcode": "1F6CF",
+      "annotation": "bed",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F6CF.svg"
+    },
+    {
+      "hexcode": "264E",
+      "annotation": "Libra",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/264E.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1FA",
+      "annotation": "flag: Guam",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1FA.svg"
+    },
+    {
+      "hexcode": "1F916",
+      "annotation": "robot",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F916.svg"
+    },
+    {
+      "hexcode": "1F9B6",
+      "annotation": "foot",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F9B6.svg"
+    },
+    {
+      "hexcode": "1F40F",
+      "annotation": "ram",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F40F.svg"
+    },
+    {
+      "hexcode": "1F32E",
+      "annotation": "taco",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F32E.svg"
+    },
+    {
+      "hexcode": "1F3E6",
+      "annotation": "bank",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3E6.svg"
+    },
+    {
+      "hexcode": "1F0CF",
+      "annotation": "joker",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F0CF.svg"
+    },
+    {
+      "hexcode": "1F9E5",
+      "annotation": "coat",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F9E5.svg"
+    },
+    {
+      "hexcode": "2796",
+      "annotation": "minus",
+      "group": "symbols",
+      "subgroup": "m",
+      "path": "symbols/m/2796.svg"
+    },
+    {
+      "hexcode": "1F1EE-1F1F6",
+      "annotation": "flag: Iraq",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EE-1F1F6.svg"
+    },
+    {
+      "hexcode": "1F4AB",
+      "annotation": "dizzy",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4AB.svg"
+    },
+    {
+      "hexcode": "1F443",
+      "annotation": "nose",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F443.svg"
+    },
+    {
+      "hexcode": "1F411",
+      "annotation": "ewe",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F411.svg"
+    },
+    {
+      "hexcode": "1F9C2",
+      "annotation": "salt",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F9C2.svg"
+    },
+    {
+      "hexcode": "26FA",
+      "annotation": "tent",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/26FA.svg"
+    },
+    {
+      "hexcode": "1F380",
+      "annotation": "ribbon",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F380.svg"
+    },
+    {
+      "hexcode": "1F97B",
+      "annotation": "sari",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F97B.svg"
+    },
+    {
+      "hexcode": "1FAAF",
+      "annotation": "khanda",
+      "group": "symbols",
+      "subgroup": "r",
+      "path": "symbols/r/1FAAF.svg"
+    },
+    {
+      "hexcode": "1F1EE-1F1F7",
+      "annotation": "flag: Iran",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EE-1F1F7.svg"
+    },
+    {
+      "hexcode": "1F47A",
+      "annotation": "goblin",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F47A.svg"
+    },
+    {
+      "hexcode": "1F9B4",
+      "annotation": "bone",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F9B4.svg"
+    },
+    {
+      "hexcode": "1F400",
+      "annotation": "rat",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F400.svg"
+    },
+    {
+      "hexcode": "1F362",
+      "annotation": "oden",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F362.svg"
+    },
+    {
+      "hexcode": "1F68A",
+      "annotation": "tram",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F68A.svg"
+    },
+    {
+      "hexcode": "1F3AB",
+      "annotation": "ticket",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F3AB.svg"
+    },
+    {
+      "hexcode": "1F48D",
+      "annotation": "ring",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F48D.svg"
+    },
+    {
+      "hexcode": "2649",
+      "annotation": "Taurus",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/2649.svg"
+    },
+    {
+      "hexcode": "1F1F1-1F1E6",
+      "annotation": "flag: Laos",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F1-1F1E6.svg"
+    },
+    {
+      "hexcode": "1F975",
+      "annotation": "hot face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F975.svg"
+    },
+    {
+      "hexcode": "1F440",
+      "annotation": "eyes",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F440.svg"
+    },
+    {
+      "hexcode": "1F987",
+      "annotation": "bat",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F987.svg"
+    },
+    {
+      "hexcode": "1F376",
+      "annotation": "sake",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F376.svg"
+    },
+    {
+      "hexcode": "1F695",
+      "annotation": "taxi",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F695.svg"
+    },
+    {
+      "hexcode": "1F3C6",
+      "annotation": "trophy",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F3C6.svg"
+    },
+    {
+      "hexcode": "1F514",
+      "annotation": "bell",
+      "group": "objects",
+      "subgroup": "s",
+      "path": "objects/s/1F514.svg"
+    },
+    {
+      "hexcode": "264A",
+      "annotation": "Gemini",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/264A.svg"
+    },
+    {
+      "hexcode": "1F1F2-1F1F1",
+      "annotation": "flag: Mali",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F2-1F1F1.svg"
+    },
+    {
+      "hexcode": "1F92A",
+      "annotation": "zany face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F92A.svg"
+    },
+    {
+      "hexcode": "1F476",
+      "annotation": "baby",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F476.svg"
+    },
+    {
+      "hexcode": "1F989",
+      "annotation": "owl",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F989.svg"
+    },
+    {
+      "hexcode": "1F9C9",
+      "annotation": "mate",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F9C9.svg"
+    },
+    {
+      "hexcode": "1F6A2",
+      "annotation": "ship",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6A2.svg"
+    },
+    {
+      "hexcode": "1F3BE",
+      "annotation": "tennis",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3BE.svg"
+    },
+    {
+      "hexcode": "1F941",
+      "annotation": "drum",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F941.svg"
+    },
+    {
+      "hexcode": "264B",
+      "annotation": "Cancer",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/264B.svg"
+    },
+    {
+      "hexcode": "1F1F3-1F1FA",
+      "annotation": "flag: Niue",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F3-1F1FA.svg"
+    },
+    {
+      "hexcode": "1F976",
+      "annotation": "cold face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F976.svg"
+    },
+    {
+      "hexcode": "1F467",
+      "annotation": "girl",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F467.svg"
+    },
+    {
+      "hexcode": "1F41B",
+      "annotation": "bug",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F41B.svg"
+    },
+    {
+      "hexcode": "1F348",
+      "annotation": "melon",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F348.svg"
+    },
+    {
+      "hexcode": "1F4BA",
+      "annotation": "seat",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F4BA.svg"
+    },
+    {
+      "hexcode": "1FA85",
+      "annotation": "piñata",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1FA85.svg"
+    },
+    {
+      "hexcode": "1FA89",
+      "annotation": "harp",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1FA89.svg"
+    },
+    {
+      "hexcode": "2653",
+      "annotation": "Pisces",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/2653.svg"
+    },
+    {
+      "hexcode": "1F1F4-1F1F2",
+      "annotation": "flag: Oman",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F4-1F1F2.svg"
+    },
+    {
+      "hexcode": "1F913",
+      "annotation": "nerd face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F913.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F373",
+      "annotation": "cook",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F373.svg"
+    },
+    {
+      "hexcode": "1F41C",
+      "annotation": "ant",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F41C.svg"
+    },
+    {
+      "hexcode": "1F34B",
+      "annotation": "lemon",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F34B.svg"
+    },
+    {
+      "hexcode": "2B50",
+      "annotation": "star",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/2B50.svg"
+    },
+    {
+      "hexcode": "1F9F5",
+      "annotation": "thread",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F9F5.svg"
+    },
+    {
+      "hexcode": "1FA99",
+      "annotation": "coin",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1FA99.svg"
+    },
+    {
+      "hexcode": "1F3A6",
+      "annotation": "cinema",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F3A6.svg"
+    },
+    {
+      "hexcode": "1F1F5-1F1EA",
+      "annotation": "flag: Peru",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F5-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F640",
+      "annotation": "weary cat",
+      "group": "smileys-emotion",
+      "subgroup": "c",
+      "path": "smileys-emotion/c/1F640.svg"
+    },
+    {
+      "hexcode": "1F9D9",
+      "annotation": "mage",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D9.svg"
+    },
+    {
+      "hexcode": "1FAB0",
+      "annotation": "fly",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FAB0.svg"
+    },
+    {
+      "hexcode": "1F96D",
+      "annotation": "mango",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F96D.svg"
+    },
+    {
+      "hexcode": "1F525",
+      "annotation": "fire",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F525.svg"
+    },
+    {
+      "hexcode": "1F388",
+      "annotation": "balloon",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F388.svg"
+    },
+    {
+      "hexcode": "1F4DD",
+      "annotation": "memo",
+      "group": "objects",
+      "subgroup": "w",
+      "path": "objects/w/1F4DD.svg"
+    },
+    {
+      "hexcode": "2797",
+      "annotation": "divide",
+      "group": "symbols",
+      "subgroup": "m",
+      "path": "symbols/m/2797.svg"
+    },
+    {
+      "hexcode": "1F1F9-1F1E9",
+      "annotation": "flag: Chad",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F9-1F1E9.svg"
+    },
+    {
+      "hexcode": "2764",
+      "annotation": "red heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/2764.svg"
+    },
+    {
+      "hexcode": "1F48F",
+      "annotation": "kiss",
+      "group": "people-body",
+      "subgroup": "f",
+      "path": "people-body/f/1F48F.svg"
+    },
+    {
+      "hexcode": "1F43A",
+      "annotation": "wolf",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F43A.svg"
+    },
+    {
+      "hexcode": "1F351",
+      "annotation": "peach",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F351.svg"
+    },
+    {
+      "hexcode": "1F9F1",
+      "annotation": "brick",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F9F1.svg"
+    },
+    {
+      "hexcode": "1F3B3",
+      "annotation": "bowling",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3B3.svg"
+    },
+    {
+      "hexcode": "26CF",
+      "annotation": "pick",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/26CF.svg"
+    },
+    {
+      "hexcode": "1F6C3",
+      "annotation": "customs",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6C3.svg"
+    },
+    {
+      "hexcode": "1F1F9-1F1EC",
+      "annotation": "flag: Togo",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F9-1F1EC.svg"
+    },
+    {
+      "hexcode": "1F48B",
+      "annotation": "kiss mark",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F48B.svg"
+    },
+    {
+      "hexcode": "1F9E0",
+      "annotation": "brain",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F9E0.svg"
+    },
+    {
+      "hexcode": "1F981",
+      "annotation": "lion",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F981.svg"
+    },
+    {
+      "hexcode": "1FAD2",
+      "annotation": "olive",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FAD2.svg"
+    },
+    {
+      "hexcode": "1F3E0",
+      "annotation": "house",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3E0.svg"
+    },
+    {
+      "hexcode": "1F387",
+      "annotation": "sparkler",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F387.svg"
+    },
+    {
+      "hexcode": "1F4A3",
+      "annotation": "bomb",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F4A3.svg"
+    },
+    {
+      "hexcode": "26A0",
+      "annotation": "warning",
+      "group": "symbols",
+      "subgroup": "w",
+      "path": "symbols/w/26A0.svg"
+    },
+    {
+      "hexcode": "1F3F4-200D-2620-FE0F",
+      "annotation": "pirate flag",
+      "group": "flags",
+      "subgroup": "f",
+      "path": "flags/f/1F3F4-200D-2620-FE0F.svg"
+    },
+    {
+      "hexcode": "1F4A5",
+      "annotation": "collision",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4A5.svg"
+    },
+    {
+      "hexcode": "1FAC1",
+      "annotation": "lungs",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1FAC1.svg"
+    },
+    {
+      "hexcode": "1F98C",
+      "annotation": "deer",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F98C.svg"
+    },
+    {
+      "hexcode": "1F9C5",
+      "annotation": "onion",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F9C5.svg"
+    },
+    {
+      "hexcode": "1F3E8",
+      "annotation": "hotel",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3E8.svg"
+    },
+    {
+      "hexcode": "2728",
+      "annotation": "sparkles",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/2728.svg"
+    },
+    {
+      "hexcode": "2699",
+      "annotation": "gear",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/2699.svg"
+    },
+    {
+      "hexcode": "1F54E",
+      "annotation": "menorah",
+      "group": "symbols",
+      "subgroup": "r",
+      "path": "symbols/r/1F54E.svg"
+    },
+    {
+      "hexcode": "1F1E6-1F1FC",
+      "annotation": "flag: Aruba",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E6-1F1FC.svg"
+    },
+    {
+      "hexcode": "1F925",
+      "annotation": "lying face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F925.svg"
+    },
+    {
+      "hexcode": "1F9B7",
+      "annotation": "tooth",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F9B7.svg"
+    },
+    {
+      "hexcode": "1F417",
+      "annotation": "boar",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F417.svg"
+    },
+    {
+      "hexcode": "1FAD8",
+      "annotation": "beans",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FAD8.svg"
+    },
+    {
+      "hexcode": "1F54B",
+      "annotation": "kaaba",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F54B.svg"
+    },
+    {
+      "hexcode": "26BE",
+      "annotation": "baseball",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/26BE.svg"
+    },
+    {
+      "hexcode": "1F517",
+      "annotation": "link",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F517.svg"
+    },
+    {
+      "hexcode": "264F",
+      "annotation": "Scorpio",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/264F.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1EF",
+      "annotation": "flag: Benin",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1EF.svg"
+    },
+    {
+      "hexcode": "1F974",
+      "annotation": "woozy face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F974.svg"
+    },
+    {
+      "hexcode": "1F444",
+      "annotation": "mouth",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F444.svg"
+    },
+    {
+      "hexcode": "1F410",
+      "annotation": "goat",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F410.svg"
+    },
+    {
+      "hexcode": "1F35E",
+      "annotation": "bread",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F35E.svg"
+    },
+    {
+      "hexcode": "1F301",
+      "annotation": "foggy",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F301.svg"
+    },
+    {
+      "hexcode": "1F94E",
+      "annotation": "softball",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F94E.svg"
+    },
+    {
+      "hexcode": "1FA9D",
+      "annotation": "hook",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1FA9D.svg"
+    },
+    {
+      "hexcode": "2747",
+      "annotation": "sparkle",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/2747.svg"
+    },
+    {
+      "hexcode": "1F1E8-1F1F1",
+      "annotation": "flag: Chile",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E8-1F1F1.svg"
+    },
+    {
+      "hexcode": "1F629",
+      "annotation": "weary face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F629.svg"
+    },
+    {
+      "hexcode": "1F9D2",
+      "annotation": "child",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D2.svg"
+    },
+    {
+      "hexcode": "1F43B",
+      "annotation": "bear",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F43B.svg"
+    },
+    {
+      "hexcode": "1F96F",
+      "annotation": "bagel",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F96F.svg"
+    },
+    {
+      "hexcode": "1F686",
+      "annotation": "train",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F686.svg"
+    },
+    {
+      "hexcode": "1F94D",
+      "annotation": "lacrosse",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F94D.svg"
+    },
+    {
+      "hexcode": "1F48A",
+      "annotation": "pill",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F48A.svg"
+    },
+    {
+      "hexcode": "1F3E7",
+      "annotation": "ATM sign",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F3E7.svg"
+    },
+    {
+      "hexcode": "1F1E8-1F1F3",
+      "annotation": "flag: China",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E8-1F1F3.svg"
+    },
+    {
+      "hexcode": "1F62B",
+      "annotation": "tired face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F62B.svg"
+    },
+    {
+      "hexcode": "1F469",
+      "annotation": "woman",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F469.svg"
+    },
+    {
+      "hexcode": "1F426",
+      "annotation": "bird",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F426.svg"
+    },
+    {
+      "hexcode": "1F953",
+      "annotation": "bacon",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F953.svg"
+    },
+    {
+      "hexcode": "1F687",
+      "annotation": "metro",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F687.svg"
+    },
+    {
+      "hexcode": "1F945",
+      "annotation": "goal net",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F945.svg"
+    },
+    {
+      "hexcode": "1F6AA",
+      "annotation": "door",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F6AA.svg"
+    },
+    {
+      "hexcode": "1F6BB",
+      "annotation": "restroom",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6BB.svg"
+    },
+    {
+      "hexcode": "1F1EA-1F1EC",
+      "annotation": "flag: Egypt",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EA-1F1EC.svg"
+    },
+    {
+      "hexcode": "1F620",
+      "annotation": "angry face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F620.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-2696-FE0F",
+      "annotation": "judge",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-2696-FE0F.svg"
+    },
+    {
+      "hexcode": "1F54A",
+      "annotation": "dove",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F54A.svg"
+    },
+    {
+      "hexcode": "1F355",
+      "annotation": "pizza",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F355.svg"
+    },
+    {
+      "hexcode": "1F6DE",
+      "annotation": "wheel",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6DE.svg"
+    },
+    {
+      "hexcode": "1F3AF",
+      "annotation": "bullseye",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F3AF.svg"
+    },
+    {
+      "hexcode": "1F9FC",
+      "annotation": "soap",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F9FC.svg"
+    },
+    {
+      "hexcode": "26D4",
+      "annotation": "no entry",
+      "group": "symbols",
+      "subgroup": "w",
+      "path": "symbols/w/26D4.svg"
+    },
+    {
+      "hexcode": "1F1EA-1F1F8",
+      "annotation": "flag: Spain",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EA-1F1F8.svg"
+    },
+    {
+      "hexcode": "1F921",
+      "annotation": "clown face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F921.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-2708-FE0F",
+      "annotation": "pilot",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-2708-FE0F.svg"
+    },
+    {
+      "hexcode": "1F986",
+      "annotation": "duck",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F986.svg"
+    },
+    {
+      "hexcode": "1F363",
+      "annotation": "sushi",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F363.svg"
+    },
+    {
+      "hexcode": "1F6F6",
+      "annotation": "canoe",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6F6.svg"
+    },
+    {
+      "hexcode": "1F579",
+      "annotation": "joystick",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F579.svg"
+    },
+    {
+      "hexcode": "1F5FF",
+      "annotation": "moai",
+      "group": "objects",
+      "subgroup": "o",
+      "path": "objects/o/1F5FF.svg"
+    },
+    {
+      "hexcode": "2B06",
+      "annotation": "up arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/2B06.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1E6",
+      "annotation": "flag: Gabon",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1E6.svg"
+    },
+    {
+      "hexcode": "1F63F",
+      "annotation": "crying cat",
+      "group": "smileys-emotion",
+      "subgroup": "c",
+      "path": "smileys-emotion/c/1F63F.svg"
+    },
+    {
+      "hexcode": "1F482",
+      "annotation": "guard",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F482.svg"
+    },
+    {
+      "hexcode": "1F9A2",
+      "annotation": "swan",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A2.svg"
+    },
+    {
+      "hexcode": "1F361",
+      "annotation": "dango",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F361.svg"
+    },
+    {
+      "hexcode": "26F4",
+      "annotation": "ferry",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/26F4.svg"
+    },
+    {
+      "hexcode": "1F3B2",
+      "annotation": "game die",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F3B2.svg"
+    },
+    {
+      "hexcode": "1F456",
+      "annotation": "jeans",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F456.svg"
+    },
+    {
+      "hexcode": "262F",
+      "annotation": "yin yang",
+      "group": "symbols",
+      "subgroup": "r",
+      "path": "symbols/r/262F.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1ED",
+      "annotation": "flag: Ghana",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1ED.svg"
+    },
+    {
+      "hexcode": "1F495",
+      "annotation": "two hearts",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F495.svg"
+    },
+    {
+      "hexcode": "1F977",
+      "annotation": "ninja",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F977.svg"
+    },
+    {
+      "hexcode": "1F9A4",
+      "annotation": "dodo",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A4.svg"
+    },
+    {
+      "hexcode": "1F36C",
+      "annotation": "candy",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F36C.svg"
+    },
+    {
+      "hexcode": "231A",
+      "annotation": "watch",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/231A.svg"
+    },
+    {
+      "hexcode": "1F386",
+      "annotation": "fireworks",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F386.svg"
+    },
+    {
+      "hexcode": "1F9E3",
+      "annotation": "scarf",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F9E3.svg"
+    },
+    {
+      "hexcode": "2652",
+      "annotation": "Aquarius",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/2652.svg"
+    },
+    {
+      "hexcode": "1F1ED-1F1F9",
+      "annotation": "flag: Haiti",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1ED-1F1F9.svg"
+    },
+    {
+      "hexcode": "1FA77",
+      "annotation": "pink heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1FA77.svg"
+    },
+    {
+      "hexcode": "1F9DA",
+      "annotation": "fairy",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DA.svg"
+    },
+    {
+      "hexcode": "1FABD",
+      "annotation": "wing",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FABD.svg"
+    },
+    {
+      "hexcode": "1F944",
+      "annotation": "spoon",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F944.svg"
+    },
+    {
+      "hexcode": "2601",
+      "annotation": "cloud",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/2601.svg"
+    },
+    {
+      "hexcode": "1F3D3",
+      "annotation": "ping pong",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3D3.svg"
+    },
+    {
+      "hexcode": "1F9E6",
+      "annotation": "socks",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F9E6.svg"
+    },
+    {
+      "hexcode": "1F6DC",
+      "annotation": "wireless",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F6DC.svg"
+    },
+    {
+      "hexcode": "1F1EE-1F1F3",
+      "annotation": "flag: India",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EE-1F1F3.svg"
+    },
+    {
+      "hexcode": "1F499",
+      "annotation": "blue heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F499.svg"
+    },
+    {
+      "hexcode": "1F9DE",
+      "annotation": "genie",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DE.svg"
+    },
+    {
+      "hexcode": "1F438",
+      "annotation": "frog",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F438.svg"
+    },
+    {
+      "hexcode": "1F347",
+      "annotation": "grapes",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F347.svg"
+    },
+    {
+      "hexcode": "2604",
+      "annotation": "comet",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/2604.svg"
+    },
+    {
+      "hexcode": "1F3F8",
+      "annotation": "badminton",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3F8.svg"
+    },
+    {
+      "hexcode": "1F457",
+      "annotation": "dress",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F457.svg"
+    },
+    {
+      "hexcode": "2716",
+      "annotation": "multiply",
+      "group": "symbols",
+      "subgroup": "m",
+      "path": "symbols/m/2716.svg"
+    },
+    {
+      "hexcode": "1F1EE-1F1F9",
+      "annotation": "flag: Italy",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EE-1F1F9.svg"
+    },
+    {
+      "hexcode": "1FA76",
+      "annotation": "grey heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1FA76.svg"
+    },
+    {
+      "hexcode": "1F9CC",
+      "annotation": "troll",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9CC.svg"
+    },
+    {
+      "hexcode": "1F9AD",
+      "annotation": "seal",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9AD.svg"
+    },
+    {
+      "hexcode": "1F34C",
+      "annotation": "banana",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F34C.svg"
+    },
+    {
+      "hexcode": "1F3DC",
+      "annotation": "desert",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3DC.svg"
+    },
+    {
+      "hexcode": "26F8",
+      "annotation": "ice skate",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/26F8.svg"
+    },
+    {
+      "hexcode": "1F45B",
+      "annotation": "purse",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F45B.svg"
+    },
+    {
+      "hexcode": "267E",
+      "annotation": "infinity",
+      "group": "symbols",
+      "subgroup": "m",
+      "path": "symbols/m/267E.svg"
+    },
+    {
+      "hexcode": "1F1EF-1F1F5",
+      "annotation": "flag: Japan",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EF-1F1F5.svg"
+    },
+    {
+      "hexcode": "1F929",
+      "annotation": "star-struck",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F929.svg"
+    },
+    {
+      "hexcode": "26F7",
+      "annotation": "skier",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/26F7.svg"
+    },
+    {
+      "hexcode": "1F41F",
+      "annotation": "fish",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F41F.svg"
+    },
+    {
+      "hexcode": "1F345",
+      "annotation": "tomato",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F345.svg"
+    },
+    {
+      "hexcode": "1F3D8",
+      "annotation": "houses",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3D8.svg"
+    },
+    {
+      "hexcode": "2663",
+      "annotation": "club suit",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/2663.svg"
+    },
+    {
+      "hexcode": "1F451",
+      "annotation": "crown",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F451.svg"
+    },
+    {
+      "hexcode": "1FADF",
+      "annotation": "splatter",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/1FADF.svg"
+    },
+    {
+      "hexcode": "1F1F0-1F1EA",
+      "annotation": "flag: Kenya",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F0-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F62A",
+      "annotation": "sleepy face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F62A.svg"
+    },
+    {
+      "hexcode": "1F933",
+      "annotation": "selfie",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F933.svg"
+    },
+    {
+      "hexcode": "1F980",
+      "annotation": "crab",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F980.svg"
+    },
+    {
+      "hexcode": "1F954",
+      "annotation": "potato",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F954.svg"
+    },
+    {
+      "hexcode": "1F3EB",
+      "annotation": "school",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3EB.svg"
+    },
+    {
+      "hexcode": "1F390",
+      "annotation": "wind chime",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F390.svg"
+    },
+    {
+      "hexcode": "1F4FB",
+      "annotation": "radio",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F4FB.svg"
+    },
+    {
+      "hexcode": "1F17F",
+      "annotation": "P button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F17F.svg"
+    },
+    {
+      "hexcode": "1F1F1-1F1FE",
+      "annotation": "flag: Libya",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F1-1F1FE.svg"
+    },
+    {
+      "hexcode": "1F62F",
+      "annotation": "hushed face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F62F.svg"
+    },
+    {
+      "hexcode": "1F445",
+      "annotation": "tongue",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1F445.svg"
+    },
+    {
+      "hexcode": "1FAB1",
+      "annotation": "worm",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FAB1.svg"
+    },
+    {
+      "hexcode": "1F955",
+      "annotation": "carrot",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F955.svg"
+    },
+    {
+      "hexcode": "1F3F0",
+      "annotation": "castle",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3F0.svg"
+    },
+    {
+      "hexcode": "1F3C0",
+      "annotation": "basketball",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3C0.svg"
+    },
+    {
+      "hexcode": "1FA95",
+      "annotation": "banjo",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1FA95.svg"
+    },
+    {
+      "hexcode": "2623",
+      "annotation": "biohazard",
+      "group": "symbols",
+      "subgroup": "w",
+      "path": "symbols/w/2623.svg"
+    },
+    {
+      "hexcode": "1F1F2-1F1F9",
+      "annotation": "flag: Malta",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F2-1F1F9.svg"
+    },
+    {
+      "hexcode": "1F622",
+      "annotation": "crying face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F622.svg"
+    },
+    {
+      "hexcode": "1F9D1",
+      "annotation": "person",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1.svg"
+    },
+    {
+      "hexcode": "1F339",
+      "annotation": "rose",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F339.svg"
+    },
+    {
+      "hexcode": "1F9C4",
+      "annotation": "garlic",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F9C4.svg"
+    },
+    {
+      "hexcode": "26EA",
+      "annotation": "church",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/26EA.svg"
+    },
+    {
+      "hexcode": "1F3D0",
+      "annotation": "volleyball",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3D0.svg"
+    },
+    {
+      "hexcode": "1FA88",
+      "annotation": "flute",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1FA88.svg"
+    },
+    {
+      "hexcode": "1F51A",
+      "annotation": "END arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F51A.svg"
+    },
+    {
+      "hexcode": "1F1F3-1F1EA",
+      "annotation": "flag: Niger",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F3-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F4A9",
+      "annotation": "pile of poo",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F4A9.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F33E",
+      "annotation": "farmer",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F33E.svg"
+    },
+    {
+      "hexcode": "1F33F",
+      "annotation": "herb",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F33F.svg"
+    },
+    {
+      "hexcode": "1F9C7",
+      "annotation": "waffle",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F9C7.svg"
+    },
+    {
+      "hexcode": "1F54C",
+      "annotation": "mosque",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F54C.svg"
+    },
+    {
+      "hexcode": "1F3D2",
+      "annotation": "ice hockey",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3D2.svg"
+    },
+    {
+      "hexcode": "1F4DF",
+      "annotation": "pager",
+      "group": "objects",
+      "subgroup": "p",
+      "path": "objects/p/1F4DF.svg"
+    },
+    {
+      "hexcode": "1F51B",
+      "annotation": "ON! arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F51B.svg"
+    },
+    {
+      "hexcode": "1F1F3-1F1F5",
+      "annotation": "flag: Nepal",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F3-1F1F5.svg"
+    },
+    {
+      "hexcode": "1F63D",
+      "annotation": "kissing cat",
+      "group": "smileys-emotion",
+      "subgroup": "c",
+      "path": "smileys-emotion/c/1F63D.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F3A4",
+      "annotation": "singer",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F3A4.svg"
+    },
+    {
+      "hexcode": "1F405",
+      "annotation": "tiger",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F405.svg"
+    },
+    {
+      "hexcode": "1FAD4",
+      "annotation": "tamale",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FAD4.svg"
+    },
+    {
+      "hexcode": "1F307",
+      "annotation": "sunset",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F307.svg"
+    },
+    {
+      "hexcode": "1FA84",
+      "annotation": "magic wand",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1FA84.svg"
+    },
+    {
+      "hexcode": "1F4DA",
+      "annotation": "books",
+      "group": "objects",
+      "subgroup": "b",
+      "path": "objects/b/1F4DA.svg"
+    },
+    {
+      "hexcode": "1F51D",
+      "annotation": "TOP arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F51D.svg"
+    },
+    {
+      "hexcode": "1F1F3-1F1F7",
+      "annotation": "flag: Nauru",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F3-1F1F7.svg"
+    },
+    {
+      "hexcode": "1F63E",
+      "annotation": "pouting cat",
+      "group": "smileys-emotion",
+      "subgroup": "c",
+      "path": "smileys-emotion/c/1F63E.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F3A8",
+      "annotation": "artist",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F3A8.svg"
+    },
+    {
+      "hexcode": "1FACE",
+      "annotation": "moose",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FACE.svg"
+    },
+    {
+      "hexcode": "1FAD5",
+      "annotation": "fondue",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FAD5.svg"
+    },
+    {
+      "hexcode": "2693",
+      "annotation": "anchor",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/2693.svg"
+    },
+    {
+      "hexcode": "1F3AE",
+      "annotation": "video game",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F3AE.svg"
+    },
+    {
+      "hexcode": "1F3F7",
+      "annotation": "label",
+      "group": "objects",
+      "subgroup": "b",
+      "path": "objects/b/1F3F7.svg"
+    },
+    {
+      "hexcode": "2651",
+      "annotation": "Capricorn",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/2651.svg"
+    },
+    {
+      "hexcode": "1F1F5-1F1FC",
+      "annotation": "flag: Palau",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F5-1F1FC.svg"
+    },
+    {
+      "hexcode": "1F48C",
+      "annotation": "love letter",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F48C.svg"
+    },
+    {
+      "hexcode": "1F934",
+      "annotation": "prince",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F934.svg"
+    },
+    {
+      "hexcode": "1F40E",
+      "annotation": "horse",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F40E.svg"
+    },
+    {
+      "hexcode": "1F9C8",
+      "annotation": "butter",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F9C8.svg"
+    },
+    {
+      "hexcode": "1F680",
+      "annotation": "rocket",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F680.svg"
+    },
+    {
+      "hexcode": "1F9F8",
+      "annotation": "teddy bear",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F9F8.svg"
+    },
+    {
+      "hexcode": "1F5DC",
+      "annotation": "clamp",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F5DC.svg"
+    },
+    {
+      "hexcode": "26CE",
+      "annotation": "Ophiuchus",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/26CE.svg"
+    },
+    {
+      "hexcode": "1F1F6-1F1E6",
+      "annotation": "flag: Qatar",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F6-1F1E6.svg"
+    },
+    {
+      "hexcode": "1F49A",
+      "annotation": "green heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F49A.svg"
+    },
+    {
+      "hexcode": "1F9DC-200D-2642-FE0F",
+      "annotation": "merman",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DC-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F993",
+      "annotation": "zebra",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F993.svg"
+    },
+    {
+      "hexcode": "1F36A",
+      "annotation": "cookie",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F36A.svg"
+    },
+    {
+      "hexcode": "1F9ED",
+      "annotation": "compass",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F9ED.svg"
+    },
+    {
+      "hexcode": "2660",
+      "annotation": "spade suit",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/2660.svg"
+    },
+    {
+      "hexcode": "1FA7B",
+      "annotation": "x-ray",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1FA7B.svg"
+    },
+    {
+      "hexcode": "2642",
+      "annotation": "male sign",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/2642.svg"
+    },
+    {
+      "hexcode": "1F1F8-1F1E9",
+      "annotation": "flag: Sudan",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F8-1F1E9.svg"
+    },
+    {
+      "hexcode": "1F90E",
+      "annotation": "brown heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F90E.svg"
+    },
+    {
+      "hexcode": "1F9DF",
+      "annotation": "zombie",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DF.svg"
+    },
+    {
+      "hexcode": "1F9AC",
+      "annotation": "bison",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9AC.svg"
+    },
+    {
+      "hexcode": "1FAD6",
+      "annotation": "teapot",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1FAD6.svg"
+    },
+    {
+      "hexcode": "1F30B",
+      "annotation": "volcano",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F30B.svg"
+    },
+    {
+      "hexcode": "2665",
+      "annotation": "heart suit",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/2665.svg"
+    },
+    {
+      "hexcode": "1FA91",
+      "annotation": "chair",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1FA91.svg"
+    },
+    {
+      "hexcode": "3030",
+      "annotation": "wavy dash",
+      "group": "symbols",
+      "subgroup": "p",
+      "path": "symbols/p/3030.svg"
+    },
+    {
+      "hexcode": "1F1F8-1F1FE",
+      "annotation": "flag: Syria",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F8-1F1FE.svg"
+    },
+    {
+      "hexcode": "1F5A4",
+      "annotation": "black heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F5A4.svg"
+    },
+    {
+      "hexcode": "1F46A",
+      "annotation": "family",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F46A.svg"
+    },
+    {
+      "hexcode": "1F42A",
+      "annotation": "camel",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F42A.svg"
+    },
+    {
+      "hexcode": "1F965",
+      "annotation": "coconut",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F965.svg"
+    },
+    {
+      "hexcode": "1F3D5",
+      "annotation": "camping",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3D5.svg"
+    },
+    {
+      "hexcode": "265F",
+      "annotation": "chess pawn",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/265F.svg"
+    },
+    {
+      "hexcode": "1FA92",
+      "annotation": "razor",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1FA92.svg"
+    },
+    {
+      "hexcode": "00A9",
+      "annotation": "copyright",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/00A9.svg"
+    },
+    {
+      "hexcode": "1F1F9-1F1F4",
+      "annotation": "flag: Tonga",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F9-1F1F4.svg"
+    },
+    {
+      "hexcode": "1F90D",
+      "annotation": "white heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F90D.svg"
+    },
+    {
+      "hexcode": "1F44C",
+      "annotation": "OK hand",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F44C.svg"
+    },
+    {
+      "hexcode": "1F999",
+      "annotation": "llama",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F999.svg"
+    },
+    {
+      "hexcode": "1F951",
+      "annotation": "avocado",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F951.svg"
+    },
+    {
+      "hexcode": "1F3DF",
+      "annotation": "stadium",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3DF.svg"
+    },
+    {
+      "hexcode": "1F9E8",
+      "annotation": "firecracker",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F9E8.svg"
+    },
+    {
+      "hexcode": "1F9F9",
+      "annotation": "broom",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F9F9.svg"
+    },
+    {
+      "hexcode": "0023-FE0F-20E3",
+      "annotation": "keycap: #",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0023-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1FC-1F1F8",
+      "annotation": "flag: Samoa",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1FC-1F1F8.svg"
+    },
+    {
+      "hexcode": "1FAE0",
+      "annotation": "melting face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1FAE0.svg"
+    },
+    {
+      "hexcode": "1F474",
+      "annotation": "old man",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F474.svg"
+    },
+    {
+      "hexcode": "1F401",
+      "annotation": "mouse",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F401.svg"
+    },
+    {
+      "hexcode": "1F95C",
+      "annotation": "peanuts",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F95C.svg"
+    },
+    {
+      "hexcode": "1F3ED",
+      "annotation": "factory",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3ED.svg"
+    },
+    {
+      "hexcode": "26BD",
+      "annotation": "soccer ball",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/26BD.svg"
+    },
+    {
+      "hexcode": "1FAAC",
+      "annotation": "hamsa",
+      "group": "objects",
+      "subgroup": "o",
+      "path": "objects/o/1FAAC.svg"
+    },
+    {
+      "hexcode": "002A-FE0F-20E3",
+      "annotation": "keycap: *",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/002A-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1FE-1F1EA",
+      "annotation": "flag: Yemen",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1FE-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F609",
+      "annotation": "winking face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F609.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F393",
+      "annotation": "student",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F393.svg"
+    },
+    {
+      "hexcode": "1F428",
+      "annotation": "koala",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F428.svg"
+    },
+    {
+      "hexcode": "1FADB",
+      "annotation": "pea pod",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FADB.svg"
+    },
+    {
+      "hexcode": "1F492",
+      "annotation": "wedding",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F492.svg"
+    },
+    {
+      "hexcode": "1F94F",
+      "annotation": "flying disc",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F94F.svg"
+    },
+    {
+      "hexcode": "1F9E4",
+      "annotation": "gloves",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F9E4.svg"
+    },
+    {
+      "hexcode": "0030-FE0F-20E3",
+      "annotation": "keycap: 0",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0030-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F3F4-E0067-E0062-E0077-E006C-E0073-E007F",
+      "annotation": "flag: Wales",
+      "group": "flags",
+      "subgroup": "s",
+      "path": "flags/s/1F3F4-E0067-E0062-E0077-E006C-E0073-E007F.svg"
+    },
+    {
+      "hexcode": "1F617",
+      "annotation": "kissing face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F617.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F3EB",
+      "annotation": "teacher",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F3EB.svg"
+    },
+    {
+      "hexcode": "1F43C",
+      "annotation": "panda",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F43C.svg"
+    },
+    {
+      "hexcode": "1F968",
+      "annotation": "pretzel",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F968.svg"
+    },
+    {
+      "hexcode": "1F305",
+      "annotation": "sunrise",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F305.svg"
+    },
+    {
+      "hexcode": "1F93F",
+      "annotation": "diving mask",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F93F.svg"
+    },
+    {
+      "hexcode": "1F458",
+      "annotation": "kimono",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F458.svg"
+    },
+    {
+      "hexcode": "0031-FE0F-20E3",
+      "annotation": "keycap: 1",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0031-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F3F3-FE0F-200D-1F308",
+      "annotation": "rainbow flag",
+      "group": "flags",
+      "subgroup": "f",
+      "path": "flags/f/1F3F3-FE0F-200D-1F308.svg"
+    },
+    {
+      "hexcode": "263A",
+      "annotation": "smiling face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/263A.svg"
+    },
+    {
+      "hexcode": "1F9DB",
+      "annotation": "vampire",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DB.svg"
+    },
+    {
+      "hexcode": "1F9A5",
+      "annotation": "sloth",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A5.svg"
+    },
+    {
+      "hexcode": "1F32D",
+      "annotation": "hot dog",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F32D.svg"
+    },
+    {
+      "hexcode": "1F689",
+      "annotation": "station",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F689.svg"
+    },
+    {
+      "hexcode": "1F3B1",
+      "annotation": "pool 8 ball",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F3B1.svg"
+    },
+    {
+      "hexcode": "1FA72",
+      "annotation": "briefs",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1FA72.svg"
+    },
+    {
+      "hexcode": "0032-FE0F-20E3",
+      "annotation": "keycap: 2",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0032-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1E6-1F1F4",
+      "annotation": "flag: Angola",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E6-1F1F4.svg"
+    },
+    {
+      "hexcode": "1F610",
+      "annotation": "neutral face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F610.svg"
+    },
+    {
+      "hexcode": "1F9DC-200D-2640-FE0F",
+      "annotation": "mermaid",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DC-200D-2640-FE0F.svg"
+    },
+    {
+      "hexcode": "1F9A6",
+      "annotation": "otter",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A6.svg"
+    },
+    {
+      "hexcode": "1F32F",
+      "annotation": "burrito",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F32F.svg"
+    },
+    {
+      "hexcode": "1F690",
+      "annotation": "minibus",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F690.svg"
+    },
+    {
+      "hexcode": "1FAA9",
+      "annotation": "mirror ball",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1FAA9.svg"
+    },
+    {
+      "hexcode": "1FA73",
+      "annotation": "shorts",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1FA73.svg"
+    },
+    {
+      "hexcode": "0033-FE0F-20E3",
+      "annotation": "keycap: 3",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0033-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1F3",
+      "annotation": "flag: Brunei",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1F3.svg"
+    },
+    {
+      "hexcode": "1FAE8",
+      "annotation": "shaking face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1FAE8.svg"
+    },
+    {
+      "hexcode": "1F9DD-200D-2642-FE0F",
+      "annotation": "man elf",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DD-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F9A8",
+      "annotation": "skunk",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A8.svg"
+    },
+    {
+      "hexcode": "1F9C6",
+      "annotation": "falafel",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F9C6.svg"
+    },
+    {
+      "hexcode": "1F69C",
+      "annotation": "tractor",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F69C.svg"
+    },
+    {
+      "hexcode": "1F389",
+      "annotation": "party popper",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F389.svg"
+    },
+    {
+      "hexcode": "1F459",
+      "annotation": "bikini",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F459.svg"
+    },
+    {
+      "hexcode": "0034-FE0F-20E3",
+      "annotation": "keycap: 4",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0034-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1F7",
+      "annotation": "flag: Brazil",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1F7.svg"
+    },
+    {
+      "hexcode": "1F614",
+      "annotation": "pensive face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F614.svg"
+    },
+    {
+      "hexcode": "1F9CF-200D-2642-FE0F",
+      "annotation": "deaf man",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9CF-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F985",
+      "annotation": "eagle",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F985.svg"
+    },
+    {
+      "hexcode": "1F373",
+      "annotation": "cooking",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F373.svg"
+    },
+    {
+      "hexcode": "1F6B2",
+      "annotation": "bicycle",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6B2.svg"
+    },
+    {
+      "hexcode": "1F9E7",
+      "annotation": "red envelope",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F9E7.svg"
+    },
+    {
+      "hexcode": "1F3B8",
+      "annotation": "guitar",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F3B8.svg"
+    },
+    {
+      "hexcode": "0035-FE0F-20E3",
+      "annotation": "keycap: 5",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0035-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1F9",
+      "annotation": "flag: Bhutan",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1F9.svg"
+    },
+    {
+      "hexcode": "1F61F",
+      "annotation": "worried face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F61F.svg"
+    },
+    {
+      "hexcode": "1F468-200D-1F373",
+      "annotation": "man cook",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-1F373.svg"
+    },
+    {
+      "hexcode": "1FABF",
+      "annotation": "goose",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FABF.svg"
+    },
+    {
+      "hexcode": "1F37F",
+      "annotation": "popcorn",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F37F.svg"
+    },
+    {
+      "hexcode": "1F9F3",
+      "annotation": "luggage",
+      "group": "travel-places",
+      "subgroup": "h",
+      "path": "travel-places/h/1F9F3.svg"
+    },
+    {
+      "hexcode": "1F381",
+      "annotation": "wrapped gift",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F381.svg"
+    },
+    {
+      "hexcode": "1F3BB",
+      "annotation": "violin",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F3BB.svg"
+    },
+    {
+      "hexcode": "0036-FE0F-20E3",
+      "annotation": "keycap: 6",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0036-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1FF",
+      "annotation": "flag: Belize",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1FF.svg"
+    },
+    {
+      "hexcode": "1F633",
+      "annotation": "flushed face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F633.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F527",
+      "annotation": "mechanic",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F527.svg"
+    },
+    {
+      "hexcode": "1F40D",
+      "annotation": "snake",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F40D.svg"
+    },
+    {
+      "hexcode": "1F9C1",
+      "annotation": "cupcake",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F9C1.svg"
+    },
+    {
+      "hexcode": "1F32A",
+      "annotation": "tornado",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F32A.svg"
+    },
+    {
+      "hexcode": "1F3C5",
+      "annotation": "sports medal",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F3C5.svg"
+    },
+    {
+      "hexcode": "1F4BB",
+      "annotation": "laptop",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F4BB.svg"
+    },
+    {
+      "hexcode": "0037-FE0F-20E3",
+      "annotation": "keycap: 7",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0037-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1E8-1F1E6",
+      "annotation": "flag: Canada",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E8-1F1E6.svg"
+    },
+    {
+      "hexcode": "1F628",
+      "annotation": "fearful face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F628.svg"
+    },
+    {
+      "hexcode": "1F478",
+      "annotation": "princess",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F478.svg"
+    },
+    {
+      "hexcode": "1F996",
+      "annotation": "T-Rex",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F996.svg"
+    },
+    {
+      "hexcode": "1F36E",
+      "annotation": "custard",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F36E.svg"
+    },
+    {
+      "hexcode": "1F300",
+      "annotation": "cyclone",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F300.svg"
+    },
+    {
+      "hexcode": "1F3CF",
+      "annotation": "cricket game",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3CF.svg"
+    },
+    {
+      "hexcode": "1F9EE",
+      "annotation": "abacus",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F9EE.svg"
+    },
+    {
+      "hexcode": "0038-FE0F-20E3",
+      "annotation": "keycap: 8",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0038-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1E8-1F1FE",
+      "annotation": "flag: Cyprus",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E8-1F1FE.svg"
+    },
+    {
+      "hexcode": "1F971",
+      "annotation": "yawning face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F971.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F384",
+      "annotation": "Mx Claus",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F384.svg"
+    },
+    {
+      "hexcode": "1F40B",
+      "annotation": "whale",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F40B.svg"
+    },
+    {
+      "hexcode": "1F3FA",
+      "annotation": "amphora",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F3FA.svg"
+    },
+    {
+      "hexcode": "1F308",
+      "annotation": "rainbow",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F308.svg"
+    },
+    {
+      "hexcode": "1F3D1",
+      "annotation": "field hockey",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3D1.svg"
+    },
+    {
+      "hexcode": "1F4F7",
+      "annotation": "camera",
+      "group": "objects",
+      "subgroup": "l",
+      "path": "objects/l/1F4F7.svg"
+    },
+    {
+      "hexcode": "0039-FE0F-20E3",
+      "annotation": "keycap: 9",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/0039-FE0F-20E3.svg"
+    },
+    {
+      "hexcode": "1F1EB-1F1F7",
+      "annotation": "flag: France",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EB-1F1F7.svg"
+    },
+    {
+      "hexcode": "1F621",
+      "annotation": "enraged face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F621.svg"
+    },
+    {
+      "hexcode": "1F9D9-200D-2642-FE0F",
+      "annotation": "man mage",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D9-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F988",
+      "annotation": "shark",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F988.svg"
+    },
+    {
+      "hexcode": "1F352",
+      "annotation": "cherries",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F352.svg"
+    },
+    {
+      "hexcode": "2603",
+      "annotation": "snowman",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/2603.svg"
+    },
+    {
+      "hexcode": "1F94A",
+      "annotation": "boxing glove",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F94A.svg"
+    },
+    {
+      "hexcode": "1F56F",
+      "annotation": "candle",
+      "group": "objects",
+      "subgroup": "l",
+      "path": "objects/l/1F56F.svg"
+    },
+    {
+      "hexcode": "1F191",
+      "annotation": "CL button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F191.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1F2",
+      "annotation": "flag: Gambia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1F2.svg"
+    },
+    {
+      "hexcode": "1F63A",
+      "annotation": "grinning cat",
+      "group": "smileys-emotion",
+      "subgroup": "c",
+      "path": "smileys-emotion/c/1F63A.svg"
+    },
+    {
+      "hexcode": "1F44D",
+      "annotation": "thumbs up",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F44D.svg"
+    },
+    {
+      "hexcode": "1FAB8",
+      "annotation": "coral",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FAB8.svg"
+    },
+    {
+      "hexcode": "1F346",
+      "annotation": "eggplant",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F346.svg"
+    },
+    {
+      "hexcode": "1F4A7",
+      "annotation": "droplet",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F4A7.svg"
+    },
+    {
+      "hexcode": "26F3",
+      "annotation": "flag in hole",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/26F3.svg"
+    },
+    {
+      "hexcode": "1F4D2",
+      "annotation": "ledger",
+      "group": "objects",
+      "subgroup": "b",
+      "path": "objects/b/1F4D2.svg"
+    },
+    {
+      "hexcode": "1F194",
+      "annotation": "ID button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F194.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1F3",
+      "annotation": "flag: Guinea",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1F3.svg"
+    },
+    {
+      "hexcode": "1F494",
+      "annotation": "broken heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F494.svg"
+    },
+    {
+      "hexcode": "1F91D",
+      "annotation": "handshake",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F91D.svg"
+    },
+    {
+      "hexcode": "1F991",
+      "annotation": "squid",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F991.svg"
+    },
+    {
+      "hexcode": "1F952",
+      "annotation": "cucumber",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F952.svg"
+    },
+    {
+      "hexcode": "26F0",
+      "annotation": "mountain",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/26F0.svg"
+    },
+    {
+      "hexcode": "1F3A3",
+      "annotation": "fishing pole",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3A3.svg"
+    },
+    {
+      "hexcode": "1F4DC",
+      "annotation": "scroll",
+      "group": "objects",
+      "subgroup": "b",
+      "path": "objects/b/1F4DC.svg"
+    },
+    {
+      "hexcode": "24C2",
+      "annotation": "circled M",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/24C2.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1F7",
+      "annotation": "flag: Greece",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1F7.svg"
+    },
+    {
+      "hexcode": "1F9E1",
+      "annotation": "orange heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F9E1.svg"
+    },
+    {
+      "hexcode": "1F468-200D-1F9B2",
+      "annotation": "man: bald",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-1F9B2.svg"
+    },
+    {
+      "hexcode": "1F40C",
+      "annotation": "snail",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F40C.svg"
+    },
+    {
+      "hexcode": "1F966",
+      "annotation": "broccoli",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F966.svg"
+    },
+    {
+      "hexcode": "1F3E5",
+      "annotation": "hospital",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3E5.svg"
+    },
+    {
+      "hexcode": "1F52B",
+      "annotation": "water pistol",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F52B.svg"
+    },
+    {
+      "hexcode": "1F4E7",
+      "annotation": "e-mail",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F4E7.svg"
+    },
+    {
+      "hexcode": "1F196",
+      "annotation": "NG button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F196.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1FE",
+      "annotation": "flag: Guyana",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1FE.svg"
+    },
+    {
+      "hexcode": "1F49B",
+      "annotation": "yellow heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F49B.svg"
+    },
+    {
+      "hexcode": "1F475",
+      "annotation": "old woman",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F475.svg"
+    },
+    {
+      "hexcode": "1FAB7",
+      "annotation": "lotus",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1FAB7.svg"
+    },
+    {
+      "hexcode": "1F330",
+      "annotation": "chestnut",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F330.svg"
+    },
+    {
+      "hexcode": "26F2",
+      "annotation": "fountain",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/26F2.svg"
+    },
+    {
+      "hexcode": "1F52E",
+      "annotation": "crystal ball",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F52E.svg"
+    },
+    {
+      "hexcode": "270F",
+      "annotation": "pencil",
+      "group": "objects",
+      "subgroup": "w",
+      "path": "objects/w/270F.svg"
+    },
+    {
+      "hexcode": "1F197",
+      "annotation": "OK button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F197.svg"
+    },
+    {
+      "hexcode": "1F1EE-1F1F1",
+      "annotation": "flag: Israel",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EE-1F1F1.svg"
+    },
+    {
+      "hexcode": "1F49C",
+      "annotation": "purple heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F49C.svg"
+    },
+    {
+      "hexcode": "1F468-200D-2696-FE0F",
+      "annotation": "man judge",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-2696-FE0F.svg"
+    },
+    {
+      "hexcode": "1F337",
+      "annotation": "tulip",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F337.svg"
+    },
+    {
+      "hexcode": "1F95E",
+      "annotation": "pancakes",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F95E.svg"
+    },
+    {
+      "hexcode": "1F69D",
+      "annotation": "monorail",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F69D.svg"
+    },
+    {
+      "hexcode": "1F3B0",
+      "annotation": "slot machine",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F3B0.svg"
+    },
+    {
+      "hexcode": "1F58D",
+      "annotation": "crayon",
+      "group": "objects",
+      "subgroup": "w",
+      "path": "objects/w/1F58D.svg"
+    },
+    {
+      "hexcode": "1F19A",
+      "annotation": "VS button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F19A.svg"
+    },
+    {
+      "hexcode": "1F1EF-1F1EA",
+      "annotation": "flag: Jersey",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EF-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F4A2",
+      "annotation": "anger symbol",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4A2.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F52C",
+      "annotation": "scientist",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F52C.svg"
+    },
+    {
+      "hexcode": "1F412",
+      "annotation": "monkey",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F412.svg"
+    },
+    {
+      "hexcode": "1F96A",
+      "annotation": "sandwich",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F96A.svg"
+    },
+    {
+      "hexcode": "1F68B",
+      "annotation": "tram car",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F68B.svg"
+    },
+    {
+      "hexcode": "1F9E9",
+      "annotation": "puzzle piece",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F9E9.svg"
+    },
+    {
+      "hexcode": "1F512",
+      "annotation": "locked",
+      "group": "objects",
+      "subgroup": "l",
+      "path": "objects/l/1F512.svg"
+    },
+    {
+      "hexcode": "1F6B9",
+      "annotation": "men’s room",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6B9.svg"
+    },
+    {
+      "hexcode": "1F1EF-1F1F4",
+      "annotation": "flag: Jordan",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EF-1F1F4.svg"
+    },
+    {
+      "hexcode": "1F4A8",
+      "annotation": "dashing away",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4A8.svg"
+    },
+    {
+      "hexcode": "1F468-200D-2708-FE0F",
+      "annotation": "man pilot",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-2708-FE0F.svg"
+    },
+    {
+      "hexcode": "1F429",
+      "annotation": "poodle",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F429.svg"
+    },
+    {
+      "hexcode": "1F95F",
+      "annotation": "dumpling",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F95F.svg"
+    },
+    {
+      "hexcode": "1F68F",
+      "annotation": "bus stop",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F68F.svg"
+    },
+    {
+      "hexcode": "2666",
+      "annotation": "diamond suit",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/2666.svg"
+    },
+    {
+      "hexcode": "1F528",
+      "annotation": "hammer",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F528.svg"
+    },
+    {
+      "hexcode": "1F6AB",
+      "annotation": "prohibited",
+      "group": "symbols",
+      "subgroup": "w",
+      "path": "symbols/w/1F6AB.svg"
+    },
+    {
+      "hexcode": "1F1F0-1F1FC",
+      "annotation": "flag: Kuwait",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F0-1F1FC.svg"
+    },
+    {
+      "hexcode": "1F600",
+      "annotation": "grinning face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F600.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F680",
+      "annotation": "astronaut",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F680.svg"
+    },
+    {
+      "hexcode": "1FACF",
+      "annotation": "donkey",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FACF.svg"
+    },
+    {
+      "hexcode": "1F369",
+      "annotation": "doughnut",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F369.svg"
+    },
+    {
+      "hexcode": "1F6E3",
+      "annotation": "motorway",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6E3.svg"
+    },
+    {
+      "hexcode": "1F38A",
+      "annotation": "confetti ball",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F38A.svg"
+    },
+    {
+      "hexcode": "1F5E1",
+      "annotation": "dagger",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F5E1.svg"
+    },
+    {
+      "hexcode": "1F6AD",
+      "annotation": "no smoking",
+      "group": "symbols",
+      "subgroup": "w",
+      "path": "symbols/w/1F6AD.svg"
+    },
+    {
+      "hexcode": "1F1F1-1F1FB",
+      "annotation": "flag: Latvia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F1-1F1FB.svg"
+    },
+    {
+      "hexcode": "1F92B",
+      "annotation": "shushing face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F92B.svg"
+    },
+    {
+      "hexcode": "1F575",
+      "annotation": "detective",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F575.svg"
+    },
+    {
+      "hexcode": "1F407",
+      "annotation": "rabbit",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F407.svg"
+    },
+    {
+      "hexcode": "1F36D",
+      "annotation": "lollipop",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F36D.svg"
+    },
+    {
+      "hexcode": "1F6E2",
+      "annotation": "oil drum",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6E2.svg"
+    },
+    {
+      "hexcode": "1F38B",
+      "annotation": "tanabata tree",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F38B.svg"
+    },
+    {
+      "hexcode": "1F6E1",
+      "annotation": "shield",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F6E1.svg"
+    },
+    {
+      "hexcode": "2B07",
+      "annotation": "down arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/2B07.svg"
+    },
+    {
+      "hexcode": "1F1F2-1F1E8",
+      "annotation": "flag: Monaco",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F2-1F1E8.svg"
+    },
+    {
+      "hexcode": "1F914",
+      "annotation": "thinking face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F914.svg"
+    },
+    {
+      "hexcode": "1F482-200D-2642-FE0F",
+      "annotation": "man guard",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F482-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F9AB",
+      "annotation": "beaver",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9AB.svg"
+    },
+    {
+      "hexcode": "1F37A",
+      "annotation": "beer mug",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F37A.svg"
+    },
+    {
+      "hexcode": "26F5",
+      "annotation": "sailboat",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/26F5.svg"
+    },
+    {
+      "hexcode": "1F38F",
+      "annotation": "carp streamer",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F38F.svg"
+    },
+    {
+      "hexcode": "1F527",
+      "annotation": "wrench",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F527.svg"
+    },
+    {
+      "hexcode": "2B05",
+      "annotation": "left arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/2B05.svg"
+    },
+    {
+      "hexcode": "1F1F2-1F1FC",
+      "annotation": "flag: Malawi",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F2-1F1FC.svg"
+    },
+    {
+      "hexcode": "1FAE1",
+      "annotation": "saluting face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1FAE1.svg"
+    },
+    {
+      "hexcode": "1F9B8",
+      "annotation": "superhero",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9B8.svg"
+    },
+    {
+      "hexcode": "1F9A1",
+      "annotation": "badger",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A1.svg"
+    },
+    {
+      "hexcode": "1F34A",
+      "annotation": "tangerine",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F34A.svg"
+    },
+    {
+      "hexcode": "2708",
+      "annotation": "airplane",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/2708.svg"
+    },
+    {
+      "hexcode": "1F3BD",
+      "annotation": "running shirt",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3BD.svg"
+    },
+    {
+      "hexcode": "26D3",
+      "annotation": "chains",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/26D3.svg"
+    },
+    {
+      "hexcode": "1F519",
+      "annotation": "BACK arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F519.svg"
+    },
+    {
+      "hexcode": "1F1F2-1F1FD",
+      "annotation": "flag: Mexico",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F2-1F1FD.svg"
+    },
+    {
+      "hexcode": "1F60F",
+      "annotation": "smirking face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F60F.svg"
+    },
+    {
+      "hexcode": "1F9DA-200D-2642-FE0F",
+      "annotation": "man fairy",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DA-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F983",
+      "annotation": "turkey",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F983.svg"
+    },
+    {
+      "hexcode": "1F34D",
+      "annotation": "pineapple",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F34D.svg"
+    },
+    {
+      "hexcode": "1F311",
+      "annotation": "new moon",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F311.svg"
+    },
+    {
+      "hexcode": "1F94C",
+      "annotation": "curling stone",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F94C.svg"
+    },
+    {
+      "hexcode": "1F9F2",
+      "annotation": "magnet",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F9F2.svg"
+    },
+    {
+      "hexcode": "1F51C",
+      "annotation": "SOON arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F51C.svg"
+    },
+    {
+      "hexcode": "1F1F3-1F1F4",
+      "annotation": "flag: Norway",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F3-1F1F4.svg"
+    },
+    {
+      "hexcode": "1F612",
+      "annotation": "unamused face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F612.svg"
+    },
+    {
+      "hexcode": "1F9DC",
+      "annotation": "merperson",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DC.svg"
+    },
+    {
+      "hexcode": "1F99C",
+      "annotation": "parrot",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F99C.svg"
+    },
+    {
+      "hexcode": "1F34E",
+      "annotation": "red apple",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F34E.svg"
+    },
+    {
+      "hexcode": "2602",
+      "annotation": "umbrella",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/2602.svg"
+    },
+    {
+      "hexcode": "1FA86",
+      "annotation": "nesting dolls",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1FA86.svg"
+    },
+    {
+      "hexcode": "1FA9C",
+      "annotation": "ladder",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1FA9C.svg"
+    },
+    {
+      "hexcode": "1F505",
+      "annotation": "dim button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F505.svg"
+    },
+    {
+      "hexcode": "1F1F5-1F1E6",
+      "annotation": "flag: Panama",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F5-1F1E6.svg"
+    },
+    {
+      "hexcode": "1F62E-200D-1F4A8",
+      "annotation": "face exhaling",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F62E-200D-1F4A8.svg"
+    },
+    {
+      "hexcode": "1F9DD-200D-2640-FE0F",
+      "annotation": "woman elf",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DD-200D-2640-FE0F.svg"
+    },
+    {
+      "hexcode": "1F422",
+      "annotation": "turtle",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F422.svg"
+    },
+    {
+      "hexcode": "1F950",
+      "annotation": "croissant",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F950.svg"
+    },
+    {
+      "hexcode": "1F5FA",
+      "annotation": "world map",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F5FA.svg"
+    },
+    {
+      "hexcode": "1FAA1",
+      "annotation": "sewing needle",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1FAA1.svg"
+    },
+    {
+      "hexcode": "1FA8F",
+      "annotation": "shovel",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1FA8F.svg"
+    },
+    {
+      "hexcode": "1F4DB",
+      "annotation": "name badge",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/1F4DB.svg"
+    },
+    {
+      "hexcode": "1F1F5-1F1F1",
+      "annotation": "flag: Poland",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F5-1F1F1.svg"
+    },
+    {
+      "hexcode": "1F60C",
+      "annotation": "relieved face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F60C.svg"
+    },
+    {
+      "hexcode": "1F9DE-200D-2642-FE0F",
+      "annotation": "man genie",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DE-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F98E",
+      "annotation": "lizard",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F98E.svg"
+    },
+    {
+      "hexcode": "1FAD3",
+      "annotation": "flatbread",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FAD3.svg"
+    },
+    {
+      "hexcode": "1F54D",
+      "annotation": "synagogue",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F54D.svg"
+    },
+    {
+      "hexcode": "1F383",
+      "annotation": "jack-o-lantern",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F383.svg"
+    },
+    {
+      "hexcode": "1FA7C",
+      "annotation": "crutch",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1FA7C.svg"
+    },
+    {
+      "hexcode": "2714",
+      "annotation": "check mark",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/2714.svg"
+    },
+    {
+      "hexcode": "1F1F7-1F1F8",
+      "annotation": "flag: Serbia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F7-1F1F8.svg"
+    },
+    {
+      "hexcode": "1F924",
+      "annotation": "drooling face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F924.svg"
+    },
+    {
+      "hexcode": "1F450",
+      "annotation": "open hands",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F450.svg"
+    },
+    {
+      "hexcode": "1F409",
+      "annotation": "dragon",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F409.svg"
+    },
+    {
+      "hexcode": "1F354",
+      "annotation": "hamburger",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F354.svg"
+    },
+    {
+      "hexcode": "1F3D9",
+      "annotation": "cityscape",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3D9.svg"
+    },
+    {
+      "hexcode": "1F384",
+      "annotation": "Christmas tree",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F384.svg"
+    },
+    {
+      "hexcode": "1FA9E",
+      "annotation": "mirror",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1FA9E.svg"
+    },
+    {
+      "hexcode": "274C",
+      "annotation": "cross mark",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/274C.svg"
+    },
+    {
+      "hexcode": "1F1F7-1F1FA",
+      "annotation": "flag: Russia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F7-1F1FA.svg"
+    },
+    {
+      "hexcode": "1F634",
+      "annotation": "sleeping face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F634.svg"
+    },
+    {
+      "hexcode": "1FAE6",
+      "annotation": "biting lip",
+      "group": "people-body",
+      "subgroup": "b",
+      "path": "people-body/b/1FAE6.svg"
+    },
+    {
+      "hexcode": "1F990",
+      "annotation": "shrimp",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F990.svg"
+    },
+    {
+      "hexcode": "1F371",
+      "annotation": "bento box",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F371.svg"
+    },
+    {
+      "hexcode": "1F691",
+      "annotation": "ambulance",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F691.svg"
+    },
+    {
+      "hexcode": "1F38E",
+      "annotation": "Japanese dolls",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F38E.svg"
+    },
+    {
+      "hexcode": "1FA9F",
+      "annotation": "window",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1FA9F.svg"
+    },
+    {
+      "hexcode": "27B0",
+      "annotation": "curly loop",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/27B0.svg"
+    },
+    {
+      "hexcode": "1F1F7-1F1FC",
+      "annotation": "flag: Rwanda",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F7-1F1FC.svg"
+    },
+    {
+      "hexcode": "1F92E",
+      "annotation": "face vomiting",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F92E.svg"
+    },
+    {
+      "hexcode": "1F9D4-200D-2642-FE0F",
+      "annotation": "man: beard",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D4-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F9AA",
+      "annotation": "oyster",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9AA.svg"
+    },
+    {
+      "hexcode": "1F359",
+      "annotation": "rice ball",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F359.svg"
+    },
+    {
+      "hexcode": "26FD",
+      "annotation": "fuel pump",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/26FD.svg"
+    },
+    {
+      "hexcode": "1F396",
+      "annotation": "military medal",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F396.svg"
+    },
+    {
+      "hexcode": "1F6BD",
+      "annotation": "toilet",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F6BD.svg"
+    },
+    {
+      "hexcode": "00AE",
+      "annotation": "registered",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/00AE.svg"
+    },
+    {
+      "hexcode": "1F1F8-1F1EA",
+      "annotation": "flag: Sweden",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F8-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F927",
+      "annotation": "sneezing face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F927.svg"
+    },
+    {
+      "hexcode": "1F9CF-200D-2640-FE0F",
+      "annotation": "deaf woman",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9CF-200D-2640-FE0F.svg"
+    },
+    {
+      "hexcode": "1FAB2",
+      "annotation": "beetle",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FAB2.svg"
+    },
+    {
+      "hexcode": "1F35D",
+      "annotation": "spaghetti",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F35D.svg"
+    },
+    {
+      "hexcode": "1F6D1",
+      "annotation": "stop sign",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6D1.svg"
+    },
+    {
+      "hexcode": "1F3C9",
+      "annotation": "rugby football",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3C9.svg"
+    },
+    {
+      "hexcode": "1F6BF",
+      "annotation": "shower",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F6BF.svg"
+    },
+    {
+      "hexcode": "2122",
+      "annotation": "trade mark",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/2122.svg"
+    },
+    {
+      "hexcode": "1F1F9-1F1FB",
+      "annotation": "flag: Tuvalu",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F9-1F1FB.svg"
+    },
+    {
+      "hexcode": "1F973",
+      "annotation": "partying face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F973.svg"
+    },
+    {
+      "hexcode": "1F647-200D-2642-FE0F",
+      "annotation": "man bowing",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F647-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F577",
+      "annotation": "spider",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F577.svg"
+    },
+    {
+      "hexcode": "1F96E",
+      "annotation": "moon cake",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F96E.svg"
+    },
+    {
+      "hexcode": "1F6DF",
+      "annotation": "ring buoy",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6DF.svg"
+    },
+    {
+      "hexcode": "1F5BC",
+      "annotation": "framed picture",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F5BC.svg"
+    },
+    {
+      "hexcode": "1F9FA",
+      "annotation": "basket",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F9FA.svg"
+    },
+    {
+      "hexcode": "1F51F",
+      "annotation": "keycap: 10",
+      "group": "symbols",
+      "subgroup": "k",
+      "path": "symbols/k/1F51F.svg"
+    },
+    {
+      "hexcode": "1F1F9-1F1FC",
+      "annotation": "flag: Taiwan",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F9-1F1FC.svg"
+    },
+    {
+      "hexcode": "1F615",
+      "annotation": "confused face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F615.svg"
+    },
+    {
+      "hexcode": "1F468-200D-1F33E",
+      "annotation": "man farmer",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-1F33E.svg"
+    },
+    {
+      "hexcode": "1F335",
+      "annotation": "cactus",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F335.svg"
+    },
+    {
+      "hexcode": "1F368",
+      "annotation": "ice cream",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F368.svg"
+    },
+    {
+      "hexcode": "1F6A4",
+      "annotation": "speedboat",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6A4.svg"
+    },
+    {
+      "hexcode": "1F3A8",
+      "annotation": "artist palette",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F3A8.svg"
+    },
+    {
+      "hexcode": "1FAA3",
+      "annotation": "bucket",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1FAA3.svg"
+    },
+    {
+      "hexcode": "1F195",
+      "annotation": "NEW button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F195.svg"
+    },
+    {
+      "hexcode": "1F1FA-1F1EC",
+      "annotation": "flag: Uganda",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1FA-1F1EC.svg"
+    },
+    {
+      "hexcode": "2639",
+      "annotation": "frowning face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/2639.svg"
+    },
+    {
+      "hexcode": "1F469-200D-1F373",
+      "annotation": "woman cook",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F469-200D-1F373.svg"
+    },
+    {
+      "hexcode": "1F98D",
+      "annotation": "gorilla",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F98D.svg"
+    },
+    {
+      "hexcode": "1F370",
+      "annotation": "shortcake",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F370.svg"
+    },
+    {
+      "hexcode": "1FA82",
+      "annotation": "parachute",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1FA82.svg"
+    },
+    {
+      "hexcode": "1F38D",
+      "annotation": "pine decoration",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F38D.svg"
+    },
+    {
+      "hexcode": "1F9FD",
+      "annotation": "sponge",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F9FD.svg"
+    },
+    {
+      "hexcode": "1F198",
+      "annotation": "SOS button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F198.svg"
+    },
+    {
+      "hexcode": "1F1FD-1F1F0",
+      "annotation": "flag: Kosovo",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1FD-1F1F0.svg"
+    },
+    {
+      "hexcode": "1F97A",
+      "annotation": "pleading face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F97A.svg"
+    },
+    {
+      "hexcode": "1F468-200D-1F3A4",
+      "annotation": "man singer",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-1F3A4.svg"
+    },
+    {
+      "hexcode": "1F99D",
+      "annotation": "raccoon",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F99D.svg"
+    },
+    {
+      "hexcode": "1F36F",
+      "annotation": "honey pot",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F36F.svg"
+    },
+    {
+      "hexcode": "1F6F0",
+      "annotation": "satellite",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6F0.svg"
+    },
+    {
+      "hexcode": "1F397",
+      "annotation": "reminder ribbon",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F397.svg"
+    },
+    {
+      "hexcode": "26B0",
+      "annotation": "coffin",
+      "group": "objects",
+      "subgroup": "o",
+      "path": "objects/o/26B0.svg"
+    },
+    {
+      "hexcode": "1F199",
+      "annotation": "UP! button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F199.svg"
+    },
+    {
+      "hexcode": "1F1FF-1F1F2",
+      "annotation": "flag: Zambia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1FF-1F1F2.svg"
+    },
+    {
+      "hexcode": "1F47E",
+      "annotation": "alien monster",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F47E.svg"
+    },
+    {
+      "hexcode": "1F468-200D-1F3A8",
+      "annotation": "man artist",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-1F3A8.svg"
+    },
+    {
+      "hexcode": "1F406",
+      "annotation": "leopard",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F406.svg"
+    },
+    {
+      "hexcode": "1F349",
+      "annotation": "watermelon",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F349.svg"
+    },
+    {
+      "hexcode": "23F1",
+      "annotation": "stopwatch",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/23F1.svg"
+    },
+    {
+      "hexcode": "1F947",
+      "annotation": "1st place medal",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F947.svg"
+    },
+    {
+      "hexcode": "1F453",
+      "annotation": "glasses",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F453.svg"
+    },
+    {
+      "hexcode": "1F534",
+      "annotation": "red circle",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F534.svg"
+    },
+    {
+      "hexcode": "1F38C",
+      "annotation": "crossed flags",
+      "group": "flags",
+      "subgroup": "f",
+      "path": "flags/f/1F38C.svg"
+    },
+    {
+      "hexcode": "1F497",
+      "annotation": "growing heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F497.svg"
+    },
+    {
+      "hexcode": "1F47C",
+      "annotation": "baby angel",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F47C.svg"
+    },
+    {
+      "hexcode": "1F984",
+      "annotation": "unicorn",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F984.svg"
+    },
+    {
+      "hexcode": "1F353",
+      "annotation": "strawberry",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F353.svg"
+    },
+    {
+      "hexcode": "1F315",
+      "annotation": "full moon",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F315.svg"
+    },
+    {
+      "hexcode": "1F948",
+      "annotation": "2nd place medal",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F948.svg"
+    },
+    {
+      "hexcode": "1F97D",
+      "annotation": "goggles",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F97D.svg"
+    },
+    {
+      "hexcode": "1F7E5",
+      "annotation": "red square",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F7E5.svg"
+    },
+    {
+      "hexcode": "1F1E6-1F1E9",
+      "annotation": "flag: Andorra",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E6-1F1E9.svg"
+    },
+    {
+      "hexcode": "1F493",
+      "annotation": "beating heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F493.svg"
+    },
+    {
+      "hexcode": "1F936",
+      "annotation": "Mrs. Claus",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F936.svg"
+    },
+    {
+      "hexcode": "1F992",
+      "annotation": "giraffe",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F992.svg"
+    },
+    {
+      "hexcode": "1F95D",
+      "annotation": "kiwi fruit",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F95D.svg"
+    },
+    {
+      "hexcode": "1F30C",
+      "annotation": "milky way",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F30C.svg"
+    },
+    {
+      "hexcode": "1F949",
+      "annotation": "3rd place medal",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F949.svg"
+    },
+    {
+      "hexcode": "1F454",
+      "annotation": "necktie",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F454.svg"
+    },
+    {
+      "hexcode": "1F6BC",
+      "annotation": "baby symbol",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6BC.svg"
+    },
+    {
+      "hexcode": "1F1E6-1F1F1",
+      "annotation": "flag: Albania",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E6-1F1F1.svg"
+    },
+    {
+      "hexcode": "2764-FE0F-200D-1F525",
+      "annotation": "heart on fire",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/2764-FE0F-200D-1F525.svg"
+    },
+    {
+      "hexcode": "1F9D9-200D-2640-FE0F",
+      "annotation": "woman mage",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D9-200D-2640-FE0F.svg"
+    },
+    {
+      "hexcode": "1F9A3",
+      "annotation": "mammoth",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A3.svg"
+    },
+    {
+      "hexcode": "1F336",
+      "annotation": "hot pepper",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F336.svg"
+    },
+    {
+      "hexcode": "1F32C",
+      "annotation": "wind face",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F32C.svg"
+    },
+    {
+      "hexcode": "1F3AD",
+      "annotation": "performing arts",
+      "group": "activities",
+      "subgroup": "a",
+      "path": "activities/a/1F3AD.svg"
+    },
+    {
+      "hexcode": "1F455",
+      "annotation": "t-shirt",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F455.svg"
+    },
+    {
+      "hexcode": "1F6B3",
+      "annotation": "no bicycles",
+      "group": "symbols",
+      "subgroup": "w",
+      "path": "symbols/w/1F6B3.svg"
+    },
+    {
+      "hexcode": "1F1E6-1F1F2",
+      "annotation": "flag: Armenia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E6-1F1F2.svg"
+    },
+    {
+      "hexcode": "2764-FE0F-200D-1FA79",
+      "annotation": "mending heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/2764-FE0F-200D-1FA79.svg"
+    },
+    {
+      "hexcode": "1F9DF-200D-2642-FE0F",
+      "annotation": "man zombie",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DF-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F439",
+      "annotation": "hamster",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F439.svg"
+    },
+    {
+      "hexcode": "1F35B",
+      "annotation": "curry rice",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F35B.svg"
+    },
+    {
+      "hexcode": "2744",
+      "annotation": "snowflake",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/2744.svg"
+    },
+    {
+      "hexcode": "1F39F",
+      "annotation": "admission tickets",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F39F.svg"
+    },
+    {
+      "hexcode": "1F45C",
+      "annotation": "handbag",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F45C.svg"
+    },
+    {
+      "hexcode": "2622",
+      "annotation": "radioactive",
+      "group": "symbols",
+      "subgroup": "w",
+      "path": "symbols/w/2622.svg"
+    },
+    {
+      "hexcode": "1F1E6-1F1F9",
+      "annotation": "flag: Austria",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E6-1F1F9.svg"
+    },
+    {
+      "hexcode": "1F636-200D-1F32B-FE0F",
+      "annotation": "face in clouds",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F636-200D-1F32B-FE0F.svg"
+    },
+    {
+      "hexcode": "1F6B4-200D-2642-FE0F",
+      "annotation": "man biking",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F6B4-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F414",
+      "annotation": "chicken",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F414.svg"
+    },
+    {
+      "hexcode": "1F367",
+      "annotation": "shaved ice",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F367.svg"
+    },
+    {
+      "hexcode": "1F5FB",
+      "annotation": "mount fuji",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F5FB.svg"
+    },
+    {
+      "hexcode": "1F3C8",
+      "annotation": "american football",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F3C8.svg"
+    },
+    {
+      "hexcode": "1F3A9",
+      "annotation": "top hat",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F3A9.svg"
+    },
+    {
+      "hexcode": "27A1",
+      "annotation": "right arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/27A1.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1EA",
+      "annotation": "flag: Belgium",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F62C",
+      "annotation": "grimacing face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F62C.svg"
+    },
+    {
+      "hexcode": "1F463",
+      "annotation": "footprints",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F463.svg"
+    },
+    {
+      "hexcode": "1F413",
+      "annotation": "rooster",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F413.svg"
+    },
+    {
+      "hexcode": "1F377",
+      "annotation": "wine glass",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F377.svg"
+    },
+    {
+      "hexcode": "1F3E9",
+      "annotation": "love hotel",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3E9.svg"
+    },
+    {
+      "hexcode": "1F004",
+      "annotation": "mahjong red dragon",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F004.svg"
+    },
+    {
+      "hexcode": "1F3BA",
+      "annotation": "trumpet",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F3BA.svg"
+    },
+    {
+      "hexcode": "269B",
+      "annotation": "atom symbol",
+      "group": "symbols",
+      "subgroup": "r",
+      "path": "symbols/r/269B.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1ED",
+      "annotation": "flag: Bahrain",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1ED.svg"
+    },
+    {
+      "hexcode": "1F922",
+      "annotation": "nauseated face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F922.svg"
+    },
+    {
+      "hexcode": "1F44B",
+      "annotation": "waving hand",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F44B.svg"
+    },
+    {
+      "hexcode": "1F427",
+      "annotation": "penguin",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F427.svg"
+    },
+    {
+      "hexcode": "1F9CB",
+      "annotation": "bubble tea",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F9CB.svg"
+    },
+    {
+      "hexcode": "1F682",
+      "annotation": "locomotive",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F682.svg"
+    },
+    {
+      "hexcode": "1F94B",
+      "annotation": "martial arts uniform",
+      "group": "activities",
+      "subgroup": "s",
+      "path": "activities/s/1F94B.svg"
+    },
+    {
+      "hexcode": "1FA87",
+      "annotation": "maracas",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1FA87.svg"
+    },
+    {
+      "hexcode": "271D",
+      "annotation": "latin cross",
+      "group": "symbols",
+      "subgroup": "r",
+      "path": "symbols/r/271D.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1EE",
+      "annotation": "flag: Burundi",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1EE.svg"
+    },
+    {
+      "hexcode": "1F92F",
+      "annotation": "exploding head",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F92F.svg"
+    },
+    {
+      "hexcode": "270B",
+      "annotation": "raised hand",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/270B.svg"
+    },
+    {
+      "hexcode": "1FAB6",
+      "annotation": "feather",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1FAB6.svg"
+    },
+    {
+      "hexcode": "1F962",
+      "annotation": "chopsticks",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F962.svg"
+    },
+    {
+      "hexcode": "1F688",
+      "annotation": "light rail",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F688.svg"
+    },
+    {
+      "hexcode": "1F3B4",
+      "annotation": "flower playing cards",
+      "group": "activities",
+      "subgroup": "g",
+      "path": "activities/g/1F3B4.svg"
+    },
+    {
+      "hexcode": "1F50B",
+      "annotation": "battery",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F50B.svg"
+    },
+    {
+      "hexcode": "2650",
+      "annotation": "Sagittarius",
+      "group": "symbols",
+      "subgroup": "z",
+      "path": "symbols/z/2650.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1F2",
+      "annotation": "flag: Bermuda",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1F2.svg"
+    },
+    {
+      "hexcode": "1F978",
+      "annotation": "disguised face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F978.svg"
+    },
+    {
+      "hexcode": "1F44E",
+      "annotation": "thumbs down",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F44E.svg"
+    },
+    {
+      "hexcode": "1F99A",
+      "annotation": "peacock",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F99A.svg"
+    },
+    {
+      "hexcode": "1F34F",
+      "annotation": "green apple",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F34F.svg"
+    },
+    {
+      "hexcode": "1F68E",
+      "annotation": "trolleybus",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F68E.svg"
+    },
+    {
+      "hexcode": "1F391",
+      "annotation": "moon viewing ceremony",
+      "group": "activities",
+      "subgroup": "e",
+      "path": "activities/e/1F391.svg"
+    },
+    {
+      "hexcode": "1F5A8",
+      "annotation": "printer",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F5A8.svg"
+    },
+    {
+      "hexcode": "25B6",
+      "annotation": "play button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/25B6.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1F4",
+      "annotation": "flag: Bolivia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1F4.svg"
+    },
+    {
+      "hexcode": "1F627",
+      "annotation": "anguished face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F627.svg"
+    },
+    {
+      "hexcode": "270A",
+      "annotation": "raised fist",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/270A.svg"
+    },
+    {
+      "hexcode": "1F426-200D-1F525",
+      "annotation": "phoenix",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F426-200D-1F525.svg"
+    },
+    {
+      "hexcode": "1FAD0",
+      "annotation": "blueberries",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FAD0.svg"
+    },
+    {
+      "hexcode": "1F693",
+      "annotation": "police car",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F693.svg"
+    },
+    {
+      "hexcode": "1F9FE",
+      "annotation": "receipt",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F9FE.svg"
+    },
+    {
+      "hexcode": "23F9",
+      "annotation": "stop button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/23F9.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1F8",
+      "annotation": "flag: Bahamas",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1F8.svg"
+    },
+    {
+      "hexcode": "1F4AF",
+      "annotation": "hundred points",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4AF.svg"
+    },
+    {
+      "hexcode": "1FAF6",
+      "annotation": "heart hands",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1FAF6.svg"
+    },
+    {
+      "hexcode": "1F42C",
+      "annotation": "dolphin",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F42C.svg"
+    },
+    {
+      "hexcode": "1F33D",
+      "annotation": "ear of corn",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F33D.svg"
+    },
+    {
+      "hexcode": "1F697",
+      "annotation": "automobile",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F697.svg"
+    },
+    {
+      "hexcode": "1F4E6",
+      "annotation": "package",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F4E6.svg"
+    },
+    {
+      "hexcode": "2640",
+      "annotation": "female sign",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/2640.svg"
+    },
+    {
+      "hexcode": "1F1E7-1F1FE",
+      "annotation": "flag: Belarus",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E7-1F1FE.svg"
+    },
+    {
+      "hexcode": "1F4A6",
+      "annotation": "sweat droplets",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4A6.svg"
+    },
+    {
+      "hexcode": "1F485",
+      "annotation": "nail polish",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F485.svg"
+    },
+    {
+      "hexcode": "1F419",
+      "annotation": "octopus",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F419.svg"
+    },
+    {
+      "hexcode": "1FAD1",
+      "annotation": "bell pepper",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FAD1.svg"
+    },
+    {
+      "hexcode": "1F3CE",
+      "annotation": "racing car",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F3CE.svg"
+    },
+    {
+      "hexcode": "1F4EE",
+      "annotation": "postbox",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F4EE.svg"
+    },
+    {
+      "hexcode": "1F192",
+      "annotation": "COOL button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F192.svg"
+    },
+    {
+      "hexcode": "1F1E8-1F1FC",
+      "annotation": "flag: Curaçao",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E8-1F1FC.svg"
+    },
+    {
+      "hexcode": "1F4AC",
+      "annotation": "speech balloon",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4AC.svg"
+    },
+    {
+      "hexcode": "1F469-200D-1F9B2",
+      "annotation": "woman: bald",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F469-200D-1F9B2.svg"
+    },
+    {
+      "hexcode": "1F99E",
+      "annotation": "lobster",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F99E.svg"
+    },
+    {
+      "hexcode": "1F96C",
+      "annotation": "leafy green",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F96C.svg"
+    },
+    {
+      "hexcode": "1F3CD",
+      "annotation": "motorcycle",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F3CD.svg"
+    },
+    {
+      "hexcode": "1F4CC",
+      "annotation": "pushpin",
+      "group": "objects",
+      "subgroup": "o",
+      "path": "objects/o/1F4CC.svg"
+    },
+    {
+      "hexcode": "1F193",
+      "annotation": "FREE button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F193.svg"
+    },
+    {
+      "hexcode": "1F1E8-1F1FF",
+      "annotation": "flag: Czechia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E8-1F1FF.svg"
+    },
+    {
+      "hexcode": "1F920",
+      "annotation": "cowboy hat face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F920.svg"
+    },
+    {
+      "hexcode": "1F64E-200D-2642-FE0F",
+      "annotation": "man pouting",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F64E-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F997",
+      "annotation": "cricket",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F997.svg"
+    },
+    {
+      "hexcode": "1FADA",
+      "annotation": "ginger root",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FADA.svg"
+    },
+    {
+      "hexcode": "1F6F9",
+      "annotation": "skateboard",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6F9.svg"
+    },
+    {
+      "hexcode": "1F5DD",
+      "annotation": "old key",
+      "group": "objects",
+      "subgroup": "l",
+      "path": "objects/l/1F5DD.svg"
+    },
+    {
+      "hexcode": "2139",
+      "annotation": "information",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/2139.svg"
+    },
+    {
+      "hexcode": "1F1E9-1F1EA",
+      "annotation": "flag: Germany",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E9-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F632",
+      "annotation": "astonished face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F632.svg"
+    },
+    {
+      "hexcode": "1F9CF",
+      "annotation": "deaf person",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9CF.svg"
+    },
+    {
+      "hexcode": "1F9A0",
+      "annotation": "microbe",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A0.svg"
+    },
+    {
+      "hexcode": "1F357",
+      "annotation": "poultry leg",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F357.svg"
+    },
+    {
+      "hexcode": "1F6E5",
+      "annotation": "motor boat",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F6E5.svg"
+    },
+    {
+      "hexcode": "1F9F0",
+      "annotation": "toolbox",
+      "group": "objects",
+      "subgroup": "t",
+      "path": "objects/t/1F9F0.svg"
+    },
+    {
+      "hexcode": "1F535",
+      "annotation": "blue circle",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F535.svg"
+    },
+    {
+      "hexcode": "1F1E9-1F1F0",
+      "annotation": "flag: Denmark",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E9-1F1F0.svg"
+    },
+    {
+      "hexcode": "1F616",
+      "annotation": "confounded face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F616.svg"
+    },
+    {
+      "hexcode": "1F468-200D-1F393",
+      "annotation": "man student",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-1F393.svg"
+    },
+    {
+      "hexcode": "1F490",
+      "annotation": "bouquet",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F490.svg"
+    },
+    {
+      "hexcode": "1F969",
+      "annotation": "cut of meat",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F969.svg"
+    },
+    {
+      "hexcode": "1F681",
+      "annotation": "helicopter",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F681.svg"
+    },
+    {
+      "hexcode": "2697",
+      "annotation": "alembic",
+      "group": "objects",
+      "subgroup": "s",
+      "path": "objects/s/2697.svg"
+    },
+    {
+      "hexcode": "1F7E6",
+      "annotation": "blue square",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F7E6.svg"
+    },
+    {
+      "hexcode": "1F1E9-1F1FF",
+      "annotation": "flag: Algeria",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1E9-1F1FF.svg"
+    },
+    {
+      "hexcode": "1F496",
+      "annotation": "sparkling heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F496.svg"
+    },
+    {
+      "hexcode": "1F468-200D-1F3EB",
+      "annotation": "man teacher",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F468-200D-1F3EB.svg"
+    },
+    {
+      "hexcode": "1F3F5",
+      "annotation": "rosette",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F3F5.svg"
+    },
+    {
+      "hexcode": "1F372",
+      "annotation": "pot of food",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F372.svg"
+    },
+    {
+      "hexcode": "1F55C",
+      "annotation": "one-thirty",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F55C.svg"
+    },
+    {
+      "hexcode": "1F489",
+      "annotation": "syringe",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F489.svg"
+    },
+    {
+      "hexcode": "1F6BA",
+      "annotation": "women’s room",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6BA.svg"
+    },
+    {
+      "hexcode": "1F1EA-1F1E8",
+      "annotation": "flag: Ecuador",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EA-1F1E8.svg"
+    },
+    {
+      "hexcode": "1F4AD",
+      "annotation": "thought balloon",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F4AD.svg"
+    },
+    {
+      "hexcode": "1F469-200D-2696-FE0F",
+      "annotation": "woman judge",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F469-200D-2696-FE0F.svg"
+    },
+    {
+      "hexcode": "1F33C",
+      "annotation": "blossom",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F33C.svg"
+    },
+    {
+      "hexcode": "1F957",
+      "annotation": "green salad",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F957.svg"
+    },
+    {
+      "hexcode": "1F55D",
+      "annotation": "two-thirty",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F55D.svg"
+    },
+    {
+      "hexcode": "1FAA0",
+      "annotation": "plunger",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1FAA0.svg"
+    },
+    {
+      "hexcode": "1F6BE",
+      "annotation": "water closet",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6BE.svg"
+    },
+    {
+      "hexcode": "1F1EA-1F1EA",
+      "annotation": "flag: Estonia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EA-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F643",
+      "annotation": "upside-down face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F643.svg"
+    },
+    {
+      "hexcode": "1F469-200D-2708-FE0F",
+      "annotation": "woman pilot",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F469-200D-2708-FE0F.svg"
+    },
+    {
+      "hexcode": "1F436",
+      "annotation": "dog face",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F436.svg"
+    },
+    {
+      "hexcode": "1F96B",
+      "annotation": "canned food",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F96B.svg"
+    },
+    {
+      "hexcode": "1F561",
+      "annotation": "six-thirty",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F561.svg"
+    },
+    {
+      "hexcode": "1F6C1",
+      "annotation": "bathtub",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F6C1.svg"
+    },
+    {
+      "hexcode": "1F6C5",
+      "annotation": "left luggage",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6C5.svg"
+    },
+    {
+      "hexcode": "1F1EA-1F1F7",
+      "annotation": "flag: Eritrea",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EA-1F1F7.svg"
+    },
+    {
+      "hexcode": "1F61B",
+      "annotation": "face with tongue",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F61B.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F692",
+      "annotation": "firefighter",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F692.svg"
+    },
+    {
+      "hexcode": "1F431",
+      "annotation": "cat face",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F431.svg"
+    },
+    {
+      "hexcode": "1F35A",
+      "annotation": "cooked rice",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F35A.svg"
+    },
+    {
+      "hexcode": "1F565",
+      "annotation": "ten-thirty",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F565.svg"
+    },
+    {
+      "hexcode": "1FAE7",
+      "annotation": "bubbles",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1FAE7.svg"
+    },
+    {
+      "hexcode": "1F6AF",
+      "annotation": "no littering",
+      "group": "symbols",
+      "subgroup": "w",
+      "path": "symbols/w/1F6AF.svg"
+    },
+    {
+      "hexcode": "1F1EB-1F1EE",
+      "annotation": "flag: Finland",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EB-1F1EE.svg"
+    },
+    {
+      "hexcode": "1F911",
+      "annotation": "money-mouth face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F911.svg"
+    },
+    {
+      "hexcode": "1F482-200D-2640-FE0F",
+      "annotation": "woman guard",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F482-200D-2640-FE0F.svg"
+    },
+    {
+      "hexcode": "1F42E",
+      "annotation": "cow face",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F42E.svg"
+    },
+    {
+      "hexcode": "1F961",
+      "annotation": "takeout box",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F961.svg"
+    },
+    {
+      "hexcode": "1F30A",
+      "annotation": "water wave",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F30A.svg"
+    },
+    {
+      "hexcode": "1FAA7",
+      "annotation": "placard",
+      "group": "objects",
+      "subgroup": "o",
+      "path": "objects/o/1FAA7.svg"
+    },
+    {
+      "hexcode": "262E",
+      "annotation": "peace symbol",
+      "group": "symbols",
+      "subgroup": "r",
+      "path": "symbols/r/262E.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1E9",
+      "annotation": "flag: Grenada",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1E9.svg"
+    },
+    {
+      "hexcode": "1FAE5",
+      "annotation": "dotted line face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1FAE5.svg"
+    },
+    {
+      "hexcode": "1F385",
+      "annotation": "Santa Claus",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F385.svg"
+    },
+    {
+      "hexcode": "1F437",
+      "annotation": "pig face",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F437.svg"
+    },
+    {
+      "hexcode": "1F37C",
+      "annotation": "baby bottle",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F37C.svg"
+    },
+    {
+      "hexcode": "1F3E4",
+      "annotation": "post office",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3E4.svg"
+    },
+    {
+      "hexcode": "1F97C",
+      "annotation": "lab coat",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F97C.svg"
+    },
+    {
+      "hexcode": "23F8",
+      "annotation": "pause button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/23F8.svg"
+    },
+    {
+      "hexcode": "1F1EC-1F1EA",
+      "annotation": "flag: Georgia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EC-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F623",
+      "annotation": "persevering face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F623.svg"
+    },
+    {
+      "hexcode": "1F9DA-200D-2640-FE0F",
+      "annotation": "woman fairy",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DA-200D-2640-FE0F.svg"
+    },
+    {
+      "hexcode": "1F43D",
+      "annotation": "pig nose",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F43D.svg"
+    },
+    {
+      "hexcode": "1F9C0",
+      "annotation": "cheese wedge",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F9C0.svg"
+    },
+    {
+      "hexcode": "1F5FC",
+      "annotation": "Tokyo tower",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F5FC.svg"
+    },
+    {
+      "hexcode": "1F392",
+      "annotation": "backpack",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F392.svg"
+    },
+    {
+      "hexcode": "23CF",
+      "annotation": "eject button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/23CF.svg"
+    },
+    {
+      "hexcode": "1F1ED-1F1F7",
+      "annotation": "flag: Croatia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1ED-1F1F7.svg"
+    },
+    {
+      "hexcode": "1F498",
+      "annotation": "heart with arrow",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F498.svg"
+    },
+    {
+      "hexcode": "1F9DB-200D-2642-FE0F",
+      "annotation": "man vampire",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DB-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F418",
+      "annotation": "elephant",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F418.svg"
+    },
+    {
+      "hexcode": "1F356",
+      "annotation": "meat on bone",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F356.svg"
+    },
+    {
+      "hexcode": "2668",
+      "annotation": "hot springs",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/2668.svg"
+    },
+    {
+      "hexcode": "1F484",
+      "annotation": "lipstick",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F484.svg"
+    },
+    {
+      "hexcode": "1F4F6",
+      "annotation": "antenna bars",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F4F6.svg"
+    },
+    {
+      "hexcode": "1F1ED-1F1FA",
+      "annotation": "flag: Hungary",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1ED-1F1FA.svg"
+    },
+    {
+      "hexcode": "1F49E",
+      "annotation": "revolving hearts",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F49E.svg"
+    },
+    {
+      "hexcode": "1F9DE-200D-2640-FE0F",
+      "annotation": "woman genie",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9DE-200D-2640-FE0F.svg"
+    },
+    {
+      "hexcode": "1F43F",
+      "annotation": "chipmunk",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F43F.svg"
+    },
+    {
+      "hexcode": "1F35F",
+      "annotation": "french fries",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F35F.svg"
+    },
+    {
+      "hexcode": "1F488",
+      "annotation": "barber pole",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F488.svg"
+    },
+    {
+      "hexcode": "2328",
+      "annotation": "keyboard",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/2328.svg"
+    },
+    {
+      "hexcode": "269C",
+      "annotation": "fleur-de-lis",
+      "group": "symbols",
+      "subgroup": "o",
+      "path": "symbols/o/269C.svg"
+    },
+    {
+      "hexcode": "1F1EE-1F1EA",
+      "annotation": "flag: Ireland",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EE-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F49F",
+      "annotation": "heart decoration",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F49F.svg"
+    },
+    {
+      "hexcode": "1F6B6-200D-2642-FE0F",
+      "annotation": "man walking",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F6B6-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F994",
+      "annotation": "hedgehog",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F994.svg"
+    },
+    {
+      "hexcode": "1F358",
+      "annotation": "rice cracker",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F358.svg"
+    },
+    {
+      "hexcode": "1F3AA",
+      "annotation": "circus tent",
+      "group": "travel-places",
+      "subgroup": "p",
+      "path": "travel-places/p/1F3AA.svg"
+    },
+    {
+      "hexcode": "1F4D3",
+      "annotation": "notebook",
+      "group": "objects",
+      "subgroup": "b",
+      "path": "objects/b/1F4D3.svg"
+    },
+    {
+      "hexcode": "1F7E2",
+      "annotation": "green circle",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F7E2.svg"
+    },
+    {
+      "hexcode": "1F1EE-1F1F8",
+      "annotation": "flag: Iceland",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EE-1F1F8.svg"
+    },
+    {
+      "hexcode": "1FA75",
+      "annotation": "light blue heart",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1FA75.svg"
+    },
+    {
+      "hexcode": "1F3C3-200D-2642-FE0F",
+      "annotation": "man running",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F3C3-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F998",
+      "annotation": "kangaroo",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F998.svg"
+    },
+    {
+      "hexcode": "1F364",
+      "annotation": "fried shrimp",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F364.svg"
+    },
+    {
+      "hexcode": "1F683",
+      "annotation": "railway car",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F683.svg"
+    },
+    {
+      "hexcode": "1F516",
+      "annotation": "bookmark",
+      "group": "objects",
+      "subgroup": "b",
+      "path": "objects/b/1F516.svg"
+    },
+    {
+      "hexcode": "1F7E4",
+      "annotation": "brown circle",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F7E4.svg"
+    },
+    {
+      "hexcode": "1F1EF-1F1F2",
+      "annotation": "flag: Jamaica",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1EF-1F1F2.svg"
+    },
+    {
+      "hexcode": "1F910",
+      "annotation": "zipper-mouth face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F910.svg"
+    },
+    {
+      "hexcode": "1F57A",
+      "annotation": "man dancing",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F57A.svg"
+    },
+    {
+      "hexcode": "1F9A9",
+      "annotation": "flamingo",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A9.svg"
+    },
+    {
+      "hexcode": "2615",
+      "annotation": "hot beverage",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/2615.svg"
+    },
+    {
+      "hexcode": "1F692",
+      "annotation": "fire engine",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F692.svg"
+    },
+    {
+      "hexcode": "2709",
+      "annotation": "envelope",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/2709.svg"
+    },
+    {
+      "hexcode": "26AB",
+      "annotation": "black circle",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/26AB.svg"
+    },
+    {
+      "hexcode": "1F1F0-1F1F2",
+      "annotation": "flag: Comoros",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F0-1F1F2.svg"
+    },
+    {
+      "hexcode": "1F9D0",
+      "annotation": "face with monocle",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F9D0.svg"
+    },
+    {
+      "hexcode": "1F3C2",
+      "annotation": "snowboarder",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F3C2.svg"
+    },
+    {
+      "hexcode": "1F995",
+      "annotation": "sauropod",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F995.svg"
+    },
+    {
+      "hexcode": "1F9C3",
+      "annotation": "beverage box",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F9C3.svg"
+    },
+    {
+      "hexcode": "23F0",
+      "annotation": "alarm clock",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/23F0.svg"
+    },
+    {
+      "hexcode": "1F4C5",
+      "annotation": "calendar",
+      "group": "objects",
+      "subgroup": "o",
+      "path": "objects/o/1F4C5.svg"
+    },
+    {
+      "hexcode": "26AA",
+      "annotation": "white circle",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/26AA.svg"
+    },
+    {
+      "hexcode": "1F1F1-1F1E7",
+      "annotation": "flag: Lebanon",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F1-1F1E7.svg"
+    },
+    {
+      "hexcode": "1F61E",
+      "annotation": "disappointed face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F61E.svg"
+    },
+    {
+      "hexcode": "1F3CC-FE0F-200D-2642-FE0F",
+      "annotation": "man golfing",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F3CC-FE0F-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F421",
+      "annotation": "blowfish",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F421.svg"
+    },
+    {
+      "hexcode": "1F35C",
+      "annotation": "steaming bowl",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F35C.svg"
+    },
+    {
+      "hexcode": "23F2",
+      "annotation": "timer clock",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/23F2.svg"
+    },
+    {
+      "hexcode": "2702",
+      "annotation": "scissors",
+      "group": "objects",
+      "subgroup": "o",
+      "path": "objects/o/2702.svg"
+    },
+    {
+      "hexcode": "1F7E9",
+      "annotation": "green square",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F7E9.svg"
+    },
+    {
+      "hexcode": "1F1F1-1F1F7",
+      "annotation": "flag: Liberia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F1-1F1F7.svg"
+    },
+    {
+      "hexcode": "1F49D",
+      "annotation": "heart with ribbon",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/1F49D.svg"
+    },
+    {
+      "hexcode": "1F3C4-200D-2642-FE0F",
+      "annotation": "man surfing",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F3C4-200D-2642-FE0F.svg"
+    },
+    {
+      "hexcode": "1F41D",
+      "annotation": "honeybee",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F41D.svg"
+    },
+    {
+      "hexcode": "1F382",
+      "annotation": "birthday cake",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F382.svg"
+    },
+    {
+      "hexcode": "1F550",
+      "annotation": "one o’clock",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F550.svg"
+    },
+    {
+      "hexcode": "1F513",
+      "annotation": "unlocked",
+      "group": "objects",
+      "subgroup": "l",
+      "path": "objects/l/1F513.svg"
+    },
+    {
+      "hexcode": "1F7EB",
+      "annotation": "brown square",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F7EB.svg"
+    },
+    {
+      "hexcode": "1F1F1-1F1F8",
+      "annotation": "flag: Lesotho",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F1-1F1F8.svg"
+    },
+    {
+      "hexcode": "2763",
+      "annotation": "heart exclamation",
+      "group": "smileys-emotion",
+      "subgroup": "h",
+      "path": "smileys-emotion/h/2763.svg"
+    },
+    {
+      "hexcode": "1FAC6",
+      "annotation": "fingerprint",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1FAC6.svg"
+    },
+    {
+      "hexcode": "1F982",
+      "annotation": "scorpion",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F982.svg"
+    },
+    {
+      "hexcode": "1F36B",
+      "annotation": "chocolate bar",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F36B.svg"
+    },
+    {
+      "hexcode": "1F551",
+      "annotation": "two o’clock",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F551.svg"
+    },
+    {
+      "hexcode": "1F6D7",
+      "annotation": "elevator",
+      "group": "objects",
+      "subgroup": "h",
+      "path": "objects/h/1F6D7.svg"
+    },
+    {
+      "hexcode": "1F518",
+      "annotation": "radio button",
+      "group": "symbols",
+      "subgroup": "g",
+      "path": "symbols/g/1F518.svg"
+    },
+    {
+      "hexcode": "1F1F2-1F1E6",
+      "annotation": "flag: Morocco",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F2-1F1E6.svg"
+    },
+    {
+      "hexcode": "1F60B",
+      "annotation": "face savoring food",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F60B.svg"
+    },
+    {
+      "hexcode": "1FAF4",
+      "annotation": "palm up hand",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1FAF4.svg"
+    },
+    {
+      "hexcode": "1F99F",
+      "annotation": "mosquito",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F99F.svg"
+    },
+    {
+      "hexcode": "1F95B",
+      "annotation": "glass of milk",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F95B.svg"
+    },
+    {
+      "hexcode": "1F55F",
+      "annotation": "four-thirty",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F55F.svg"
+    },
+    {
+      "hexcode": "1F97F",
+      "annotation": "flat shoe",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F97F.svg"
+    },
+    {
+      "hexcode": "1F6B0",
+      "annotation": "potable water",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6B0.svg"
+    },
+    {
+      "hexcode": "1F1F2-1F1E9",
+      "annotation": "flag: Moldova",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F2-1F1E9.svg"
+    },
+    {
+      "hexcode": "1F636",
+      "annotation": "face without mouth",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F636.svg"
+    },
+    {
+      "hexcode": "270C",
+      "annotation": "victory hand",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/270C.svg"
+    },
+    {
+      "hexcode": "1F33A",
+      "annotation": "hibiscus",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F33A.svg"
+    },
+    {
+      "hexcode": "1F943",
+      "annotation": "tumbler glass",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F943.svg"
+    },
+    {
+      "hexcode": "1F560",
+      "annotation": "five-thirty",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F560.svg"
+    },
+    {
+      "hexcode": "1FAAE",
+      "annotation": "hair pick",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1FAAE.svg"
+    },
+    {
+      "hexcode": "1F6C4",
+      "annotation": "baggage claim",
+      "group": "symbols",
+      "subgroup": "t",
+      "path": "symbols/t/1F6C4.svg"
+    },
+    {
+      "hexcode": "1F1F3-1F1E6",
+      "annotation": "flag: Namibia",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F3-1F1E6.svg"
+    },
+    {
+      "hexcode": "1F62D",
+      "annotation": "loudly crying face",
+      "group": "smileys-emotion",
+      "subgroup": "f",
+      "path": "smileys-emotion/f/1F62D.svg"
+    },
+    {
+      "hexcode": "1F919",
+      "annotation": "call me hand",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F919.svg"
+    },
+    {
+      "hexcode": "1FABB",
+      "annotation": "hyacinth",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1FABB.svg"
+    },
+    {
+      "hexcode": "1F52A",
+      "annotation": "kitchen knife",
+      "group": "food-drink",
+      "subgroup": "d",
+      "path": "food-drink/d/1F52A.svg"
+    },
+    {
+      "hexcode": "1F555",
+      "annotation": "six o’clock",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F555.svg"
+    },
+    {
+      "hexcode": "1F48E",
+      "annotation": "gem stone",
+      "group": "objects",
+      "subgroup": "c",
+      "path": "objects/c/1F48E.svg"
+    },
+    {
+      "hexcode": "2196",
+      "annotation": "up-left arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/2196.svg"
+    },
+    {
+      "hexcode": "1F1F3-1F1EC",
+      "annotation": "flag: Nigeria",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F3-1F1EC.svg"
+    },
+    {
+      "hexcode": "1F63C",
+      "annotation": "cat with wry smile",
+      "group": "smileys-emotion",
+      "subgroup": "c",
+      "path": "smileys-emotion/c/1F63C.svg"
+    },
+    {
+      "hexcode": "1F64F",
+      "annotation": "folded hands",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/1F64F.svg"
+    },
+    {
+      "hexcode": "1F331",
+      "annotation": "seedling",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F331.svg"
+    },
+    {
+      "hexcode": "1F344-200D-1F7EB",
+      "annotation": "brown mushroom",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F344-200D-1F7EB.svg"
+    },
+    {
+      "hexcode": "1F564",
+      "annotation": "nine-thirty",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F564.svg"
+    },
+    {
+      "hexcode": "1F4E3",
+      "annotation": "megaphone",
+      "group": "objects",
+      "subgroup": "s",
+      "path": "objects/s/1F4E3.svg"
+    },
+    {
+      "hexcode": "2195",
+      "annotation": "up-down arrow",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/2195.svg"
+    },
+    {
+      "hexcode": "1F1F7-1F1EA",
+      "annotation": "flag: Réunion",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F7-1F1EA.svg"
+    },
+    {
+      "hexcode": "1F648",
+      "annotation": "see-no-evil monkey",
+      "group": "smileys-emotion",
+      "subgroup": "m",
+      "path": "smileys-emotion/m/1F648.svg"
+    },
+    {
+      "hexcode": "270D",
+      "annotation": "writing hand",
+      "group": "people-body",
+      "subgroup": "h",
+      "path": "people-body/h/270D.svg"
+    },
+    {
+      "hexcode": "2618",
+      "annotation": "shamrock",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/2618.svg"
+    },
+    {
+      "hexcode": "1FADC",
+      "annotation": "root vegetable",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1FADC.svg"
+    },
+    {
+      "hexcode": "1F559",
+      "annotation": "ten o’clock",
+      "group": "travel-places",
+      "subgroup": "t",
+      "path": "travel-places/t/1F559.svg"
+    },
+    {
+      "hexcode": "1F3A7",
+      "annotation": "headphone",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F3A7.svg"
+    },
+    {
+      "hexcode": "2721",
+      "annotation": "star of David",
+      "group": "symbols",
+      "subgroup": "r",
+      "path": "symbols/r/2721.svg"
+    },
+    {
+      "hexcode": "1F1F7-1F1F4",
+      "annotation": "flag: Romania",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F7-1F1F4.svg"
+    },
+    {
+      "hexcode": "1F5E8",
+      "annotation": "left speech bubble",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F5E8.svg"
+    },
+    {
+      "hexcode": "1F9D4-200D-2640-FE0F",
+      "annotation": "woman: beard",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D4-200D-2640-FE0F.svg"
+    },
+    {
+      "hexcode": "1F344",
+      "annotation": "mushroom",
+      "group": "animals-nature",
+      "subgroup": "p",
+      "path": "animals-nature/p/1F344.svg"
+    },
+    {
+      "hexcode": "1F956",
+      "annotation": "baguette bread",
+      "group": "food-drink",
+      "subgroup": "f",
+      "path": "food-drink/f/1F956.svg"
+    },
+    {
+      "hexcode": "1F321",
+      "annotation": "thermometer",
+      "group": "travel-places",
+      "subgroup": "s",
+      "path": "travel-places/s/1F321.svg"
+    },
+    {
+      "hexcode": "1F3B7",
+      "annotation": "saxophone",
+      "group": "objects",
+      "subgroup": "m",
+      "path": "objects/m/1F3B7.svg"
+    },
+    {
+      "hexcode": "1F501",
+      "annotation": "repeat button",
+      "group": "symbols",
+      "subgroup": "a",
+      "path": "symbols/a/1F501.svg"
+    },
+    {
+      "hexcode": "1F1F8-1F1F3",
+      "annotation": "flag: Senegal",
+      "group": "flags",
+      "subgroup": "c",
+      "path": "flags/c/1F1F8-1F1F3.svg"
+    },
+    {
+      "hexcode": "1F5EF",
+      "annotation": "right anger bubble",
+      "group": "smileys-emotion",
+      "subgroup": "e",
+      "path": "smileys-emotion/e/1F5EF.svg"
+    },
+    {
+      "hexcode": "1F9D1-200D-1F9B2",
+      "annotation": "person: bald",
+      "group": "people-body",
+      "subgroup": "p",
+      "path": "people-body/p/1F9D1-200D-1F9B2.svg"
+    },
+    {
+      "hexcode": "1F9A7",
+      "annotation": "orangutan",
+      "group": "animals-nature",
+      "subgroup": "a",
+      "path": "animals-nature/a/1F9A7.svg"
+    }
+  ]
+}
