@@ -1,6 +1,7 @@
 # LED Animator App
+v1.0
 
-A web-based LED backpack animation editor and renderer for pixel displays (96×128 and 64×64).  
+A web-based LED text animator editor and renderer for pixel displays (96×128 and 64×64) optimized for LED backpacks.  
 Easily type text, choose backgrounds, apply animations, and export true-motion GIFs.  
 Designed for riders, creators, and makers to bring custom LED messages and emoji art to life.
 
@@ -9,7 +10,7 @@ Designed for riders, creators, and makers to bring custom LED messages and emoji
 ## ✨ Features
 
 - Real-time canvas preview (96×128 or 64×64)  
-- Background presets (A–D), solid colors, or custom uploads  
+- Background presets, solid colors, or custom uploads  
 - Emoji picker powered by [OpenMoji](https://openmoji.org)  
 - Add and edit words or lines directly on canvas  
 - Centered layout with padding (no text cutoff)  
@@ -20,7 +21,7 @@ Designed for riders, creators, and makers to bring custom LED messages and emoji
   - GIF render controls (FPS, duration, filename)  
 - Multi-select editing  
 - Zoom and drag support for desktop and mobile  
-- JSON and GIF export  
+- JSON file and GIF export  
 
 ---
 
@@ -77,6 +78,8 @@ https://theskylincoln.github.io/led-animator/
 ## 💬 Creator
 
 Instagram: [@theskylincoln](https://instagram.com/theskylincoln)
+
+_Created with the assitence of ChatGPT (openAI)_
 
 ---
 
