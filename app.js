@@ -1175,8 +1175,15 @@ emojiModal?.addEventListener("click",(e)=>{ if (e.target.classList.contains("mod
 
 /* ---------- Init ---------- */
 function init(){
-  buildBgGrid(); render(); fitZoom();
-  autoSizeChk.checked = true; autoSizePerLine.checked = true; autoSizeAllIfOn(); render();
-  // Pills: only Font section open by default (CSS hides the others' bodies)
+  buildBgGrid();
+  render();
+  fitZoom();
+
+  // defaults
+  autoSizeChk.checked = true;
+  autoSizeAllIfOn();
+
+  // ⬇️ Start in Preview mode by default
+  setMode("preview");
 }
 init();
