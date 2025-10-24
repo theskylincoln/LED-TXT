@@ -1,7 +1,11 @@
 /* =======================================================
- LED Backpack Animator — app.js (Part 1 of 3)
- Boot / DOM / state / backgrounds (PNG+GIF) / zoom & pills
- Autosize (live) / conflict warnings / emoji picker shell
+ LED Backpack Animator — app.js
+ - Seamless durations for animations
+ - Conflict warnings
+ - Emoji picker wired
+ - Click canvas in Preview -> Edit
+ - Live updates in Preview
+ - GIF backgrounds: redraw each frame (browser animated <img>)
 ======================================================= */
 
 /* ---------- UI notify (placeholder) ---------- */
@@ -18,58 +22,28 @@ const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 const canvas  = $("#led"), ctx = canvas.getContext("2d"), wrap = $(".canvas-wrap");
 const resSel  = $("#resSelect"), zoomSlider = $("#zoom"), fitBtn  = $("#fitBtn");
 const modeEditBtn   = $("#modeEdit"), modePreviewBtn = $("#modePreview");
-
-const bgGrid  = $("#bgGrid"),
-      bgSolidTools = $("#bgSolidTools"),
+const bgGrid  = $("#bgGrid"), bgSolidTools = $("#bgSolidTools"),
       bgSolidColor = $("#bgSolidColor"),
       addBgSwatchBtn = $("#addBgSwatchBtn"),
-      bgSwatches = $("#bgSwatches"),
-      bgUpload   = $("#bgUpload");
+      bgSwatches = $("#bgSwatches"), bgUpload = $("#bgUpload"),
+      bgGreyRow = $("#bgGreyRow"), bgColorRow = $("#bgColorRow");
+const progressBar = $("#progress"), tCur = $("#tCur"), tEnd = $("#tEnd");
+const previewBtn = $("#previewRenderBtn"), gifBtn = $("#gifRenderBtn"), gifPreviewImg = $("#gifPreview");
+const undoBtn = $("#undoBtn"), redoBtn = $("#redoBtn"), clearAllBtn = $("#clearAllBtn");
+const aboutBtn = $("#aboutBtn"), aboutModal = $("#aboutModal"), aboutClose = $("#aboutClose");
 
-const progressFill = $("#progress"),
-      tCur = $("#tCur"),
-      tEnd = $("#tEnd");
+const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn"), delWordBtn=$("#deleteWordBtn");
+const emojiBtn=$("#emojiBtn"), emojiModal=$("#emojiModal"), emojiClose=$("#emojiClose"),
+      emojiTabs=$("#emojiTabs"), emojiGrid=$("#emojiGrid");
 
-const previewBtn    = $("#previewRenderBtn"),
-      gifBtn        = $("#gifRenderBtn"),
-      gifPreviewImg = $("#gifPreview");
-
-const undoBtn = $("#undoBtn"),
-      redoBtn = $("#redoBtn"),
-      clearAllBtn = $("#clearAllBtn");
-
-const aboutBtn  = $("#aboutBtn"),
-      aboutModal= $("#aboutModal"),
-      aboutClose= $("#aboutClose");
-
-const addWordBtn=$("#addWordBtn"),
-      addLineBtn=$("#addLineBtn"),
-      delWordBtn=$("#deleteWordBtn");
-
-const emojiBtn   = $("#emojiBtn"),
-      emojiModal = $("#emojiModal"),
-      emojiClose = $("#emojiClose"),
-      emojiTabs  = $("#emojiTabs"),
-      emojiGrid  = $("#emojiGrid"),
-      emojiPager = $("#emojiPager");
-
-const fontSelect=$("#fontSelect"),
-      fontSizeInp=$("#fontSize"),
-      autoSizeChk=$("#autoSize"),
-      fontColorInp=$("#fontColor"),
-      addSwatchBtn=$("#addSwatchBtn"),
-      textSwatches=$("#swatches");
-
-const lineGapInp=$("#lineGap"),
-      wordGapInp=$("#wordGap");
-
-const alignBtns=$$("[data-align]"),
-      valignBtns=$$("[data-valign]");
-
+const fontSelect=$("#fontSelect"), fontSizeInp=$("#fontSize"),
+      autoSizeChk=$("#autoSize"), autoSizePerLine=$("#autoSizePerLine"),
+      fontColorInp=$("#fontColor"), addSwatchBtn=$("#addSwatchBtn"), textSwatches=$("#swatches");
+const lineGapInp=$("#lineGap"), wordGapInp=$("#wordGap");
+const alignBtns=$$("[data-align]"), valignBtns=$$("[data-valign]");
 const animList=$("#animList");
-
-const multiToggle=$("#multiToggle"),
-      manualDragBtn=$("#manualDragToggle");
+const conflictEl=$("#animConflict");
+const multiToggle=$("#multiToggle"), manualDragBtn=$("#manualDragToggle");
 
 /* ---------- state ---------- */
 let mode="edit", zoom=1, selected=null;
@@ -77,38 +51,34 @@ let history = [], future = [];
 
 const defaults = { font:"Orbitron", size:22, color:"#FFFFFF", lineGap:4, wordGap:6, align:"center", valign:"middle" };
 
-/* Words preset: “WILL WHEELIE FOR BOOKTOK GIRLIES” — each word has its own color-cycle starting hue.
-   BOOKTOK also has rainbow + glow. All words get wave to “move everything”. */
-const seedHues = [210, 50, 310, 0, 20]; // starting hues (blue, yellow, magenta-ish, red, orange)
-function hslHex(h, s=100, l=60){ return `hsl(${h}deg ${s}% ${l}%)`; }
+/* preset hues per word (evenly spaced) */
+const START_HUES = [210, 50, 310, 140, 0, 260, 90, 330];
 
 const doc = {
   res: { w:96, h:128 },
   lines: [
-    { words:[{text:"WILL",     font:"Orbitron", size:22, color:hslHex(seedHues[0]), anims:[{id:"colorcycle",params:{speed:0.6,start:"#407BFF"}},{id:"wave",params:{ax:0.6,ay:1.0,cycles:1}}]}] },
-    { words:[{text:"WHEELIE",  font:"Orbitron", size:22, color:hslHex(seedHues[1]), anims:[{id:"colorcycle",params:{speed:0.6,start:"#FFD54A"}},{id:"wave",params:{ax:0.6,ay:1.0,cycles:1}}]}] },
-    { words:[{text:"FOR",      font:"Orbitron", size:22, color:hslHex(seedHues[2]), anims:[{id:"colorcycle",params:{speed:0.6,start:"#FF69CF"}},{id:"wave",params:{ax:0.6,ay:1.0,cycles:1}}]}] },
-    { words:[{text:"BOOKTOK",  font:"Orbitron", size:22, color:"#ffffff",
-              anims:[
-                {id:"rainbow",params:{speed:0.55,start:"#ff00ff"}},
-                {id:"glow",params:{intensity:0.65}},
-                {id:"wave",params:{ax:0.6,ay:1.0,cycles:1}}
-              ]}] },
-    { words:[{text:"GIRLIES",  font:"Orbitron", size:22, color:hslHex(seedHues[3]), anims:[{id:"colorcycle",params:{speed:0.6,start:"#FF6464"}},{id:"wave",params:{ax:0.6,ay:1.0,cycles:1}}]}] },
+    { words:[{text:"WILL", color:"#55a0ff", font:"Orbitron", size:22}] },
+    { words:[{text:"WHEELIE", color:"#ffd95a", font:"Orbitron", size:22}] },
+    { words:[{text:"FOR", color:"#ff7bda", font:"Orbitron", size:22}] },
+    { words:[{text:"BOOKTOK", color:"#ffffff", font:"Orbitron", size:22}] },
+    { words:[{text:"GIRLIES", color:"#ff6a6a", font:"Orbitron", size:22}] },
   ],
-  // BG default = Preset_A (PNG) — supports GIFs if user uploads or preset GIF provided
-  bg: { type:"preset", image:null, preset:"assets/presets/96x128/Preset_A.png", color:null, isGif:false },
+  bg: { type:"preset", image:null, preset:"assets/presets/96x128/Preset_A.gif", color:null }, // GIF allowed
   spacing:{ lineGap:4, wordGap:6 },
   style:{ align:"center", valign:"middle" },
-  // global animations “buffer” (used by the UI’s Apply buttons)
-  anims:[ {id:"glow",params:{intensity:0.6}}, {id:"zoom",params:{direction:"In",speed:1,duration:1.0}}, {id:"wave",params:{ax:0.4,ay:0.6,cycles:1}} ],
+  /* global anims used as editor buffer & bulk apply */
+  anims:[
+    {id:"glow", params:{ intensity:0.6, duration:2 }},
+    {id:"wave", params:{ ax:0.4, ay:0.6, cycles:1, duration:4 }},
+    {id:"colorcycle", params:{ duration:6, start:"#ff0000" }}
+  ],
   multi:new Set()
 };
 
-/* ---------- Background presets ---------- */
+/* ---------- Background presets (thumbs) ---------- */
 const PRESETS = {
   "96x128": [
-    { id:"A", thumb:"assets/thumbs/Preset_A_thumb.png", full:"assets/presets/96x128/Preset_A.png" },
+    { id:"A", thumb:"assets/thumbs/Preset_A_thumb.png", full:"assets/presets/96x128/Preset_A.gif" },
     { id:"B", thumb:"assets/thumbs/Preset_B_thumb.png", full:"assets/presets/96x128/Preset_B.png" }
   ],
   "64x64": [
@@ -121,49 +91,56 @@ function visibleSet(){ return PRESETS[`${doc.res.w}x${doc.res.h}`] || []; }
 /* ---------- Multi / Manual-Drag state ---------- */
 let manualDrag = { enabled:false, active:false, startX:0, startY:0, targets:[], startOffsets:[] };
 
-/* ---------- Animations model + conflicts ---------- */
+/* ---------- Animations model ---------- */
+/* added duration to applicable animations (seconds for a full phase) */
 const ANIMS = [
   { id:"slide",      name:"Slide In",             params:{direction:"Left",  speed:1} },
   { id:"slideaway",  name:"Slide Away",           params:{direction:"Left",  speed:1} },
-  { id:"zoom",       name:"Zoom",                 params:{direction:"In", speed:1, duration:1.0} }, // duration affects easing length
+  { id:"zoom",       name:"Zoom",                 params:{direction:"In",    speed:1} },
   { id:"scroll",     name:"Scroll / Marquee",     params:{direction:"Left",  speed:1} },
-  { id:"pulse",      name:"Pulse / Breathe",      params:{scale:0.03, vy:4} },
-  { id:"wave",       name:"Wave",                 params:{ax:0.8, ay:1.4, cycles:1.0} },
-  { id:"jitter",     name:"Jitter",               params:{amp:0.10, freq:2.5} },
-  { id:"shake",      name:"Shake",                params:{amp:0.20, freq:2} },
-  { id:"colorcycle", name:"Color Cycle",          params:{speed:0.6, start:"#ff0000"} },
-  { id:"rainbow",    name:"Rainbow Sweep",        params:{speed:0.5, start:"#ff00ff"} },
-  { id:"sweep",      name:"Highlight Sweep",      params:{speed:0.7, width:0.25} },
-  { id:"flicker",    name:"Flicker",              params:{strength:0.5} },
-  { id:"strobe",     name:"Strobe",               params:{rate:3} },
-  { id:"glow",       name:"Glow Pulse",           params:{intensity:0.6} },
-  { id:"heartbeat",  name:"Heartbeat",            params:{rate:1.2} },
-  { id:"ripple",     name:"Ripple",               params:{amp:1.0, freq:2.0} },
-  { id:"typewriter", name:"Typewriter",           params:{rate:1} },
-  { id:"scramble",   name:"Scramble / Decode",    params:{rate:1} },
-  { id:"popcorn",    name:"Popcorn",              params:{rate:1} },
+  { id:"pulse",      name:"Pulse / Breathe",      params:{scale:0.03, vy:4, duration:2} },
+  { id:"wave",       name:"Wave",                 params:{ax:0.8, ay:1.4, cycles:1.0, duration:4} },
+  { id:"jitter",     name:"Jitter",               params:{amp:0.10, freq:2.5, duration:2} },
+  { id:"shake",      name:"Shake",                params:{amp:0.20, freq:2, duration:2} },
+  { id:"colorcycle", name:"Color Cycle",          params:{duration:6, start:"#ff0000"} },
+  { id:"rainbow",    name:"Rainbow Sweep",        params:{duration:6, start:"#ff00ff"} },
+  { id:"sweep",      name:"Highlight Sweep",      params:{duration:3, width:0.25} },
+  { id:"flicker",    name:"Flicker",              params:{strength:0.5, duration:1.5} },
+  { id:"strobe",     name:"Strobe",               params:{rate:3, duration:1} },
+  { id:"glow",       name:"Glow Pulse",           params:{intensity:0.6, duration:2} },
+  { id:"heartbeat",  name:"Heartbeat",            params:{rate:1.2, duration:1.5} },
+  { id:"ripple",     name:"Ripple",               params:{amp:1.0, freq:2.0, duration:3} },
+  { id:"typewriter", name:"Typewriter",           params:{rate:1, duration:3} },
+  { id:"scramble",   name:"Scramble / Decode",    params:{rate:1, duration:3} },
+  { id:"popcorn",    name:"Popcorn",              params:{rate:1, duration:2} },
   { id:"fadeout",    name:"Fade Out",             params:{} },
 ];
-// All pairs in this list will trigger a visible warning if they’re both active
-const CONFLICTS = [
-  ["typewriter","scramble"], ["typewriter","popcorn"], ["typewriter","scroll"],
-  ["strobe","flicker"], ["rainbow","colorcycle"], ["slide","scroll"], ["zoom","scroll"]
-];
-function listConflicts(activeIds){
-  const hits=[];
-  for(const [a,b] of CONFLICTS){
-    if(activeIds.includes(a) && activeIds.includes(b)) hits.push([a,b]);
+
+/* ---------- Emoji manifest (categories == folders you created) ---------- */
+let EMOJI_DB = null;
+async function loadEmojiManifest(){
+  if (EMOJI_DB) return EMOJI_DB;
+  try{
+    const res = await fetch("assets/openmoji/emoji_manifest.json"); // your generated file
+    EMOJI_DB = await res.json();
+  }catch{
+    // fallback to scanning known folders (simple)
+    EMOJI_DB = {
+      categories:["smileys","people","animals","food","travel","activities","objects","symbols","flags"],
+      entries:[]
+    };
   }
-  return hits;
+  return EMOJI_DB;
 }
 
 /* =======================================================
-   Build UI pieces — background grid (centered PNGs)
+   Build UI pieces
 ======================================================= */
+
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 
+/* build BG grid (thumbs centered both axes) */
 function buildBgGrid(){
-  if(!bgGrid) return;
   bgGrid.innerHTML="";
   const set = visibleSet();
   const tiles = [
@@ -182,12 +159,11 @@ function buildBgGrid(){
       b.classList.add("active");
       if(t.kind==="preset"){
         const im=new Image(); im.crossOrigin="anonymous"; im.src=t.full;
-        const isGif = /\.gif(\?|$)/i.test(t.full);
         try{await im.decode();}catch{}
-        doc.bg={type:"preset",color:null,image:im,preset:t.full,isGif};
+        doc.bg={type:"preset",color:null,image:im,preset:t.full};
         showSolidTools(false); render();
       }else if(t.kind==="solid"){
-        doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null,isGif:false};
+        doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null};
         showSolidTools(true); render();
       }else{
         bgUpload.click();
@@ -195,29 +171,26 @@ function buildBgGrid(){
     });
     bgGrid.appendChild(b);
   });
-  // Select current preset if applicable
-  const firstPreset = $(".bg-tile[data-kind='preset']", bgGrid);
-  if(firstPreset) firstPreset.classList.add("active");
+  // select whichever matches doc.bg
+  const first = $(".bg-tile", bgGrid); if (first) first.classList.add("active");
 }
 on(bgUpload,"change",e=>{
   const f=e.target.files?.[0]; if(!f)return;
   const url=URL.createObjectURL(f);
   const im=new Image();
-  const isGif = /\.gif(\?|$)/i.test(f.name||"");
   im.onload=()=>{URL.revokeObjectURL(url);
-    doc.bg={type:"image",color:null,image:im,preset:null,isGif};
+    doc.bg={type:"image",color:null,image:im,preset:null};
     showSolidTools(false); render();
   };
-  im.src=url;
+  im.src=url; // animated GIFs will animate in the element; we redraw each frame in preview loop
 });
 
 /* ---------- zoom / fit ---------- */
 function setZoom(z){
-  zoom=z; if(zoomSlider) zoomSlider.value=String(z.toFixed(2));
-  if (canvas) canvas.style.transform=`translate(-50%,-50%) scale(${z})`;
+  zoom=z; zoomSlider.value=String(z.toFixed(2));
+  canvas.style.transform=`translate(-50%,-50%) scale(${z})`;
 }
 function fitZoom(){
-  if(!wrap) return;
   const pad=18, r=wrap.getBoundingClientRect();
   const availW=Math.max(40,r.width-pad*2);
   const availH=Math.max(40,r.height-pad*2);
@@ -228,85 +201,87 @@ on(zoomSlider,"input",e=>setZoom(parseFloat(e.target.value)));
 on(fitBtn,"click",fitZoom);
 window.addEventListener("resize",fitZoom);
 
-/* ---------- pills behavior (only active section is visible) ---------- */
+/* ---------- pills (one visible) ---------- */
 const pillTabs = $$(".pill[data-acc]");
 const accFont   = $("#accFont"), accLayout = $("#accLayout"), accAnim = $("#accAnim");
-function showOnly(id){
-  [accFont,accLayout,accAnim].forEach(x=> x && (x.open=false));
-  pillTabs.forEach(x=>x.classList.remove("active"));
-  const target = $("#"+id); const pill = $(`.pill[data-acc="${id}"]`);
-  if(target){ target.open=true; }
-  if(pill){ pill.classList.add("active"); }
-}
 pillTabs.forEach(p=>{
-  on(p,"click",()=> showOnly(p.dataset.acc));
+  on(p,"click",()=>{
+    const id=p.dataset.acc;
+    [accFont,accLayout,accAnim].forEach(x=>x.open=false);
+    pillTabs.forEach(x=>x.classList.remove("active"));
+    $("#"+id).open = true; p.classList.add("active");
+  });
 });
 
-/* ---------- Swatches (text + background) ---------- */
+/* ---------- swatches ---------- */
 const defaultTextPalette = ["#FFFFFF","#FF3B30","#00E25B","#1E5BFF","#FFE45A","#FF65D5","#40F2F2","#000000"];
 let customTextPalette = [];
 function rebuildTextSwatches(){
-  if(!textSwatches) return;
   textSwatches.innerHTML="";
   [...defaultTextPalette, ...customTextPalette].forEach(c=>{
     const b=document.createElement("button");
     b.className="swatch"; b.style.background=c; b.title=c;
     b.addEventListener("click",()=>{
-      if (fontColorInp) fontColorInp.value = c;
+      fontColorInp.value = c;
       forEachSelectedWord(w=>{ w.color = c; });
-      requestPreviewSafeRender();
+      render();
     });
     textSwatches.appendChild(b);
   });
 }
 addSwatchBtn && addSwatchBtn.addEventListener("click",()=>{
-  const c = fontColorInp?.value || defaults.color;
+  const c = fontColorInp.value || defaults.color;
   if (!defaultTextPalette.includes(c) && !customTextPalette.includes(c)) customTextPalette.push(c);
   rebuildTextSwatches();
 });
 rebuildTextSwatches();
 
-const defaultBgPalette=["#000000","#101010","#1a1a1a","#222222","#333333","#444444","#555555","#666666"];
+/* ---------- BG swatches (greys + colors + custom) ---------- */
+const bgGreys = ["#000000","#0f0f0f","#1a1a1a","#222222","#2b2b2b","#333333","#444444","#555555","#666666","#777777"];
+const bgColors = ["#111e3a","#1e2a55","#2c2f8a","#492c8a","#5f2c8a","#8a2c7e","#8a2c4c","#8a2c2c"];
 let customBgPalette=[];
-function rebuildBgSwatches(){
-  if(!bgSwatches) return;
-  bgSwatches.innerHTML="";
-  [...defaultBgPalette,...customBgPalette].forEach(c=>{
+function fillRow(el, arr){
+  el.innerHTML=""; arr.forEach(c=>{
     const b=document.createElement("button");
     b.className="swatch"; b.style.background=c; b.title=c;
     b.addEventListener("click",()=>{
-      doc.bg={type:"solid",color:c,image:null,preset:null,isGif:false};
-      showSolidTools(true); requestPreviewSafeRender();
+      doc.bg={type:"solid",color:c,image:null,preset:null};
+      showSolidTools(true); render();
     });
+    el.appendChild(b);
+  });
+}
+function rebuildBgSwatches(){
+  fillRow(bgGreyRow, bgGreys);
+  fillRow(bgColorRow, bgColors);
+  bgSwatches.innerHTML="";
+  customBgPalette.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="swatch"; b.style.background=c; b.title=c;
+    b.addEventListener("click",()=>{ doc.bg={type:"solid",color:c,image:null,preset:null}; render(); });
     bgSwatches.appendChild(b);
   });
 }
 on(addBgSwatchBtn,"click",()=>{
-  const c=bgSolidColor?.value || "#000000";
-  if(!defaultBgPalette.includes(c)&&!customBgPalette.includes(c)) customBgPalette.push(c);
+  const c=bgSolidColor.value;
+  if(!bgGreys.includes(c)&&!bgColors.includes(c)&&!customBgPalette.includes(c)) customBgPalette.push(c);
   rebuildBgSwatches();
 });
-on(bgSolidColor,"input",()=>{
-  doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null,isGif:false};
-  requestPreviewSafeRender();
-});
+on(bgSolidColor,"input",()=>{ doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null}; render(); });
 rebuildBgSwatches();
 
 /* =======================================================
-   Text metrics / layout / autosize (live + reflects UI)
+   Text metrics / layout + auto-size
 ======================================================= */
 function measureText(w){
   ctx.font = `${w.size || defaults.size}px ${w.font || defaults.font}`;
   return ctx.measureText(w.text || "").width;
 }
 function lineHeight(line){ return Math.max(12, ...line.words.map(w => (w.size || defaults.size))); }
-function totalHeight(){ return doc.lines.map(lineHeight).reduce((s,h)=>s+h,0) + (doc.lines.length-1)*(doc.spacing.lineGap||defaults.lineGap); }
 function lineWidth(line){
   const gap = doc.spacing.wordGap ?? defaults.wordGap;
   return line.words.reduce((s,w)=> s + measureText(w), 0) + Math.max(0,line.words.length-1)*gap;
 }
-
-/* Auto-size (per line) */
 function autoSizeAllIfOn(){
   if(!autoSizeChk?.checked) return;
   const padX = 6, padY = 6;
@@ -332,25 +307,14 @@ function autoSizeAllIfOn(){
     }
   });
 
-  // reflect live size of selected (or first word)
-  const ref = selected ? doc.lines[selected.line]?.words[selected.word] : doc.lines[0]?.words?.[0];
-  if (ref && fontSizeInp) fontSizeInp.value = Math.round(ref.size || defaults.size);
+  // reflect live size
+  const wSel = selected ? doc.lines[selected.line].words[selected.word] : doc.lines[0].words[0];
+  if (wSel) fontSizeInp.value = Math.round(wSel.size || defaults.size);
 }
 
-/* ---------- Emoji picker data shell (loaded on demand) ---------- */
-let EMOJI_DB = null;
-async function loadEmojiManifest() {
-  if (EMOJI_DB) return EMOJI_DB;
-  try{
-    const res = await fetch("assets/openmoji/emoji_manifest.json");
-    EMOJI_DB = await res.json(); // {categories:[{id,name,items:[{name,path}]}]}
-  }catch(e){ notifyUserError("Could not load emoji manifest."); }
-  return EMOJI_DB;
-}
 /* =======================================================
-   Part 2 of 3 — Animations runtime / Render / Input
+   Animations runtime (with duration loops)
 ======================================================= */
-
 function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
 function colorToHue(hex){
   const c = (hex||"#fff").replace("#","");
@@ -365,47 +329,47 @@ function colorToHue(hex){
   return Math.round(h*360);
 }
 function resolveWordAnims(word){
-  // word.anims plus mandatory “everyone moves” wave added if absent
-  const base = (word.anims && word.anims.length) ? [...word.anims] : (doc.anims ? [...doc.anims] : []);
-  if (!base.find(a=>a.id==="wave")) base.push({id:"wave",params:{ax:0.5,ay:0.9,cycles:1}});
-  return base;
+  const own = word.anims && word.anims.length ? word.anims : null;
+  const base = doc.anims || [];
+  return own ? own : base;
+}
+function phaseFrom(t, params){
+  if (params?.duration && params.duration>0) return (t % params.duration) / params.duration;
+  return null; // meaning "use raw t"
 }
 
 function animatedProps(base, word, t, totalDur){
   const props = { x:base.x, y:base.y, scale:1, alpha:1, text:word.text||"", color:word.color, dx:0, dy:0, shadow:null, gradient:null, perChar:null };
-
-  const active = resolveWordAnims(word);
-  const get = id => active.find(a=>a.id===id);
+  const get = id => resolveWordAnims(word).find(a=>a.id===id);
+  const usePhase = (a)=>phaseFrom(t, a?.params);
 
   // Scroll
   const scroll = get("scroll");
   if (scroll) {
     const dir = (scroll.params.direction || "Left");
     const sp  = Number(scroll.params.speed || 1);
-    const v = 20 * sp;
+    const v = 20 * sp; // px/s
     if(dir==="Left")  props.dx -= (t * v) % (doc.res.w + 200);
     if(dir==="Right") props.dx += (t * v) % (doc.res.w + 200);
     if(dir==="Up")    props.dy -= (t * v) % (doc.res.h + 200);
     if(dir==="Down")  props.dy += (t * v) % (doc.res.h + 200);
   }
 
-  // Zoom with duration
+  // Zoom
   const zm = get("zoom");
   if (zm) {
     const dir = (zm.params.direction || "In");
     const sp  = Number(zm.params.speed || 1);
-    const dur = Math.max(0.1, Number(zm.params.duration || 1.0));
     const k = 0.4 * sp;
-    const d = Math.min(1, t / dur);
     props.scale *= (dir === "In")
-      ? (1 + k * easeOutCubic(d))
-      : Math.max(0.2, 1 + k * (1 - easeOutCubic(d)) * (-1));
+      ? (1 + k * easeOutCubic(Math.min(1, t / 1)))
+      : Math.max(0.2, 1 + k * (1 - Math.min(1, t / 1)) * (-1));
   }
 
-  // Slide In
+  // Slide in
   const slide = get("slide");
   if (slide && totalDur) {
-    const head = Math.max(0.1, 0.2 * totalDur);
+    const head = 0.2 * totalDur;
     const dir = (slide.params.direction || "Left");
     const sp  = Number(slide.params.speed || 1);
     const d = Math.min(1, t / Math.max(0.001, head));
@@ -417,10 +381,10 @@ function animatedProps(base, word, t, totalDur){
     if(dir==="Down")  props.dy += dist * s;
   }
 
-  // Slide Away
+  // Slide away
   const slideaway = get("slideaway");
   if (slideaway && totalDur) {
-    const tail = Math.max(0.1, 0.2 * totalDur);
+    const tail = 0.2 * totalDur;
     if (t > totalDur - tail) {
       const dir = (slideaway.params.direction || "Left");
       const sp  = Number(slideaway.params.speed || 1);
@@ -434,10 +398,10 @@ function animatedProps(base, word, t, totalDur){
     }
   }
 
-  // Fade Out
+  // Fade out
   const fout = get("fadeout");
   if (fout && totalDur) {
-    const tail = Math.max(0.1, 0.2 * totalDur);
+    const tail = 0.2 * totalDur;
     if (t > totalDur - tail) {
       const r = (t - (totalDur - tail)) / tail;
       props.alpha *= Math.max(0, 1 - r);
@@ -447,120 +411,152 @@ function animatedProps(base, word, t, totalDur){
   // Pulse
   const pulse = get("pulse");
   if (pulse) {
+    const ph = usePhase(pulse);
     const s = Number(pulse.params.scale || 0.03);
     const vy = Number(pulse.params.vy || 4);
-    props.scale *= 1 + (Math.sin(t * 2 * Math.PI) * s);
-    props.dy    += Math.sin(t * 2 * Math.PI) * vy;
+    const ang = ph!=null ? ph*2*Math.PI : t*2*Math.PI;
+    props.scale *= 1 + (Math.sin(ang) * s);
+    props.dy    += Math.sin(ang) * vy;
   }
 
   // Wave
   const wave = get("wave");
   if (wave) {
+    const ph = usePhase(wave);
     const ax = Number(wave.params.ax || 0.8);
     const ay = Number(wave.params.ay || 1.4);
     const cyc= Number(wave.params.cycles || 1.0);
-    const ph = cyc * 2 * Math.PI * t;
-    props.dx += Math.sin(ph + base.x * 0.05) * ax * 4;
-    props.dy += Math.sin(ph + base.y * 0.06) * ay * 4;
+    const theta = (ph!=null ? ph : (t/(wave.params.duration||1))) * cyc * 2*Math.PI;
+    props.dx += Math.sin(theta + base.x * 0.05) * ax * 4;
+    props.dy += Math.sin(theta + base.y * 0.06) * ay * 4;
   }
 
-  // Jitter & Shake
+  // Jitter
   const jit = get("jitter");
   if (jit) {
+    const ph = usePhase(jit);
     const a = Number(jit.params.amp || 0.10), f = Number(jit.params.freq || 2.5);
-    props.dx += Math.sin(t * 2 * Math.PI * f) * a * 3;
-    props.dy += Math.cos(t * 2 * Math.PI * f) * a * 3;
-  }
-  const shake = get("shake");
-  if (shake) {
-    const a = Number(shake.params.amp || 0.20) * 5, f = Number(shake.params.freq || 2);
-    props.dx += Math.sin(t * 2 * Math.PI * f) * a;
-    props.dy += Math.cos(t * 2 * Math.PI * f) * a * 0.6;
+    const time = ph!=null ? ph*3 : t;
+    props.dx += Math.sin(time * 2 * Math.PI * f) * a * 3;
+    props.dy += Math.cos(time * 2 * Math.PI * f) * a * 3;
   }
 
-  // Typewriter / Scramble / Popcorn
+  // Shake
+  const shake = get("shake");
+  if (shake) {
+    const ph = usePhase(shake);
+    const a = Number(shake.params.amp || 0.20) * 5, f = Number(shake.params.freq || 2);
+    const time = ph!=null ? ph*2 : t;
+    props.dx += Math.sin(time * 2 * Math.PI * f) * a;
+    props.dy += Math.cos(time * 2 * Math.PI * f) * a * 0.6;
+  }
+
+  // Typewriter
   const type = get("typewriter");
   if (type && props.text) {
+    const ph = usePhase(type);
     const rate = Number(type.params.rate || 1);
     const cps  = 10 * rate;
-    const shown = Math.max(0, Math.min(props.text.length, Math.floor(t * cps)));
+    const shown = Math.max(0, Math.min(props.text.length, Math.floor((ph!=null ? ph*props.text.length : t * cps))));
     props.text = props.text.slice(0, shown);
   }
+
+  // Scramble
   const scr = get("scramble");
   if (scr && word.text) {
     const rate = Number(scr.params.rate || 1), cps = 10 * rate;
     const goal = word.text || ""; let out = "";
+    const tm = (scr.params.duration? ( (t % scr.params.duration) ) : t);
     for (let i = 0; i < goal.length; i++) {
       const revealAt = i / cps;
-      if (t >= revealAt) out += goal[i];
+      if (tm >= revealAt) out += goal[i];
       else {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-        const idx = Math.floor((t * 20 + i * 3) % chars.length);
+        const idx = Math.floor((tm * 20 + i * 3) % chars.length);
         out += chars[idx];
       }
     }
     props.text = out;
   }
+
+  // Popcorn
   const pop = get("popcorn");
   if (pop && word.text) {
+    const ph = usePhase(pop);
     const rate = Number(pop.params.rate || 1);
+    const time = ph!=null ? ph*2 : t;
     const alphaArr = [];
     for (let i = 0; i < (word.text||"").length; i++) {
-      const phase = Math.sin(2 * Math.PI * rate * t + i * 0.4);
-      alphaArr.push(phase > 0 ? 1 : 0.25);
+      const v = Math.sin(2 * Math.PI * rate * time + i * 0.4);
+      alphaArr.push(v > 0 ? 1 : 0.25);
     }
     props.perChar ??= {}; props.perChar.alpha = alphaArr;
   }
 
-  // Color Cycle / Rainbow / Sweep
+  // Color cycle
   const cc = get("colorcycle");
   if (cc) {
-    const sp = Number(cc.params.speed || 0.5);
+    const ph = usePhase(cc);
     const base = (cc.params.start || "#ff0000");
     const hueBase = colorToHue(base);
-    const hue = Math.floor((hueBase + (t * 60 * sp)) % 360);
+    const hue = Math.floor((hueBase + ( (ph!=null ? ph*360 : t*60) )) % 360);
     props.color = `hsl(${hue}deg 100% 60%)`;
   }
+
+  // Rainbow / sweep (gradient)
   const rainbow = get("rainbow");
   if (rainbow && (props.text||"").length) {
-    const speed = Number(rainbow.params.speed || 0.5);
+    const ph = usePhase(rainbow);
     const base = (rainbow.params.start || "#ff00ff");
     const hueBase = colorToHue(base);
-    props.gradient = { type: "rainbow", speed, base: hueBase };
+    props.gradient = { type: "rainbow", phase: (ph!=null?ph:t), base: hueBase };
   }
   const sweep = get("sweep");
   if (sweep && (props.text||"").length) {
-    const speed = Number(sweep.params.speed || 0.7), width = Number(sweep.params.width || 0.25);
-    props.gradient = { type: "sweep", speed, width };
+    const ph = usePhase(sweep);
+    const width = Number(sweep.params.width || 0.25);
+    props.gradient = { type: "sweep", phase: (ph!=null?ph:t), width };
   }
 
-  // Flicker / Strobe / Glow
+  // Flicker
   const flicker = get("flicker");
   if (flicker) {
+    const ph = usePhase(flicker);
+    const time = ph!=null ? ph*3 : t;
     const str = Math.max(0, Math.min(1, Number(flicker.params.strength || 0.5)));
-    const n = (Math.sin(t * 23.7) + Math.sin(t * 17.3)) * 0.25 + 0.5;
+    const n = (Math.sin(time * 23.7) + Math.sin(time * 17.3)) * 0.25 + 0.5;
     props.alpha *= (1 - str * 0.6) + n * str * 0.6;
   }
+
+  // Strobe
   const strobe = get("strobe");
   if (strobe) {
+    const ph = usePhase(strobe);
     const rate = Number(strobe.params.rate || 3);
-    const phase = Math.sin(2 * Math.PI * rate * t);
+    const time = ph!=null ? ph*2 : t;
+    const phase = Math.sin(2 * Math.PI * rate * time);
     props.alpha *= (phase > 0) ? 1 : 0.15;
   }
+
+  // Glow
   const glow = get("glow");
   if (glow) {
+    const ph = usePhase(glow);
     const intensity = Math.max(0, Number(glow.params.intensity || 0.6));
-    const k = (Math.sin(t * 2 * Math.PI * 1.2) * 0.5 + 0.5) * intensity;
+    const time = ph!=null ? ph*2 : t;
+    const k = (Math.sin(time * 2 * Math.PI * 1.2) * 0.5 + 0.5) * intensity;
     props.shadow = { blur: 6 + k * 10, color: props.color || word.color };
   }
 
-  // Ripple per-char Y
+  // Ripple
   const ripple = get("ripple");
   if (ripple && word.text) {
+    const ph = usePhase(ripple);
     const amp = Number(ripple.params.amp || 1.0) * 2.0;
     const freq= Number(ripple.params.freq || 2.0);
+    const time = ph!=null ? ph*2 : t;
     const arr = [];
-    for (let i = 0; i < (word.text||"").length; i++) arr.push(Math.sin(2 * Math.PI * freq * t + i * 0.6) * amp);
+    for (let i = 0; i < (word.text||"").length; i++) arr.push(Math.sin(2 * Math.PI * freq * time + i * 0.6) * amp);
     props.perChar ??= {}; props.perChar.dy = arr;
   }
 
@@ -568,21 +564,20 @@ function animatedProps(base, word, t, totalDur){
 }
 
 /* =======================================================
-   Render (BG PNG/GIF + live autosize + selection)
+   Render
 ======================================================= */
 function render(t=0, totalDur=getDuration()){
   const W = canvas.width  = doc.res.w;
   const H = canvas.height = doc.res.h;
 
-  // BG (always paint a solid first)
+  // BG
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle = (doc.bg?.type==="solid" ? (doc.bg.color||"#000") : "#000");
   ctx.fillRect(0,0,W,H);
-  if (doc.bg?.image) {
-    try { ctx.drawImage(doc.bg.image,0,0,W,H); } catch {}
-  } else if (doc.bg?.preset && doc.bg.type==="preset") {
+  if (doc.bg?.image) { try { ctx.drawImage(doc.bg.image,0,0,W,H); } catch {} }
+  else if (doc.bg?.preset && doc.bg.type==="preset") {
     const im = new Image(); im.crossOrigin="anonymous"; im.src = doc.bg.preset;
-    im.onload = ()=>{ doc.bg.image = im; requestPreviewSafeRender(); };
+    im.onload = ()=>{ doc.bg.image = im; render(t,totalDur); };
   }
 
   // text
@@ -610,8 +605,22 @@ function render(t=0, totalDur=getDuration()){
     else x = (W - wLine)/2;
 
     line.words.forEach((w, wi)=>{
-      const base = { x, y: y + lh*0.85 };
+      // Give every word its own starting hue for colorcycle if not set
+      if (!w.anims) w.anims = [];
+      const hasPerWordCC = w.anims.find(a=>a.id==="colorcycle");
+      if (!hasPerWordCC) {
+        const hue = START_HUES[(li*8+wi) % START_HUES.length];
+        w.anims.push({ id:"colorcycle", params:{ duration:6, start:`hsl(${hue}deg 100% 60%)` }});
+      }
+      // Booktok: add rainbow too (on top of base)
+      if ((w.text||"").toUpperCase()==="BOOKTOK" && !w.anims.find(a=>a.id==="rainbow")){
+        w.anims.push({ id:"rainbow", params:{ duration:6, start:"#ff00ff" }});
+      }
+      // All words also get Glow + Wave if missing (your request to match)
+      if (!w.anims.find(a=>a.id==="glow")) w.anims.push({ id:"glow", params:{ intensity:0.6, duration:2 }});
+      if (!w.anims.find(a=>a.id==="wave")) w.anims.push({ id:"wave", params:{ ax:0.4, ay:0.6, cycles:1, duration:4 }});
 
+      const base = { x, y: y + lh*0.85 };
       const props = animatedProps(base, w, t, totalDur);
       const txt = props.text || "";
 
@@ -625,7 +634,7 @@ function render(t=0, totalDur=getDuration()){
       if (props.shadow) { ctx.shadowBlur = props.shadow.blur; ctx.shadowColor = props.shadow.color || (w.color||defaults.color); }
       else ctx.shadowBlur = 0;
 
-      // apply manual free-position
+      // manual offsets
       const fx = Number(w.fx || 0), fy = Number(w.fy || 0);
       const drawX = base.x + (props.dx||0) + fx;
       const drawY = base.y + (props.dy||0) + fy;
@@ -636,12 +645,12 @@ function render(t=0, totalDur=getDuration()){
         const wordWidth = Math.ceil(ctx.measureText(txt).width);
         if (props.gradient.type === "rainbow") {
           const g = ctx.createLinearGradient(drawX, drawY, drawX + wordWidth, drawY);
-          const baseHue = (props.gradient.base + (t * 120 * props.gradient.speed)) % 360;
+          const baseHue = (props.gradient.base + (props.gradient.phase * 360)) % 360;
           for (let i=0;i<=6;i++){ const stop=i/6; const hue=Math.floor((baseHue+stop*360)%360); g.addColorStop(stop, `hsl(${hue}deg 100% 60%)`); }
           fillStyle = g;
         } else if (props.gradient.type === "sweep") {
           const band = Math.max(0.05, Math.min(0.8, props.gradient.width || 0.25));
-          const pos  = (t * (props.gradient.speed || 0.7) * 1.2) % 1;
+          const pos  = props.gradient.phase % 1;
           const g = ctx.createLinearGradient(drawX, drawY, drawX + wordWidth, drawY);
           const a = Math.max(0, pos - band/2), b = Math.min(1, pos + band/2);
           g.addColorStop(0, fillStyle); g.addColorStop(a, fillStyle);
@@ -694,10 +703,9 @@ function render(t=0, totalDur=getDuration()){
 }
 
 /* =======================================================
-   Selection / typing / manual drag / multi-select
+   Selection / input
 ======================================================= */
 function keyOf(li, wi){ return `${li}:${wi}`; }
-
 function forEachSelectedWord(fn){
   if (doc.multi.size){
     doc.multi.forEach(k=>{
@@ -709,8 +717,6 @@ function forEachSelectedWord(fn){
     if (w) fn(w, selected.line, selected.word);
   }
 }
-
-/* Hit test includes manual offsets */
 function hitTestWord(px, py){
   const lineGap = doc.spacing.lineGap ?? defaults.lineGap;
   const heights = doc.lines.map(lineHeight);
@@ -742,25 +748,24 @@ function hitTestWord(px, py){
   return null;
 }
 
-/* In preview: click canvas returns to edit mode (quick toggle) */
+/* Click to select (Shift adds). If in Preview, click canvas -> Edit */
 canvas.addEventListener("click",(e)=>{
-  if (mode==="preview") { setMode("edit"); return; }
-
+  if (mode==="preview"){ setMode("edit"); return; }
   const rect=canvas.getBoundingClientRect();
   const px=(e.clientX-rect.left)/zoom, py=(e.clientY-rect.top)/zoom;
   const hit = hitTestWord(px, py);
 
   if (hit) {
     const k = keyOf(hit.line, hit.word);
-    if (e.shiftKey) {                 // Shift = multi-select toggle
+    if (e.shiftKey) {
       if (doc.multi.has(k)) doc.multi.delete(k);
       else doc.multi.add(k);
       selected = hit;
     } else {
       doc.multi.clear(); selected = hit;
     }
-    buildAnimationsUI();              // refresh params / warnings for new selection
-    requestPreviewSafeRender();
+    buildAnimationsUI();              // refresh params for new selection
+    render();
   }
 });
 
@@ -778,14 +783,14 @@ document.addEventListener("keydown",(e)=>{
       const w = doc.lines[li]?.words[wi]; if(!w) return;
       w.text = (w.text || "") + e.key;
     });
-    autoSizeAllIfOn(); requestPreviewSafeRender();
+    autoSizeAllIfOn(); render();
   } else if (e.key==="Backspace"){
     e.preventDefault();
     targets.forEach(([li,wi])=>{
       const w = doc.lines[li]?.words[wi]; if(!w) return;
       w.text = (w.text || "").slice(0,-1);
     });
-    autoSizeAllIfOn(); requestPreviewSafeRender();
+    autoSizeAllIfOn(); render();
   }
 });
 
@@ -795,12 +800,12 @@ addWordBtn?.addEventListener("click",()=>{
   const line = doc.lines[li] || (doc.lines[li]={words:[]});
   line.words.push({ text:"NEW", color:defaults.color, font:defaults.font, size:defaults.size });
   selected = { line: li, word: line.words.length-1 };
-  requestPreviewSafeRender();
+  render();
 });
 addLineBtn?.addEventListener("click",()=>{
   doc.lines.push({ words:[{ text:"LINE", color:defaults.color, font:defaults.font, size:defaults.size }] });
   selected = { line: doc.lines.length-1, word: 0 };
-  requestPreviewSafeRender();
+  render();
 });
 delWordBtn?.addEventListener("click",()=>{
   if (!selected) return;
@@ -808,35 +813,33 @@ delWordBtn?.addEventListener("click",()=>{
   line.words.splice(selected.word,1);
   if (!line.words.length) doc.lines.splice(selected.line,1);
   doc.multi.clear(); selected = null;
-  requestPreviewSafeRender();
+  render();
 });
 
 /* Font / size / color inputs */
-fontSelect?.addEventListener("change",()=>{ forEachSelectedWord(w=>{ w.font = fontSelect.value || defaults.font; }); autoSizeAllIfOn(); requestPreviewSafeRender(); });
-fontSizeInp?.addEventListener("input",()=>{ const v = Math.max(6, Math.min(64, parseInt(fontSizeInp.value||`${defaults.size}`,10))); forEachSelectedWord(w=>{ w.size = v; }); requestPreviewSafeRender(); });
-autoSizeChk?.addEventListener("change",()=>{ autoSizeAllIfOn(); requestPreviewSafeRender(); });
-fontColorInp?.addEventListener("input",()=>{ const c = fontColorInp.value || defaults.color; forEachSelectedWord(w=>{ w.color = c; }); requestPreviewSafeRender(); });
+fontSelect?.addEventListener("change",()=>{ forEachSelectedWord(w=>{ w.font = fontSelect.value || defaults.font; }); autoSizeAllIfOn(); render(); });
+fontSizeInp?.addEventListener("input",()=>{ const v = Math.max(6, Math.min(64, parseInt(fontSizeInp.value||`${defaults.size}`,10))); forEachSelectedWord(w=>{ w.size = v; }); render(); });
+autoSizeChk?.addEventListener("change",()=>{ autoSizeAllIfOn(); render(); });
+fontColorInp?.addEventListener("input",()=>{ const c = fontColorInp.value || defaults.color; forEachSelectedWord(w=>{ w.color = c; }); render(); });
 
 /* Spacing & alignment */
-lineGapInp?.addEventListener("input",()=>{ doc.spacing.lineGap = Math.max(0, Math.min(40, parseInt(lineGapInp.value||"4",10))); autoSizeAllIfOn(); requestPreviewSafeRender(); });
-wordGapInp?.addEventListener("input",()=>{ doc.spacing.wordGap = Math.max(0, Math.min(40, parseInt(wordGapInp.value||"6",10))); autoSizeAllIfOn(); requestPreviewSafeRender(); });
+lineGapInp?.addEventListener("input",()=>{ doc.spacing.lineGap = Math.max(0, Math.min(40, parseInt(lineGapInp.value||"4",10))); autoSizeAllIfOn(); render(); });
+wordGapInp?.addEventListener("input",()=>{ doc.spacing.wordGap = Math.max(0, Math.min(40, parseInt(wordGapInp.value||"6",10))); autoSizeAllIfOn(); render(); });
 alignBtns.forEach(b=> b.addEventListener("click",()=>{
   if (manualDrag.enabled) return;
   alignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active");
-  doc.style ??= {}; doc.style.align = b.dataset.align || "center"; requestPreviewSafeRender();
+  doc.style ??= {}; doc.style.align = b.dataset.align || "center"; render();
 }));
 valignBtns.forEach(b=> b.addEventListener("click",()=>{
   if (manualDrag.enabled) return;
   valignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active");
-  doc.style ??= {}; doc.style.valign = b.dataset.valign || "middle"; requestPreviewSafeRender();
+  doc.style ??= {}; doc.style.valign = b.dataset.valign || "middle"; render();
 }));
 
-/* Multi toggle visual (Shift still works) */
-multiToggle?.addEventListener("click", ()=>{
-  multiToggle.classList.toggle("active");
-});
+/* Multi toggle visual */
+multiToggle?.addEventListener("click", ()=>{ multiToggle.classList.toggle("active"); });
 
-/* Manual drag toggle (sticky) */
+/* Manual drag sticky */
 manualDragBtn?.addEventListener("click", () => {
   manualDrag.enabled = !manualDrag.enabled;
   manualDragBtn.classList.toggle("active", manualDrag.enabled);
@@ -848,14 +851,14 @@ manualDragBtn?.addEventListener("click", () => {
   });
 });
 
-/* Cmd/Ctrl = temporary drag (no toggle needed) */
+/* Cmd/Ctrl = temporary drag */
 canvas.addEventListener("pointerdown", (e) => {
   const rect = canvas.getBoundingClientRect();
   const px = (e.clientX - rect.left) / zoom;
   const py = (e.clientY - rect.top) / zoom;
 
   let willDrag = manualDrag.enabled || e.ctrlKey || e.metaKey;
-  if (!willDrag) return; // selection handled via click
+  if (!willDrag) return;
 
   const pick = hitTestWord(px, py);
   if (!selected && !doc.multi.size && pick) selected = {line:pick.line, word:pick.word};
@@ -888,7 +891,7 @@ window.addEventListener("pointermove", (e) => {
     w.fx = (start.fx + dx);
     w.fy = (start.fy + dy);
   });
-  requestPreviewSafeRender();
+  render(mode === "preview" ? ((performance.now() - startT) / 1000) % getDuration() : 0);
 });
 window.addEventListener("pointerup", (e) => {
   if (!manualDrag.active) return;
@@ -897,117 +900,48 @@ window.addEventListener("pointerup", (e) => {
   try { canvas.releasePointerCapture(e.pointerId); } catch {}
 });
 
-/* ---------- Emoji Picker UI ---------- */
-function pageArray(arr, page, per){ return arr.slice(page*per, page*per+per); }
-function buildEmojiTabs(db){
-  if(!emojiTabs || !db?.categories) return;
-  emojiTabs.innerHTML="";
-  db.categories.forEach((cat, i)=>{
-    const btn = document.createElement("button");
-    btn.type="button"; btn.className="pill" + (i===0?" active":"");
-    btn.textContent = cat.name;
-    btn.addEventListener("click", ()=>{
-      Array.from(emojiTabs.children).forEach(x=>x.classList.remove("active"));
-      btn.classList.add("active");
-      buildEmojiGrid(cat, 0);
-    });
-    emojiTabs.appendChild(btn);
-  });
-}
-function buildEmojiGrid(cat, page){
-  if(!emojiGrid || !cat) return;
-  const per = 60;
-  emojiGrid.innerHTML="";
-  const slice = pageArray(cat.items||[], page, per);
-  slice.forEach(item=>{
-    const b=document.createElement("button");
-    b.type="button"; b.className="emoji-cell";
-    const img = document.createElement("img");
-    img.loading="lazy";
-    img.src = item.path; // SVG is OK for drawImage
-    img.alt = item.name || "emoji";
-    b.appendChild(img);
-    b.addEventListener("click", ()=>{
-      addEmojiAsWord(item);
-      emojiModal?.classList.add("hidden");
-    });
-    emojiGrid.appendChild(b);
-  });
-  // pager
-  if(!emojiPager) return;
-  emojiPager.innerHTML="";
-  const total = Math.ceil((cat.items||[]).length / per);
-  if (total<=1) return;
-  const prev = document.createElement("button");
-  prev.textContent="‹"; prev.disabled = page<=0;
-  prev.addEventListener("click", ()=> buildEmojiGrid(cat, Math.max(0,page-1)));
-  const next = document.createElement("button");
-  next.textContent="›"; next.disabled = page>=total-1;
-  next.addEventListener("click", ()=> buildEmojiGrid(cat, Math.min(total-1,page+1)));
-  emojiPager.appendChild(prev);
-  emojiPager.appendChild(document.createTextNode(` Page ${page+1}/${total} `));
-  emojiPager.appendChild(next);
-}
-async function openEmojiPicker(){
-  const db = await loadEmojiManifest(); if(!db) return;
-  buildEmojiTabs(db);
-  buildEmojiGrid(db.categories[0], 0);
-  emojiModal?.classList.remove("hidden");
-}
-emojiBtn?.addEventListener("click", openEmojiPicker);
-emojiClose?.addEventListener("click", ()=> emojiModal?.classList.add("hidden"));
-function addEmojiAsWord(entry){
-  // Treat emoji as image word rendered via <img> (SVG supported by drawImage in modern browsers)
-  const li = selected ? selected.line : (doc.lines.length-1);
-  const line = doc.lines[li] || (doc.lines[li]={words:[]});
-  const im = new Image();
-  im.onload = ()=>{ line.words.push({ text:"", image:im, size:24, font:defaults.font, color:"#fff", emoji:true }); selected={line:li,word:line.words.length-1}; requestPreviewSafeRender(); };
-  im.src = entry.path;
-}
-/* =======================================================
-   Part 3 of 3 — Animations UI / Preview / GIF / Config
-======================================================= */
-
+/* ---------- Animations UI + conflicts ---------- */
 function cloneAnims(src){ return src.map(a=>({ id:a.id, params:{...a.params} })); }
 
-function buildAnimationsUI(){
-  if (!animList) return;
-  animList.innerHTML = "";
+function checkConflicts(animArr){
+  // crude rules: slide vs scroll in same axis; zoom in & out; multiple slide directions
+  const ids = new Set(animArr.map(a=>a.id));
+  let conflict = false;
 
-  // (Live) conflict banner
-  const banner = document.createElement("div");
-  banner.className = "anim-warning hidden";
-  animList.appendChild(banner);
-
-  // helper to recompute conflicts on change
-  function refreshConflicts(){
-    const activeIds = (doc.anims||[]).map(a=>a.id);
-    const conflicts = listConflicts(activeIds);
-    if (conflicts.length){
-      banner.classList.remove("hidden");
-      banner.textContent = "⚠ Conflicting animations: " + conflicts.map(pair=> pair.join(" ↔ ")).join("  •  ");
-    } else {
-      banner.classList.add("hidden");
-      banner.textContent = "";
-    }
+  const slide = animArr.find(a=>a.id==="slide");
+  const scroll = animArr.find(a=>a.id==="scroll");
+  if (slide && scroll){
+    const s = (slide.params.direction||"Left");
+    const c = (scroll.params.direction||"Left");
+    if ((s==="Left"||s==="Right") && (c==="Left"||c==="Right")) conflict = true;
+    if ((s==="Up"||s==="Down")   && (c==="Up"||c==="Down")) conflict = true;
+  }
+  const zooms = animArr.filter(a=>a.id==="zoom");
+  if (zooms.length>1){
+    const dirs = new Set(zooms.map(z=>z.params.direction));
+    if (dirs.has("In") && dirs.has("Out")) conflict = true;
   }
 
-  // Build rows
-  (ANIMS).forEach(def=>{
+  conflictEl.classList.toggle("hidden", !conflict);
+}
+
+function buildAnimationsUI(){
+  animList.innerHTML = "";
+  doc.anims = doc.anims || [];
+  checkConflicts(doc.anims);
+
+  ANIMS.forEach(def=>{
     const row = document.createElement("div"); row.className="anim-row";
     const left = document.createElement("div"); left.className="anim-left";
-
-    const chk = document.createElement("input"); chk.type = "checkbox"; chk.id = `anim_${def.id}`;
+    const chk = document.createElement("input"); chk.type="checkbox"; chk.id = `anim_${def.id}`;
     chk.checked = !!doc.anims.find(a=>a.id===def.id);
-
     const lbl = document.createElement("label"); lbl.setAttribute("for", chk.id); lbl.textContent = def.name;
-
     const gear = document.createElement("button"); gear.type="button"; gear.className="button tiny"; gear.textContent="⚙";
 
     left.appendChild(chk); left.appendChild(lbl); left.appendChild(gear);
+    const params = document.createElement("div"); params.className="anim-params";
+    params.style.display = chk.checked ? "block" : "none";
 
-    // params
-    const params = document.createElement("div"); params.className="anim-params"; params.style.display = chk.checked ? "block" : "none";
     const cur = doc.anims.find(a=>a.id===def.id)?.params || def.params;
     Object.entries(def.params).forEach(([k,v])=>{
       const p = document.createElement("div"); p.className="p";
@@ -1029,8 +963,8 @@ function buildAnimationsUI(){
       inp.addEventListener("input",()=>{
         const a = doc.anims.find(x=>x.id===def.id);
         if (a) a.params[k] = (inp.type==="number") ? +inp.value : inp.value;
-        refreshConflicts();
-        requestPreviewSafeRender(true);
+        checkConflicts(doc.anims);
+        if (mode === "preview") startPreview(); else render();
       });
       p.appendChild(la); p.appendChild(inp); params.appendChild(p);
     });
@@ -1039,8 +973,8 @@ function buildAnimationsUI(){
       const has = !!doc.anims.find(a=>a.id===def.id);
       if (chk.checked && !has){ doc.anims.push({ id:def.id, params:{...def.params} }); params.style.display = "block"; }
       else if (!chk.checked && has){ doc.anims = doc.anims.filter(a=>a.id!==def.id); params.style.display = "none"; }
-      refreshConflicts();
-      requestPreviewSafeRender(true);
+      checkConflicts(doc.anims);
+      if (mode === "preview") startPreview(); else render();
     });
     gear.addEventListener("click",()=> params.style.display = params.style.display==="none" ? "block" : "none");
 
@@ -1059,19 +993,18 @@ function buildAnimationsUI(){
       const w = doc.lines[selected.line]?.words[selected.word];
       if (w) w.anims = cloneAnims(pack);
     }
-    requestPreviewSafeRender(true);
+    render();
   });
   $("#applyAllAnimBtn")?.addEventListener("click", ()=>{
     const pack = cloneAnims(doc.anims);
     doc.lines.forEach(line=> line.words.forEach(w=> w.anims = cloneAnims(pack)));
-    requestPreviewSafeRender(true);
+    render();
   });
-
-  refreshConflicts();
 }
+buildAnimationsUI();
 
 /* =======================================================
-   Preview loop (+ keep BG GIFs active), GIF export
+   Preview loop + GIF
 ======================================================= */
 function getFPS(){ const v = parseInt($("#fps")?.value || "15",10); return Math.max(1,Math.min(30,v||15)); }
 function getDuration(){ const v=parseInt($("#seconds")?.value || "8",10); return Math.max(1,Math.min(60,v||8)); }
@@ -1084,29 +1017,18 @@ function startPreview(){
   function loop(now){
     const secs = (now - startT) / 1000; const tt = secs % dur;
     render(tt, dur);
-    if (progressFill) progressFill.style.setProperty("--p", (tt / dur));
+    if (progressBar) progressBar.style.setProperty("--p", (tt / dur));
     if (tCur) tCur.textContent = `${tt.toFixed(1)}s`;
     rafId = requestAnimationFrame(loop);
   }
   rafId = requestAnimationFrame(loop);
 }
 function stopPreview(){ if (rafId) cancelAnimationFrame(rafId); rafId=null; render(0, getDuration()); }
-
-// If we’re previewing, restart the loop for live updates; else just render once
-function requestPreviewSafeRender(restart=false){
-  if (mode==="preview"){
-    if (restart) startPreview(); else render(((performance.now()-startT)/1000)%getDuration(), getDuration());
-  } else {
-    render(0, getDuration());
-  }
-}
-
 function setMode(m){
   mode = m;
   modeEditBtn?.classList.toggle("active", m==="edit");
   modePreviewBtn?.classList.toggle("active", m==="preview");
-  if (m==="preview") startPreview();
-  else stopPreview();
+  if (m==="preview") startPreview(); else stopPreview();
 }
 modeEditBtn?.addEventListener("click",()=>setMode("edit"));
 modePreviewBtn?.addEventListener("click",()=>setMode("preview"));
@@ -1115,7 +1037,7 @@ modePreviewBtn?.addEventListener("click",()=>setMode("preview"));
 aboutBtn?.addEventListener("click",()=> aboutModal?.classList.remove("hidden"));
 aboutClose?.addEventListener("click",()=> aboutModal?.classList.add("hidden"));
 
-/* ---------- Local GIF (preview image under buttons) ---------- */
+/* GIF render (preview image under buttons; download opens in new tab) */
 function loadScriptLocal(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.async=true; s.onload=()=>res(true); s.onerror=rej; document.head.appendChild(s); }); }
 async function ensureLocalGifLibs(){
   if (typeof GIFEncoder !== "undefined") return true;
@@ -1140,48 +1062,50 @@ async function renderGifDownload(){
 
   try{
     const enc = new GIFEncoder(); enc.setRepeat(0); enc.setDelay(delay); enc.setQuality(10); enc.setSize(W, H); enc.start();
-    for (let i = 0; i < frames; i++) { const t = i / fps; render(t, secs); enc.addFrame(ctx); if (progressFill) progressFill.style.setProperty("--p", (t / secs) % 1); if (tCur) tCur.textContent = `${(t % secs).toFixed(1)}s`; }
+    for (let i = 0; i < frames; i++) { const t = i / fps; render(t, secs); enc.addFrame(ctx); if (progressBar) progressBar.style.setProperty("--p", (t / secs) % 1); if (tCur) tCur.textContent = `${(t % secs).toFixed(1)}s`; }
     enc.finish();
     const blob = encoderToBlob(enc); const url = URL.createObjectURL(blob);
 
-    // Show preview image under buttons (long-press to save on iPhone)
+    // Show preview image (long-press to save on iPhone)
     if (gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=url; gifPreviewImg.alt="Animated GIF preview"; }
+
+    // Open in a new tab AND download
+    window.open(url, "_blank");
+    const a=document.createElement("a"); a.href=url; a.download=`${($("#fileName")?.value||"animation").replace(/\.(png|jpe?g|webp|gif)$/i,"")}.gif`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
   }catch(err){ console.error(err); notifyUserError("GIF render failed."); }
   finally{ if(resume) startPreview(); }
 }
-previewBtn?.addEventListener("click", ()=> setMode("preview"));
+previewBtn?.addEventListener("click", ()=> { setMode("preview"); /* also makes preview visible */ });
 gifBtn?.addEventListener("click", ()=> renderGifDownload());
-[$("#fps"), $("#seconds")].forEach(inp => inp && inp.addEventListener("input", () => {
-  if (mode === "preview") startPreview();
-  if (tEnd) tEnd.textContent = `${getDuration().toFixed(1)}s`;
-}));
+[$("#fps"), $("#seconds")].forEach(inp => inp && inp.addEventListener("input", () => { if (mode === "preview") startPreview(); tEnd && (tEnd.textContent = `${getDuration().toFixed(1)}s`); }));
 
 /* ---------- Resolution change ---------- */
 on(resSel,"change",()=>{
   const [w,h]=resSel.value.split("x").map(Number);
-  doc.res={w,h}; buildBgGrid(); showSolidTools(doc.bg?.type==="solid"); requestPreviewSafeRender(true); fitZoom();
+  doc.res={w,h}; buildBgGrid(); showSolidTools(doc.bg?.type==="solid"); render(); fitZoom();
 });
 
 /* ---------- Undo/Redo/Clear ---------- */
 function snapshot(){ return JSON.parse(JSON.stringify(doc)); }
 function pushHistory(){ history.push(snapshot()); future.length=0; }
-undoBtn?.addEventListener("click",()=>{ if (!history.length) return; future.push(snapshot()); const last=history.pop(); Object.assign(doc,last); requestPreviewSafeRender(true); });
-redoBtn?.addEventListener("click",()=>{ if (!future.length) return; history.push(snapshot()); const next=future.pop(); Object.assign(doc,next); requestPreviewSafeRender(true); });
-clearAllBtn?.addEventListener("click",()=>{ pushHistory(); doc.lines=[{words:[{text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color}]}]; requestPreviewSafeRender(true); });
+undoBtn?.addEventListener("click",()=>{ if (!history.length) return; future.push(snapshot()); const last=history.pop(); Object.assign(doc,last); render(); });
+redoBtn?.addEventListener("click",()=>{ if (!future.length) return; history.push(snapshot()); const next=future.pop(); Object.assign(doc,next); render(); });
+clearAllBtn?.addEventListener("click",()=>{ pushHistory(); doc.lines=[{words:[{text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color}]}]; render(); });
 
-/* ---------- Config import/export (embeds uploaded BG as PNG dataURL) ---------- */
+/* ---------- Config in/out ---------- */
 $("#saveJsonBtn")?.addEventListener("click",()=>{
   const data = snapshot();
-  if (doc.bg?.image && (doc.bg.type==="image")){
+  if (data.bg?.image && data.bg.type==="image"){
     try{
       const tmp=document.createElement("canvas"); tmp.width=doc.res.w; tmp.height=doc.res.h;
       const tctx=tmp.getContext("2d"); tctx.drawImage(doc.bg.image,0,0,tmp.width,tmp.height);
       data.bg.dataURL = tmp.toDataURL("image/png");
-      data.bg.isGif = !!doc.bg.isGif;
     }catch{}
   }
   const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="led_anim_config.json"; a.click();
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.target="_blank";
+  a.download="led_anim_config.json"; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 });
 $("#loadJsonInput")?.addEventListener("change",async(e)=>{
@@ -1189,18 +1113,70 @@ $("#loadJsonInput")?.addEventListener("change",async(e)=>{
   try{
     const txt=await f.text(); const obj=JSON.parse(txt);
     Object.assign(doc,obj);
-    if (obj.bg?.dataURL){ const im=new Image(); im.src=obj.bg.dataURL; im.onload=()=>{ doc.bg.image=im; requestPreviewSafeRender(true); }; }
-    buildBgGrid(); requestPreviewSafeRender(true); fitZoom();
+    if (obj.bg?.dataURL){ const im=new Image(); im.src=obj.bg.dataURL; im.onload=()=>{ doc.bg.image=im; render(); }; }
+    buildBgGrid(); render(); fitZoom();
   }catch(err){ notifyUserError("Invalid config file."); }
 });
 
+/* =======================================================
+   Emoji picker
+======================================================= */
+function buildEmojiTabs(db){
+  emojiTabs.innerHTML="";
+  const cats = db.categories || [];
+  cats.forEach((c,idx)=>{
+    const btn = document.createElement("button");
+    btn.className = "pill" + (idx===0 ? " active":"");
+    btn.textContent = c;
+    btn.addEventListener("click",()=>{
+      $$(".emoji-tabs .pill").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      buildEmojiGrid(db, c);
+    });
+    emojiTabs.appendChild(btn);
+  });
+}
+function buildEmojiGrid(db, cat){
+  emojiGrid.innerHTML = "";
+  const entries = (db.entries||[]).filter(e=> !cat || e.category===cat);
+  entries.forEach(e=>{
+    const cell = document.createElement("button");
+    cell.type="button"; cell.className="emoji-cell";
+    const img = document.createElement("img");
+    img.loading = "lazy";
+    img.src = e.png || e.svg || e.path; // your manifest should provide one of these
+    img.alt = e.name || "emoji";
+    cell.appendChild(img);
+    cell.addEventListener("click",()=>{
+      // Add as a "word" that will be drawn as an image (rasterize SVGs at load time)
+      addEmojiWord(img.src);
+      emojiModal.classList.add("hidden");
+    });
+    emojiGrid.appendChild(cell);
+  });
+}
+function addEmojiWord(src){
+  const li = selected ? selected.line : (doc.lines.length-1);
+  const line = doc.lines[li] || (doc.lines[li]={words:[]});
+  line.words.push({ text:"", emoji:true, imgSrc:src, size:24, font:defaults.font, color:"#fff" });
+  selected = { line: li, word: line.words.length-1 };
+  // Preload image
+  const im = new Image(); im.crossOrigin="anonymous"; im.src=src; im.onload=()=>{ line.words[selected.word].imgObj = im; render(); };
+  render();
+}
+emojiBtn?.addEventListener("click", async ()=>{
+  const db = await loadEmojiManifest();
+  buildEmojiTabs(db);
+  buildEmojiGrid(db, db.categories?.[0]);
+  emojiModal.classList.remove("hidden");
+});
+emojiClose?.addEventListener("click", ()=> emojiModal.classList.add("hidden"));
+emojiModal?.addEventListener("click",(e)=>{ if (e.target.classList.contains("modal-backdrop")) emojiModal.classList.add("hidden"); });
+
 /* ---------- Init ---------- */
 function init(){
-  buildBgGrid();
-  autoSizeChk && (autoSizeChk.checked = true);
-  render(0, getDuration());
-  fitZoom();
-  showOnly("accFont"); // only active pill visible
-  buildAnimationsUI(); // build with conflict banner
+  buildBgGrid(); render(); fitZoom();
+  autoSizeChk.checked = true; autoSizePerLine.checked = true; autoSizeAllIfOn(); render();
+  // Pills: only Font section open by default (CSS hides the others' bodies)
 }
 init();
