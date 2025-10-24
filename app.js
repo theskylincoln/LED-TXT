@@ -869,7 +869,8 @@ function encoderBlob(enc){ const bytes=enc.stream().bin||enc.stream().getData();
 
 async function renderGif(){
   const ok=await ensureGifLibs(); if(!ok) return;
-  const F=fps(), S=seconds(), frames=Math.max(1,Math.floor(F*S)), delay=Math.max(1,Math.round(1000/F));
+  const F=fps(), S=seconds(), frames=Math.max(1,Math.floor(F*S))
+  const delay=Math.max(1,Math.round(1000/F));
   const resume=(mode==="preview"); stopPreview();
 
   const W=canvas.width=doc.res.w, H=canvas.height=doc.res.h;
