@@ -16,7 +16,7 @@
     <button id="aboutBtn" class="icon-btn" title="About">ℹ️</button>
   </header>
 
-    <main class="layout">
+  <main class="layout">
     <!-- ===== Background & Resolution (collapsible, open) ===== -->
     <details class="panel glass" open>
       <summary class="panel-title">Background &amp; Resolution</summary>
@@ -54,28 +54,28 @@
       </div>
     </details>
       
-<!-- ===== Control Row ===== -->
-  <div class="top-controls glass" id="controlBar">
-    <div class="left-controls">
-      <div class="seg">
-        <button id="modeEdit" class="seg-btn active">📝 Edit</button>
-        <button id="modePreview" class="seg-btn">▶ Preview</button>
+    <!-- ===== Control Row ===== -->
+    <div class="top-controls glass" id="controlBar">
+      <div class="left-controls">
+        <div class="seg">
+          <button id="modeEdit" class="seg-btn active">📝 Edit</button>
+          <button id="modePreview" class="seg-btn">▶ Preview</button>
+        </div>
       </div>
-    </div>
 
-    <div class="right-controls">
-      <div class="zoom-wrap">
-        <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="0.2" max="4" step="0.1" value="1" />
-        <button id="fitBtn" class="button tiny">Fit</button>
-      </div>
-      <div class="seg">
-        <button id="undoBtn" class="seg-btn">↩ Undo</button>
-        <button id="redoBtn" class="seg-btn">↪ Redo</button>
-        <button id="clearAllBtn" class="seg-btn danger">🗑 Clear</button>
+      <div class="right-controls">
+        <div class="zoom-wrap">
+          <label for="zoom">Zoom</label>
+          <input type="range" id="zoom" min="0.2" max="4" step="0.1" value="1" />
+          <button id="fitBtn" class="button tiny">Fit</button>
+        </div>
+        <div class="seg">
+          <button id="undoBtn" class="seg-btn">↩ Undo</button>
+          <button id="redoBtn" class="seg-btn">↪ Redo</button>
+          <button id="clearAllBtn" class="seg-btn danger">🗑 Clear</button>
+        </div>
       </div>
     </div>
-  </section>
     
     <!-- ===== Stage / Canvas ===== -->
     <section class="panel stage glass">
@@ -257,6 +257,7 @@
       <p>Follow on Instagram:
         <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>
       </p>
+      <p class="micro">Animated Noto Emoji © Google • Licensed CC BY 4.0</p>
       <button id="aboutClose" class="button primary">Close</button>
     </div>
   </div>
@@ -277,19 +278,41 @@
     <div class="modal-backdrop"></div>
     <div class="modal-content glass xl">
       <div class="emoji-head">
-        <div class="tabs" id="emojiTabs"></div>
+        <!-- Tabs: Static | Animated -->
+        <div class="tabs" id="emojiTabs">
+          <button class="tab-btn active" data-tab="static">Static</button>
+          <button class="tab-btn" data-tab="animated">Animated</button>
+        </div>
         <div class="emoji-search">
+          <!-- Static search (existing) -->
           <input id="emojiSearch" type="search" placeholder="Search emojis…" />
           <button id="emojiClose" class="icon-btn">✖</button>
         </div>
       </div>
-      <div id="emojiGrid" class="emoji-grid"></div>
-      <div class="emoji-zoom-hint">Pinch to zoom on mobile • Use resize handle on desktop</div>
+
+      <!-- Static pane (existing grid) -->
+      <div id="emojiPaneStatic">
+        <div id="emojiGrid" class="emoji-grid"></div>
+      </div>
+
+      <!-- Animated pane (new) -->
+      <div id="emojiPaneAnimated" class="hidden">
+        <div class="emoji-search alt">
+          <input id="aeSearch" type="search" placeholder="Search animated emoji…" />
+        </div>
+        <div id="aeGrid" class="emoji-grid"></div>
+        <div class="emoji-zoom-hint">Pinch to zoom on mobile • Use resize handle on desktop</div>
+      </div>
     </div>
   </div>
 
   <!-- ===== Scripts ===== -->
+  <!-- Lottie + animated emoji helper MUST load before app.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+  <script src="animatedEmoji.js"></script>
+
   <script src="app.js"></script>
+
   <!-- local GIF libs -->
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
   <script defer src="assets/libs/jsgif/LZWEncoder.js"></script>
