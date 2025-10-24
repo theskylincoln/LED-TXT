@@ -29,7 +29,7 @@
         </select>
       </div>
 
-      <!-- 2×2 grid; tiles injected by app.js -->
+      <!-- 2×2 grid on mobile; 4-up on desktop -->
       <div id="bgGrid" class="bg-grid"></div>
 
       <!-- Solid color tools -->
@@ -53,7 +53,7 @@
         <input type="file" id="bgUpload" accept="image/*" hidden />
       </div>
     </details>
-      
+
     <!-- ===== Control Row ===== -->
     <div class="top-controls glass" id="controlBar">
       <div class="left-controls">
@@ -76,7 +76,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- ===== Stage / Canvas ===== -->
     <section class="panel stage glass">
       <div class="canvas-wrap">
@@ -106,17 +106,17 @@
       </div>
     </section>
 
-    <!-- ===== Inspector (pills show ONE section; clicking active pill hides all) ===== -->
+    <!-- ===== Inspector (pills show ONE section at a time; clicking active pill hides all) ===== -->
     <section class="panel inspector glass">
       <div class="inspector-head pillbar">
-        <button class="pill active" data-acc="accFont">Font</button>
+        <button class="pill" data-acc="accFont">Font</button>
         <button class="pill" data-acc="accLayout">Spacing &amp; Alignment</button>
         <button class="pill" data-acc="accAnim">Animations</button>
       </div>
 
       <div id="inspectorBody" class="inspector-body">
         <!-- Font -->
-        <details id="accFont" class="acc open">
+        <details id="accFont" class="acc">
           <summary><span class="subttl">Font &amp; Color</span></summary>
           <div class="acc-body">
             <div class="row">
@@ -139,9 +139,12 @@
             <div class="row two-eq tight">
               <label class="checkbox">
                 <input type="checkbox" id="autoSize" checked />
+                <span>Auto-size (Word)</span>
+              </label>
+              <label class="checkbox">
+                <input type="checkbox" id="autoSizePerLine" checked />
                 <span>Auto-size (Line)</span>
               </label>
-              <button id="autoInfoBtn" class="icon-btn" title="What’s Auto-size?">❔</button>
             </div>
 
             <!-- Swatches ABOVE custom (same palette as BG) -->
@@ -257,7 +260,6 @@
       <p>Follow on Instagram:
         <a href="https://instagram.com/theskylincoln" target="_blank" rel="noopener">@theskylincoln</a>
       </p>
-      <p class="micro">Animated Noto Emoji © Google • Licensed CC BY 4.0</p>
       <button id="aboutClose" class="button primary">Close</button>
     </div>
   </div>
@@ -278,39 +280,28 @@
     <div class="modal-backdrop"></div>
     <div class="modal-content glass xl">
       <div class="emoji-head">
-      <div class="tabs" id="emojiTabs">
-        <button class="tab-btn active" data-tab="static">Static</button>
-        <button class="tab-btn" data-tab="animated">Animated</button>
+        <div class="tabs" id="emojiTabs"></div>
+        <div class="emoji-search">
+          <input id="emojiSearch" type="search" placeholder="Search emojis…" />
+          <button id="emojiClose" class="icon-btn">✖</button>
+        </div>
       </div>
-
-      <div class="emoji-search">
-        <!-- Static search -->
-        <input id="emojiSearch" type="search" placeholder="Search static emojis…" />
-        <!-- Animated search -->
-        <input id="aeSearch" type="search" class="hidden" placeholder="Search animated emojis…" />
-        <button id="emojiClose" class="icon-btn">✖</button>
-      </div>
-    </div>
-
-    <!-- Static pane -->
-    <div id="emojiPaneStatic">
-  <div id="emojiGrid" class="emoji-grid"></div>
-</div>
-
-    <!-- Animated pane -->
-    <div id="emojiPaneAnimated" class="hidden">
-  <div id="aeGrid" class="emoji-grid"></div>
-      <div class="micro">Animated Noto Emoji • drawn via Lottie</div>
-    </div>
+      <div id="emojiGrid" class="emoji-grid"></div>
+      <div class="emoji-zoom-hint">Pinch to zoom on mobile • Use resize handle on desktop</div>
     </div>
   </div>
 
   <!-- ===== Scripts ===== -->
-  <!-- Lottie + animated emoji helper MUST load before app.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-  <script src="animatedEmoji.js"></script>
-  <script src="app.js"></script>
+  <!-- Lottie for animated Noto emoji -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" integrity="sha512-YpCwKdd7m6kz3mV5b3Hf1t3P1v1cO8V8q5U0y4q0n0eKQ4QPcF7v1LQe8wXyq8hH81kP2Q7x2Yh3+9m3v4wWtw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- Your animatedEmoji helper (as you provided) -->
+  <script src="assets/animatedEmoji/animatedEmoji.js"></script>
+  <script>
+    // If you deploy Noto JSON locally, set useLocal:true and localBase accordingly
+    window.AnimatedEmoji && window.AnimatedEmoji.init({ useLocal:false });
+  </script>
 
+  <script src="app.js"></script>
   <!-- local GIF libs -->
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
   <script defer src="assets/libs/jsgif/LZWEncoder.js"></script>
