@@ -86,6 +86,7 @@ const doc={
   ],
   anims:[], // panel defaults (used for Apply To All etc.)
   multi:new Set()
+  manualDrag: false,
 };
 
 /* theme palette to match new CSS */
@@ -1080,7 +1081,205 @@ function init(){
       render();
       fitZoom();
     });
+   // ====== DRAG BUTTON + HANDLERS ======
+  const dragBtn = document.getElementById('manualDragBtn');
+if (dragBtn) {
+  dragBtn.addEventListener('click', () => {
+    state.manualDrag = !state.manualDrag;
+    dragBtn.classList.toggle('active', state.manualDrag);
+    dragBtn.setAttribute('aria-pressed', state.manualDrag ? 'true' : 'false');
+  });
 }
+
+// treat Ctrl/⌘ as drag too
+const isDragGesture = (evt) => state.manualDrag || evt.ctrlKey || evt.metaKey;
+
+// HOOK INTO YOUR CANVAS POINTERS (adjust 'canvas' if yours is named differently)
+const canvasEl = document.getElementById('led') || document.querySelector('canvas');
+if (canvasEl) {
+    canvasEl.addEventListener('pointerdown', (e) => {
+      if (isDragGesture(e)) {
+        // your existing drag start
+        if (typeof beginDrag === 'function') { beginDrag(e); }
+        e.preventDefault();
+        return;
+      }
+      // else your normal select/caret logic runs…
+    });
+  }
+
+  // ====== SPACE = NEW WORD, ENTER = NEW LINE ======
+  window.addEventListener('keydown', (e) => {
+    // Only when NOT in preview mode (adjust this guard to your app)
+    if (state.mode === 'preview') return;
+
+    if (e.key === ' ') {
+      e.preventDefault();
+      createNewWordAfterSelection();
+      if (typeof requestRender === 'function') requestRender();
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      createNewLineAfterSelection();
+      if (typeof requestRender === 'function') requestRender();
+    }
+  });
+
+    function createNewWordAfterSelection() {
+      const sel = state.selection;
+    if (!sel) return;
+    const lineObj = state.lines?.[sel.line];
+    if (!lineObj) return;
+    const w = lineObj.words?.[sel.word];
+    const newWord = w ? { ...w, text: '' } : { text:'', color:'#FFFFFF', font:'monospace', size:20, anim:{}, align:'center' };
+    lineObj.words.splice((sel.word ?? lineObj.words.length) + 1, 0, newWord);
+    state.selection = { line: sel.line, word: (sel.word ?? -1) + 1 };
+    }
+
+  function createNewLineAfterSelection() {
+    const sel = state.selection;
+    const idx = sel?.line ?? state.lines.length - 1;
+    const newLine = { words: [{ text:'', color:'#FFFFFF', font:'monospace', size:20, anim:{}, align:'center' }], align:'center' };
+    state.lines.splice(idx + 1, 0, newLine);
+    state.selection = { line: idx + 1, word: 0 };
+  }
+
+  // ====== EMOJI: DESELECT WHEN OPENING ======
+  document.getElementById('emojiBtn')?.addEventListener('click', async () => {
+    state.selection = null;
+    document.activeElement?.blur();
+    await openEmojiModal(); // defined below
+  });
+
+  // ====== EMOJI: LOAD + PAGINATE + SEARCH ======
+  let EMOJI = [];
+  const EMOJIS_PER_PAGE = 60;
+  let emojiPage = 0;
+  let emojiQuery = '';
+
+  async function ensureEmojiLoaded() {
+    if (EMOJI.length) return;
+    const res = await fetch('assets/openmoji/emoji_manifest.json');
+    EMOJI = await res.json(); // [{name, unicode, src}]
+  }
+
+  function getFilteredEmoji() {
+    const q = emojiQuery.trim().toLowerCase();
+    return q ? EMOJI.filter(e => e.name.toLowerCase().includes(q)) : EMOJI;
+  }
+
+  function renderEmojiGrid() {
+    const list  = document.getElementById('emojiGrid');
+    const pager = document.getElementById('emojiPager');
+    if (!list || !pager) return;
+
+    const data = getFilteredEmoji();
+    const pages = Math.max(1, Math.ceil(data.length / EMOJIS_PER_PAGE));
+    emojiPage = Math.min(emojiPage, pages - 1);
+
+    const start = emojiPage * EMOJIS_PER_PAGE;
+    const slice = data.slice(start, start + EMOJIS_PER_PAGE);
+
+    list.innerHTML = slice.map(e => `
+      <button class="emoji-cell" data-src="${e.src}" title="${e.name}">
+        <img src="${e.src}" alt="${e.name}" loading="lazy"/>
+      </button>
+    `).join('');
+
+    pager.textContent = `${pages ? (emojiPage + 1) : 0} / ${pages}`;
+
+    list.querySelectorAll('.emoji-cell').forEach(btn => {
+      btn.addEventListener('click', () => {
+        insertEmojiAtNewWord(btn.dataset.src);
+        closeEmojiModal();
+      });
+    });
+  }
+
+  document.getElementById('emojiSearch')?.addEventListener('input', (e) => {
+    emojiQuery = e.target.value || '';
+    emojiPage = 0;
+    renderEmojiGrid();
+  });
+  document.getElementById('emojiPrev')?.addEventListener('click', () => { emojiPage = Math.max(0, emojiPage - 1); renderEmojiGrid(); });
+  document.getElementById('emojiNext')?.addEventListener('click', () => { emojiPage = emojiPage + 1; renderEmojiGrid(); });
+  document.getElementById('emojiClose')?.addEventListener('click', () => closeEmojiModal());
+
+  async function openEmojiModal() {
+    await ensureEmojiLoaded();
+    emojiQuery = '';
+    emojiPage = 0;
+    renderEmojiGrid();
+    document.getElementById('emojiModal')?.showModal();
+  }
+  function closeEmojiModal() { document.getElementById('emojiModal')?.close(); }
+
+  function insertEmojiAtNewWord(src) {
+    // Create a new word that your renderer understands as an emoji word
+    const line = state.selection?.line ?? (state.lines.length ? state.lines.length - 1 : 0);
+    const lineObj = state.lines[line] ?? (state.lines[line] = { words: [], align:'center' });
+    lineObj.words.push({ text:'', emoji: src, size:22, align:'center', anim:{} });
+    state.selection = { line, word: lineObj.words.length - 1 };
+    if (typeof requestRender === 'function') requestRender();
+  }
+
+  // ====== ANIMATIONS LIST (one row per anim + gear to toggle settings) ======
+  const ANIMS = [
+    { key:'pulse',   label:'Pulse',   settings:[{k:'speed', min:0.2, max:3, step:0.1, val:1 }]},
+    { key:'flicker', label:'Flicker', settings:[{k:'intensity', min:0, max:1, step:0.05, val:.4 }]},
+    { key:'wave',    label:'Wave',    settings:[{k:'amp', min:0, max:10, step:1, val:3 }, {k:'speed', min:0.2, max:3, step:0.1, val:1 }]},
+    { key:'jitter',  label:'Jitter',  settings:[{k:'amount', min:0, max:5, step:.5, val:1 }]},
+  ];
+
+  function renderAnimList() {
+    const host = document.getElementById('animList');
+    if (!host) return;
+    host.innerHTML = ANIMS.map(a => `
+      <div class="anim-row" data-key="${a.key}">
+        <div class="title">${a.label}</div>
+        <button class="gear" type="button" title="Settings">⚙️</button>
+        <div class="anim-settings">
+          ${a.settings.map(s => `
+            <div class="anim-setting-line">
+              <label>${s.k}</label>
+              <input type="range" data-k="${s.k}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.val}"/>
+              <output>${s.val}</output>
+            </div>`).join('')}
+        </div>
+      </div>
+    `).join('');
+
+    host.querySelectorAll('.anim-row .gear').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('.anim-row');
+        row.classList.toggle('open');
+      });
+    });
+
+    host.querySelectorAll('.anim-settings input[type="range"]').forEach(sl => {
+      sl.addEventListener('input', () => {
+        sl.nextElementSibling.value = sl.value;
+        const row = sl.closest('.anim-row');
+        const key = row.dataset.key;
+        const k = sl.dataset.k;
+        updateAnimSettingForSelection(key, k, parseFloat(sl.value));
+        if (typeof requestRender === 'function') requestRender();
+      });
+    });
+  }
+
+  function updateAnimSettingForSelection(animKey, settingKey, value) {
+    const sel = state.selection;
+    if (!sel) return;
+    const w = state.lines[sel.line]?.words[sel.word];
+    if (!w) return;
+    w.anim ??= {};
+    (w.anim[animKey] ??= {});
+    w.anim[animKey][settingKey] = value;
+  }
+
+  // Call once on load
+  renderAnimList();
 
 /* =======================================================
    DOM READY WRAPPER — ensures init runs only after HTML is loaded
