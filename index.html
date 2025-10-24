@@ -16,30 +16,7 @@
     <button id="aboutBtn" class="icon-btn" title="About">ℹ️</button>
   </header>
 
-  <!-- ===== Control Row above canvas ===== -->
-  <section class="panel glass control-row">
-    <div class="left-controls">
-      <div class="seg">
-        <button id="modeEdit" class="seg-btn active">📝 Edit</button>
-        <button id="modePreview" class="seg-btn">▶ Preview</button>
-      </div>
-    </div>
-
-    <div class="right-controls">
-      <div class="zoom-wrap">
-        <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="0.2" max="4" step="0.1" value="1" />
-        <button id="fitBtn" class="button tiny">Fit</button>
-      </div>
-      <div class="seg">
-        <button id="undoBtn" class="seg-btn">↩ Undo</button>
-        <button id="redoBtn" class="seg-btn">↪ Redo</button>
-        <button id="clearAllBtn" class="seg-btn danger">🗑 Clear</button>
-      </div>
-    </div>
-  </section>
-
-  <main class="layout">
+    <main class="layout">
     <!-- ===== Background & Resolution (collapsible, open) ===== -->
     <details class="panel glass" open>
       <summary class="panel-title">Background &amp; Resolution</summary>
@@ -76,7 +53,30 @@
         <input type="file" id="bgUpload" accept="image/*" hidden />
       </div>
     </details>
+      
+<!-- ===== Control Row ===== -->
+  <div class="top-controls glass" id="controlBar">
+    <div class="left-controls">
+      <div class="seg">
+        <button id="modeEdit" class="seg-btn active">📝 Edit</button>
+        <button id="modePreview" class="seg-btn">▶ Preview</button>
+      </div>
+    </div>
 
+    <div class="right-controls">
+      <div class="zoom-wrap">
+        <label for="zoom">Zoom</label>
+        <input type="range" id="zoom" min="0.2" max="4" step="0.1" value="1" />
+        <button id="fitBtn" class="button tiny">Fit</button>
+      </div>
+      <div class="seg">
+        <button id="undoBtn" class="seg-btn">↩ Undo</button>
+        <button id="redoBtn" class="seg-btn">↪ Redo</button>
+        <button id="clearAllBtn" class="seg-btn danger">🗑 Clear</button>
+      </div>
+    </div>
+  </section>
+    
     <!-- ===== Stage / Canvas ===== -->
     <section class="panel stage glass">
       <div class="canvas-wrap">
