@@ -280,3 +280,52 @@ input[type="color"]{
 .hidden{ display:none !important; }
 .center{ text-align:center; }
 .block{ display:block; }
+
+/* === Animation panel refinements === */
+
+/* Reduce vertical spacing between each animation row */
+.anim-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0; /* ↓ was probably 8–10px */
+  padding: 3px 0;
+}
+
+/* Checkbox + label aligned */
+.anim-row label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+
+/* Make settings gear smaller and more subtle */
+.anim-settings {
+  width: 26px;     /* ↓ was 32px */
+  height: 26px;
+  min-width: 26px;
+  border-radius: 8px;
+  background: var(--accent);
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+.anim-settings:hover {
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* Add a bit more separation between groups of animations */
+.anim-section + .anim-section {
+  margin-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 8px;
+}
+
+/* Keep Apply buttons visually distinct */
+#animControls button {
+  margin-bottom: 8px;
+}
