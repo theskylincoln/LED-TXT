@@ -117,6 +117,12 @@
         <button class="pill" data-acc="accFont">Font</button>
         <button class="pill" data-acc="accLayout">Spacing &amp; Alignment</button>
         <button class="pill" data-acc="accAnim">Animations</button>
+
+        <!-- ▼ INSERTED: Drag pill visible on desktop -->
+        <button id="manualDragBtn" class="pill" title="Manual drag (Ctrl/⌘ also works)">
+          🖐️ Drag <span class="pill-indicator"></span>
+        </button>
+        <!-- ▲ INSERTED -->
       </div>
 
       <div id="inspectorBody" class="inspector-body">
@@ -163,7 +169,6 @@
             <div class="row">
               <div class="block-label">Color Effects</div>
               <div id="fontColorEffects" class="swatches"></div>
-              <!-- (JS will inject toggles for Color Cycle / Rainbow / Glow-on-color if applicable) -->
             </div>
 
             <!-- Single-line custom color + Add (font) -->
@@ -206,7 +211,7 @@
               </div>
             </div>
 
-            <!-- Manual free-drag toggle -->
+            <!-- Manual free-drag toggle (you can keep this; the pill is just extra-visible) -->
             <div class="row">
               <button id="manualDragToggle" class="chip">🖐️ Manual Drag</button>
             </div>
@@ -310,6 +315,15 @@
             <option value="animated">Animated</option>
           </select>
           <input id="emojiSearch" type="search" placeholder="Search emojis…" />
+
+          <!-- ▼ INSERTED: Pager controls for emoji pages -->
+          <div class="emoji-pager">
+            <button id="emojiPrev" class="icon-btn" title="Prev page">◀</button>
+            <span id="emojiPager">0 / 0</span>
+            <button id="emojiNext" class="icon-btn" title="Next page">▶</button>
+          </div>
+          <!-- ▲ INSERTED -->
+
           <button id="emojiClose" class="icon-btn">✖</button>
         </div>
       </div>
@@ -318,7 +332,7 @@
     </div>
   </div>
 
-    <!-- ===== Scripts ===== -->
+  <!-- ===== Scripts ===== -->
   <!-- Lottie for animated Noto emoji -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <!-- Animated Noto Emoji helper -->
