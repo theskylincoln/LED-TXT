@@ -1,15 +1,14 @@
 /* =======================================================================
-   LED Backpack Animator v1.0 — app.js (complete + Animated Emoji)
-   - Preview/edit toolbar
-   - Background presets + solid + upload (PNG/JPG/GIF)
-   - Centered canvas, fit/zoom
-   - Words, lines, emojis (static OpenMoji) + animated Noto emoji (Lottie)
-   - Manual drag, multi-select
+   LED Backpack Animator v1.0 — app.js (complete + approved fixes + delete handle)
+   - Inspector pills: pills row always visible; below it, show NOTHING unless a pill is active; only that panel shows; clicking active pill collapses all
+   - Canvas draws immediately on load; auto-fit on load and on window resize
+   - Background presets + solid + upload (unchanged features)
+   - Words, lines, emojis (static OpenMoji + animated Noto), manual drag, multi-select
    - Real-time animations with conflict warnings
-   - Autosize (Word) + Autosize (Line)
-   - GIF render (preview image + download in new tab) with frame-locked Lottie
-   - Emoji picker (tabs, search), pinch/drag-handle resize
-   - Undo/Redo covers typing/deletes/drag/emoji
+   - Autosize (Word) + Autosize (Line) restored; autosize on Add Word/Line
+   - GIF render: Generate Preview (inline, no download) + Download (uses cached build)
+   - Unified Emoji picker modal: tabs + search mode selector (Static / Animated / Both)
+   - NEW: Delete handle "×" pinned outside top-right of selection; click to delete
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -36,13 +35,16 @@ const multiToggle=$("#multiToggle"), manualDragBtn=$("#manualDragToggle");
 const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn"), delWordBtn=$("#deleteWordBtn");
 const emojiBtn=$("#emojiBtn");
 
-/* inspector: font/layout/anims */
-const pillTabs=$$(".pill[data-acc]");  // pills
+/* inspector: pills + panels */
+const pillTabs=$$(".pill[data-acc]");
 const accFont=$("#accFont"), accLayout=$("#accLayout"), accAnim=$("#accAnim");
+// pills row always visible (per approval)
+const inspectorHead=$(".inspector-head");
 
+/* font/layout controls */
 const fontSelect=$("#fontSelect"), fontSizeInp=$("#fontSize");
-const autoSizeWordChk=$("#autoSize");          // Autosize (Word)
-const autoSizeLineChk=$("#autoSizePerLine");   // Autosize (Line) — HTML label
+const autoSizeWordChk=$("#autoSize");             // Autosize (Word)
+const autoSizeLineChk=$("#autoSizePerLine");      // Autosize (Line)
 const fontColorInp=$("#fontColor"), addSwatchBtn=$("#addSwatchBtn"), textSwatches=$("#swatches");
 
 const lineGapInp=$("#lineGap"), wordGapInp=$("#wordGap");
@@ -63,23 +65,19 @@ const previewBtn=$("#previewRenderBtn"), gifBtn=$("#gifRenderBtn"), gifPreviewIm
 /* about + info */
 const aboutBtn=$("#aboutBtn"), aboutModal=$("#aboutModal"), aboutClose=$("#aboutClose");
 
-/* ===== Emoji modal (Static + Animated tabs) ===== */
-const emojiModal=$("#emojiModal"), emojiTabs=$("#emojiTabs");
-/* Static */
-const emojiGrid=$("#emojiGrid"), emojiSearch=$("#emojiSearch"), emojiClose=$("#emojiClose");
-/* Animated (new) */
-const emojiPaneStatic = $("#emojiPaneStatic");
-const emojiPaneAnimated = $("#emojiPaneAnimated");
-const aeSearch = $("#aeSearch");
-const aeGrid   = $("#aeGrid");
+/* unified emoji modal */
+const emojiModal=$("#emojiModal"), emojiTabsEl=$("#emojiTabs"), emojiGrid=$("#emojiGrid");
+const emojiSearch=$("#emojiSearch"), emojiClose=$("#emojiClose");
 
 /* ------------------ state ------------------ */
 let mode="edit", zoom=1, selected=null;             // selected = {line, word}
 let history=[], future=[];
 let startT=0, rafId=null;
-let RENDER_EXPORT = null; // {frameIndex, fps} used to lock Lottie frames during GIF export
 const defaults={ font:"Orbitron", size:22, color:"#FFFFFF" };
 
+let lastGif = { blob:null, url:null, fps:0, seconds:0, name:"animation" };
+
+/* === ORIGINAL preset content/state preserved === */
 const doc={
   version:"1.0",
   res:{ w:96, h:128 },
@@ -114,8 +112,8 @@ const PRESETS={
 };
 const visibleSet=()=>PRESETS[`${doc.res.w}x${doc.res.h}`]||[];
 
-/* ------------------ emoji db (Static OpenMoji) ------------------ */
-let EMOJI_DB=null;                // {entries:[{id,name,category,path}], categories:[...]}
+/* ------------------ OpenMoji (static) ------------------ */
+let EMOJI_DB=null;  // {entries:[{id,name,category,path}], categories:[]}
 async function loadEmojiManifest(){
   if (EMOJI_DB) return EMOJI_DB;
   const r=await fetch("assets/openmoji/emoji_manifest.json");
@@ -197,7 +195,8 @@ function fitZoom(){
   setZoom(Math.max(0.1,Math.min(availW/doc.res.w, availH/doc.res.h)));
 }
 on(zoomSlider,"input",e=>setZoom(parseFloat(e.target.value)));
-on(fitBtn,"click",fitZoom); window.addEventListener("resize",fitZoom);
+on(fitBtn,"click",fitZoom);
+window.addEventListener("resize",fitZoom);
 
 function setMode(m){
   mode=m;
@@ -210,35 +209,67 @@ on(modePreviewBtn,"click",()=>setMode("preview"));
 on(canvas,"click",()=>{ if(mode==="preview") setMode("edit"); });
 
 /* =======================================================
-   PILLS (only one visible; tap active closes)
+   PILLS (pills always visible; only selected panel shown; clicking active collapses)
 ======================================================= */
+const panels=[accFont, accLayout, accAnim];
 pillTabs.forEach(p=>{
   on(p,"click",()=>{
     const id=p.dataset.acc, target=$("#"+id);
-    const wasOpen=target.open;
-    [accFont,accLayout,accAnim].forEach(x=>x.open=false);
-    pillTabs.forEach(x=>x.classList.remove("active"));
-    if(!wasOpen){ target.open=true; p.classList.add("active"); }
+    const wasOpen = target.open;
+
+    // close all panels + deactivate all pills
+    panels.forEach(x=> x.open=false);
+    pillTabs.forEach(x=> x.classList.remove("active"));
+
+    // toggle target
+    if(!wasOpen){
+      target.open=true;
+      p.classList.add("active");
+    }
   });
+});
+// start with no panels open, no active pills
+panels.forEach(p=> p.open=false);
+pillTabs.forEach(p=> p.classList.remove("active"));
+
+/* =======================================================
+   TEXT SWATCHES
+======================================================= */
+const defaultTextPalette=["#FFFFFF","#FF3B30","#00E25B","#1E5BFF","#FFE45A","#FF65D5","#40F2F2","#000000"];
+let customTextPalette=[];
+function rebuildTextSwatches(){
+  textSwatches.innerHTML="";
+  [...defaultTextPalette, ...customTextPalette].forEach(c=>{
+    const b=document.createElement("button"); b.className="swatch"; b.style.background=c; b.title=c;
+    b.onclick=()=>{ forEachSelectedWord(w=>w.color=c); render(); fontColorInp.value=c; };
+    textSwatches.appendChild(b);
+  });
+}
+on(addSwatchBtn,"click",()=>{
+  const c=fontColorInp.value||"#FFFFFF";
+  if(!defaultTextPalette.includes(c)&&!customTextPalette.includes(c)) customTextPalette.push(c);
+  rebuildTextSwatches();
 });
 
 /* =======================================================
-   TEXT/EMOJI MEASURE / AUTOSIZE
+   MEASURE / AUTOSIZE
 ======================================================= */
-const emojiCache=new Map(); // static (OpenMoji) images
+const emojiCache=new Map();
 function getEmojiImage(url){
   if(emojiCache.has(url)) return emojiCache.get(url);
   const img=new Image(); img.crossOrigin="anonymous"; img.decoding="async"; img.src=url;
   emojiCache.set(url,img); return img;
 }
-function isEmojiLike(w){ return !!(w?.emoji || w?.emojiAnimated); }
+function isEmojiWord(w){ return !!w?.emoji; }
+function isAnimatedEmojiWord(w){ return !!w?.ae; }
+
 function measureText(w){
-  if(isEmojiLike(w)){ return (w.size??24) * (w.scale??1); }
+  if(isEmojiWord(w) || isAnimatedEmojiWord(w)){ return (w.size??24) * (w.scale??1); }
   ctx.font=`${w.size||defaults.size}px ${w.font||defaults.font}`;
   return ctx.measureText(w.text||"").width;
 }
 function lineHeight(line){
-  const hs = line.words.map(w=> isEmojiLike(w) ? (w.size??24)*(w.scale??1) : (w.size||defaults.size));
+  const hs = line.words.map(w=> (isEmojiWord(w)||isAnimatedEmojiWord(w)) ? (w.size??24)*(w.scale??1) : (w.size||defaults.size));
   return Math.max(12, ...hs);
 }
 function lineWidth(line){
@@ -256,24 +287,23 @@ function autoSizeAllIfOn(){
 
   doc.lines.forEach(line=>{
     if (autoSizeLineChk?.checked){
-      // cap each word so whole line fits width; also cap by per-line height
       let s=Math.floor(perLineH);
       for(let test=s; test>=6; test-=0.5){
         let wsum=- (doc.spacing.wordGap??6);
         for(const w of line.words){
-          const base = isEmojiLike(w) ? (w.size??24)*(w.scale??1) : (test);
-          if(!isEmojiLike(w)){
+          const base = (isEmojiWord(w)||isAnimatedEmojiWord(w)) ? (w.size??24)*(w.scale??1) : (test);
+          if(isEmojiWord(w) || isAnimatedEmojiWord(w)){
+            wsum += base + (doc.spacing.wordGap??6);
+          }else{
             ctx.font=`${test}px ${w.font||defaults.font}`;
             wsum += ctx.measureText(w.text||"").width + (doc.spacing.wordGap??6);
-          }else{
-            wsum += base + (doc.spacing.wordGap??6);
           }
         }
-        if(wsum<=maxW){ line.words.forEach(w=>{ if(!isEmojiLike(w)) w.size=test; }); break; }
+        if(wsum<=maxW){ line.words.forEach(w=>{ if(!isEmojiWord(w)&&!isAnimatedEmojiWord(w)) w.size=test; }); break; }
       }
     }else if (autoSizeWordChk?.checked){
       line.words.forEach(w=>{
-        if (isEmojiLike(w)) return;
+        if (isEmojiWord(w)||isAnimatedEmojiWord(w)) return;
         for(let s=(w.size||defaults.size); s>=6; s--){
           ctx.font=`${s}px ${w.font||defaults.font}`;
           if (lineWidth(line)<=maxW){ w.size=s; break; }
@@ -282,8 +312,9 @@ function autoSizeAllIfOn(){
     }
   });
 
+  // reflect size to input if a text word is selected
   const wSel = selected ? doc.lines[selected.line]?.words[selected.word] : doc.lines[0]?.words[0];
-  if (wSel && !isEmojiLike(wSel)) fontSizeInp.value=Math.round(wSel.size||defaults.size);
+  if (wSel && !isEmojiWord(wSel) && !isAnimatedEmojiWord(wSel)) fontSizeInp.value=Math.round(wSel.size||defaults.size);
 }
 
 /* =======================================================
@@ -330,21 +361,42 @@ function animatedProps(base, word, t, totalDur){
   const get=id=>resolveWordAnims(word).find(a=>a.id===id);
   const dur=(id)=>Math.max(0.05,(get(id)?.params?.dur ?? totalDur ?? seconds()));
 
+  // scroll
   const sc=get("scroll"); if(sc){ const dir=sc.params.direction||"Left"; const sp=Number(sc.params.speed||1); const v=20*sp; if(dir==="Left")props.dx-=(t*v)%(doc.res.w+200); if(dir==="Right")props.dx+=(t*v)%(doc.res.w+200); if(dir==="Up")props.dy-=(t*v)%(doc.res.h+200); if(dir==="Down")props.dy+=(t*v)%(doc.res.h+200); }
+
+  // zoom
   const zm=get("zoom"); if(zm){ const k=0.4*(Number(zm.params.speed||1)); const d=Math.min(1,t/dur("zoom")); props.scale*=(zm.params.direction==="Out")? Math.max(0.2,1-k*easeOutCubic(d)) : (1+k*easeOutCubic(d)); }
+
+  // slide in
   const sl=get("slide"); if(sl){ const head=0.25*dur("slide"); const d=Math.min(1,t/head); const dist=((["Left","Right"].includes(sl.params.direction))?doc.res.w:doc.res.h)*0.6*(Number(sl.params.speed||1)); const s=1-easeOutCubic(d); const dir=sl.params.direction||"Left"; if(dir==="Left")props.dx-=dist*s; if(dir==="Right")props.dx+=dist*s; if(dir==="Up")props.dy-=dist*s; if(dir==="Down")props.dy+=dist*s; }
+
+  // slideaway (tail)
   const sw=get("slideaway"); if(sw && totalDur){ const tail=0.25*dur("slideaway"); if(t>totalDur-tail){ const d=(t-(totalDur-tail))/tail; const dist=((["Left","Right"].includes(sw.params.direction))?doc.res.w:doc.res.h)*0.6*(Number(sw.params.speed||1)); const s=easeOutCubic(d); const dir=sw.params.direction||"Left"; if(dir==="Left")props.dx-=dist*s; if(dir==="Right")props.dx+=dist*s; if(dir==="Up")props.dy-=dist*s; if(dir==="Down")props.dy+=dist*s; } }
+
+  // fadeout
   const fo=get("fadeout"); if(fo && totalDur){ const tail=0.25*dur("fadeout"); if(t>totalDur-tail){ const d=(t-(totalDur-tail))/tail; props.alpha*=Math.max(0,1-d); } }
+
+  // pulse/breathe
   const pu=get("pulse"); if(pu){ const s=Number(pu.params.scale||0.03), vy=Number(pu.params.vy||4); props.scale*=1+Math.sin(t*2*Math.PI)*s; props.dy+=Math.sin(t*2*Math.PI)*vy; }
+
+  // wave
   const wv=get("wave"); if(wv){ const ax=Number(wv.params.ax||0.8), ay=Number(wv.params.ay||1.4), cyc=Number(wv.params.cycles||1); const ph=cyc*2*Math.PI*(t/dur("wave")); props.dx+=Math.sin(ph+base.x*0.05)*ax*4; props.dy+=Math.sin(ph+base.y*0.06)*ay*4; }
+
+  // jitter / shake
   const jit=get("jitter"); if(jit){ const a=Number(jit.params.amp||0.1), f=Number(jit.params.freq||2.5); props.dx+=Math.sin(t*2*Math.PI*f)*a*3; props.dy+=Math.cos(t*2*Math.PI*f)*a*3; }
   const shk=get("shake"); if(shk){ const a=Number(shk.params.amp||0.2)*5, f=Number(shk.params.freq||2); props.dx+=Math.sin(t*2*Math.PI*f)*a; props.dy+=Math.cos(t*2*Math.PI*f)*a*0.6; }
+
+  // typewriter / scramble / popcorn
   const tw=get("typewriter"); if(tw && props.text){ const cps=10*Number(tw.params.rate||1); const shown=Math.min(props.text.length, Math.floor(t*cps)); props.text=props.text.slice(0,shown); }
   const scb=get("scramble"); if(scb && word.text){ const cps=10*Number(scb.params.rate||1), goal=word.text; let out=""; for(let i=0;i<goal.length;i++){ const revealAt=i/cps; if(t>=revealAt) out+=goal[i]; else{ const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"; out+=chars[Math.floor((t*20+i*3)%chars.length)]; } } props.text=out; }
   const pop=get("popcorn"); if(pop && word.text){ const rate=Number(pop.params.rate||1); props.perChar??={}; props.perChar.alpha=Array.from(word.text).map((_,i)=> (Math.sin(2*Math.PI*rate*t+i*0.4)>0)?1:0.25 ); }
+
+  // colorcycle / rainbow / sweep
   const cc=get("colorcycle"); if(cc){ const durC=dur("colorcycle"); const sp=Number(cc.params.speed||0.5); const base=colorToHue(cc.params.start||"#ff0000"); const h=((base + (t/durC)*360*sp)%360)|0; props.color=`hsl(${h}deg 100% 60%)`; }
   const rb=get("rainbow"); if(rb && (props.text||"").length){ const durR=dur("rainbow"); const speed=Number(rb.params.speed||0.6); const base=colorToHue(rb.params.start||"#ff00ff"); props.gradient={type:"rainbow",speed,base,loop:durR}; }
   const swp=get("sweep"); if(swp && (props.text||"").length){ const durS=dur("sweep"); props.gradient={type:"sweep",speed:Number(swp.params.speed||0.7),width:Number(swp.params.width||0.25),loop:durS}; }
+
+  // flicker / strobe / glow / ripple
   const fl=get("flicker"); if(fl){ const str=Math.max(0,Math.min(1,Number(fl.params.strength||0.5))); const n=(Math.sin(t*23.7)+Math.sin(t*17.3))*0.25+0.5; props.alpha*=(1-str*0.6)+n*str*0.6; }
   const st=get("strobe"); if(st){ const ph=Math.sin(2*Math.PI*Number(st.params.rate||3)*t); props.alpha*= (ph>0)?1:0.15; }
   const gl=get("glow"); if(gl){ const k=(Math.sin(t*2*Math.PI*1.2)*0.5+0.5)*Number(gl.params.intensity||0.6); props.shadow={blur:6+k*10,color:props.color||word.color}; }
@@ -352,15 +404,20 @@ function animatedProps(base, word, t, totalDur){
   return props;
 }
 
+/* ------- selection overlays (for delete handles hit-test) ------- */
+const selectionMeta = new Map(); // key "li:wi" -> { box:{x,y,w,h}, del:{x,y,w,h} }
+
 /* =======================================================
-   RENDER (async for Animated Emoji)
+   RENDER (static + animated emoji aware)
 ======================================================= */
-async function render(t=0,totalDur=seconds()){
+function render(t=0,totalDur=seconds()){
+  selectionMeta.clear();
+
   const W=canvas.width=doc.res.w, H=canvas.height=doc.res.h;
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle=(doc.bg?.type==="solid" ? (doc.bg.color||"#000") : "#000"); ctx.fillRect(0,0,W,H);
 
-  // preset/image (gif animates independently)
+  // preset/image
   if(doc.bg?.image){ try{ ctx.drawImage(doc.bg.image,0,0,W,H); }catch{} }
   else if(doc.bg?.preset && !doc.bg.image){
     const im=new Image(); im.crossOrigin="anonymous"; im.src=doc.bg.preset;
@@ -377,8 +434,7 @@ async function render(t=0,totalDur=seconds()){
   else if(doc.style.valign==="bottom") yBase=H-contentH-4;
   else yBase=(H-contentH)/2;
 
-  for (let li=0; li<doc.lines.length; li++){
-    const line=doc.lines[li];
+  doc.lines.forEach((line,li)=>{
     const lh=heights[li], wLine=lineWidth(line);
     let xBase;
     if(doc.style.align==="left") xBase=4;
@@ -386,66 +442,92 @@ async function render(t=0,totalDur=seconds()){
     else xBase=(W-wLine)/2;
 
     let x=xBase, y=yBase+lh*0.85;
-
-    for (let wi=0; wi<line.words.length; wi++){
-      const w=line.words[wi];
+    line.words.forEach((w,wi)=>{
       const base={x,y};
       const props=animatedProps(base,w,t,totalDur);
       const fx=Number(w.fx||0), fy=Number(w.fy||0);
 
-      /* -------- Animated Emoji branch -------- */
-      if (w.emojiAnimated){
-        const box=(w.size??24)*(w.scale??1)*(props.scale||1);
-        const drawX=base.x+(props.dx||0)+fx;
-        const drawY=base.y+(props.dy||0)+fy;
-        const topY=drawY-box;
-
-        // draw via AnimatedEmoji helper (preview vs export)
-        const el = { codepoint:w.codepoint, x:drawX, y:topY, w:box, h:box, speed:w.speed||1 };
-        try{
-          if (RENDER_EXPORT){
-            await AnimatedEmoji.drawAtFrame(ctx, el, RENDER_EXPORT.frameIndex, RENDER_EXPORT.fps);
-          } else {
-            await AnimatedEmoji.draw(ctx, el);
-          }
-        }catch(e){ /* swallow draw errors until asset loads */ }
-
-        // selection overlay
+      // Animated emoji
+      if(isAnimatedEmojiWord(w)){
+        const boxSize=(w.size??24)*(w.scale??1)*(props.scale||1);
+        const drawX=base.x+(props.dx||0)+fx, drawY=base.y+(props.dy||0)+fy;
+        const topY=drawY-boxSize;
+        const AE=window.AnimatedEmoji;
+        if(AE && AE.ensure){
+          AE.draw(ctx, { codepoint:w.codepoint, x:drawX, y:topY, w:boxSize, h:boxSize, speed:w.speed||1 });
+        } else {
+          ctx.save(); ctx.globalAlpha=0.7; ctx.fillStyle="#333"; ctx.fillRect(drawX, topY, boxSize, boxSize);
+          ctx.fillStyle="#aaa"; ctx.font="10px monospace"; ctx.fillText("Noto", drawX+4, topY+12); ctx.restore();
+        }
+        // selection UI
         const key=`${li}:${wi}`;
-        if(doc.multi.has(key) || (selected && selected.line===li && selected.word===wi && mode==="edit")){
-          ctx.save(); ctx.setLineDash([3,2]); ctx.lineWidth=1; ctx.strokeStyle=doc.multi.has(key)?"rgba(0,255,255,0.95)":"rgba(255,0,255,0.95)";
-          ctx.strokeRect(drawX-2, topY-2, box+4, box+4);
-          const h=8; ctx.setLineDash([]); ctx.fillStyle="#8d79ff"; ctx.strokeStyle="rgba(0,0,0,0.55)"; ctx.lineWidth=1;
-          ctx.fillRect(drawX+box-h, topY+box-h, h, h); ctx.strokeRect(drawX+box-h, topY+box-h, h, h);
+        const isSel = doc.multi.has(key) || (selected && selected.line===li && selected.word===wi && mode==="edit");
+        if(isSel){
+          const pad=2, dash=[3,2];
+          ctx.save();
+          ctx.setLineDash(dash); ctx.lineWidth=1;
+          ctx.strokeStyle=doc.multi.has(key)?"rgba(0,255,255,0.95)":"rgba(255,0,255,0.95)";
+          ctx.strokeRect(drawX-pad, topY-pad, boxSize+pad*2, boxSize+pad*2);
+          ctx.setLineDash([]);
+          // resize handle
+          const h=8; ctx.fillStyle="#8d79ff"; ctx.strokeStyle="rgba(0,0,0,0.55)"; ctx.lineWidth=1;
+          ctx.fillRect(drawX+boxSize-h, topY+boxSize-h, h, h); ctx.strokeRect(drawX+boxSize-h, topY+boxSize-h, h, h);
+          // delete handle (outside top-right)
+          const DEL_W=16, DEL_H=16, DEL_PAD=6;
+          const delX=drawX+boxSize+DEL_PAD, delY=topY-DEL_H-DEL_PAD;
+          ctx.fillStyle="rgba(12,14,22,0.95)";
+          ctx.strokeStyle="rgba(255,255,255,0.25)";
+          ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(delX, delY, DEL_W, DEL_H, 4); ctx.fill(); ctx.stroke();
+          ctx.fillStyle="#ff6680"; ctx.font="12px system-ui, sans-serif"; ctx.textBaseline="middle";
+          ctx.fillText("×", delX+5, delY+DEL_H/2+0.5);
           ctx.restore();
+
+          selectionMeta.set(key, { box:{x:drawX-pad,y:topY-pad,w:boxSize+pad*2,h:boxSize+pad*2}, del:{x:delX,y:delY,w:DEL_W,h:DEL_H} });
         }
         x+= (w.size??24)*(w.scale??1) + wg;
-        continue;
+        return;
       }
 
-      /* -------- Static Emoji branch -------- */
-      if(w.emoji){
-        const box=(w.size??24)*(w.scale??1)*(props.scale||1);
+      // Static emoji
+      if(isEmojiWord(w)){
+        const boxSize=(w.size??24)*(w.scale??1)*(props.scale||1);
         const drawX=base.x+(props.dx||0)+fx, drawY=base.y+(props.dy||0)+fy;
-        const topY=drawY-box;
+        const topY=drawY-boxSize;
         const img=getEmojiImage(w.src);
         if(img && img.complete && img.naturalWidth>0){
           ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,props.alpha));
           if(props.shadow){ ctx.shadowBlur=props.shadow.blur; ctx.shadowColor=props.shadow.color||"#fff"; }
-          ctx.drawImage(img, drawX, topY, box, box);
+          ctx.drawImage(img, drawX, topY, boxSize, boxSize);
           ctx.restore();
         } else if(img){ img.onload=()=>{ if(mode==="preview") startPreview(); else render(t,totalDur); }; }
         const key=`${li}:${wi}`;
-        if(doc.multi.has(key) || (selected && selected.line===li && selected.word===wi && mode==="edit")){
-          ctx.save(); ctx.setLineDash([3,2]); ctx.lineWidth=1; ctx.strokeStyle=doc.multi.has(key)?"rgba(0,255,255,0.95)":"rgba(255,0,255,0.95)"; ctx.strokeRect(drawX-2, topY-2, box+4, box+4);
-          const h=8; ctx.setLineDash([]); ctx.fillStyle="#8d79ff"; ctx.strokeStyle="rgba(0,0,0,0.55)"; ctx.lineWidth=1; ctx.fillRect(drawX+box-h, topY+box-h, h, h); ctx.strokeRect(drawX+box-h, topY+box-h, h, h);
+        const isSel = doc.multi.has(key) || (selected && selected.line===li && selected.word===wi && mode==="edit");
+        if(isSel){
+          const pad=2, dash=[3,2];
+          ctx.save();
+          ctx.setLineDash(dash); ctx.lineWidth=1;
+          ctx.strokeStyle=doc.multi.has(key)?"rgba(0,255,255,0.95)":"rgba(255,0,255,0.95)";
+          ctx.strokeRect(drawX-pad, topY-pad, boxSize+pad*2, boxSize+pad*2);
+          ctx.setLineDash([]);
+          const h=8; ctx.fillStyle="#8d79ff"; ctx.strokeStyle="rgba(0,0,0,0.55)"; ctx.lineWidth=1;
+          ctx.fillRect(drawX+boxSize-h, topY+boxSize-h, h, h); ctx.strokeRect(drawX+boxSize-h, topY+boxSize-h, h, h);
+          // delete handle
+          const DEL_W=16, DEL_H=16, DEL_PAD=6;
+          const delX=drawX+boxSize+DEL_PAD, delY=topY-DEL_H-DEL_PAD;
+          ctx.fillStyle="rgba(12,14,22,0.95)";
+          ctx.strokeStyle="rgba(255,255,255,0.25)";
+          ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(delX, delY, DEL_W, DEL_H, 4); ctx.fill(); ctx.stroke();
+          ctx.fillStyle="#ff6680"; ctx.font="12px system-ui, sans-serif"; ctx.textBaseline="middle";
+          ctx.fillText("×", delX+5, delY+DEL_H/2+0.5);
           ctx.restore();
+
+          selectionMeta.set(key, { box:{x:drawX-pad,y:topY-pad,w:boxSize+pad*2,h:boxSize+pad*2}, del:{x:delX,y:delY,w:DEL_W,h:DEL_H} });
         }
         x+= (w.size??24)*(w.scale??1) + wg;
-        continue;
+        return;
       }
 
-      /* -------- Text branch -------- */
+      // Text
       const txt=props.text||"";
       const fsize=(w.size||defaults.size)*(props.scale||1);
       ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,props.alpha));
@@ -459,7 +541,7 @@ async function render(t=0,totalDur=seconds()){
         const ww=Math.ceil(ctx.measureText(txt).width);
         if(props.gradient.type==="rainbow"){
           const g=ctx.createLinearGradient(drawX,drawY,drawX+ww,drawY);
-          const baseHue=(props.gradient.base + (t/props.gradient.loop)*360*props.gradient.speed)%360;
+          const baseHue=(colorToHue("#fff") + (t/props.gradient.loop)*360*props.gradient.speed)%360;
           for(let i=0;i<=6;i++){ const stop=i/6, h=Math.floor((baseHue+stop*360)%360); g.addColorStop(stop,`hsl(${h}deg 100% 60%)`); }
           fillStyle=g;
         } else if(props.gradient.type==="sweep"){
@@ -486,21 +568,38 @@ async function render(t=0,totalDur=seconds()){
         ctx.fillText(txt, drawX, drawY);
       }
 
+      // selection rectangle + delete handle
       const selKey=`${li}:${wi}`;
       const ww=ctx.measureText(w.text||"").width;
-      if(doc.multi.has(selKey) || (selected && selected.line===li && selected.word===wi && mode==="edit")){
-        ctx.save(); ctx.setLineDash([3,2]); ctx.lineWidth=1;
+      const isSel = doc.multi.has(selKey) || (selected && selected.line===li && selected.word===wi && mode==="edit");
+      if(isSel){
+        const pad=2, dash=[3,2];
+        ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=1;
         ctx.strokeStyle=doc.multi.has(selKey)?"rgba(0,255,255,0.95)":"rgba(255,0,255,0.95)";
-        ctx.strokeRect(drawX-2, (drawY)-lh, ww+4, lh+4); ctx.restore();
+        const rectX=drawX-pad, rectY=(drawY)-lh-pad, rectW=ww+pad*2, rectH=lh+pad*2;
+        ctx.strokeRect(rectX, rectY, rectW, rectH);
+        ctx.setLineDash([]);
+        // delete handle
+        const DEL_W=16, DEL_H=16, DEL_PAD=6;
+        const delX=rectX+rectW+DEL_PAD, delY=rectY-DEL_H-DEL_PAD;
+        ctx.fillStyle="rgba(12,14,22,0.95)";
+        ctx.strokeStyle="rgba(255,255,255,0.25)";
+        ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(delX, delY, DEL_W, DEL_H, 4); ctx.fill(); ctx.stroke();
+        ctx.fillStyle="#ff6680"; ctx.font="12px system-ui, sans-serif"; ctx.textBaseline="middle";
+        ctx.fillText("×", delX+5, delY+DEL_H/2+0.5);
+        ctx.restore();
+
+        selectionMeta.set(selKey, { box:{x:rectX,y:rectY,w:rectW,h:rectH}, del:{x:delX,y:delY,w:DEL_W,h:DEL_H} });
       }
       ctx.restore();
 
       x+= measureText(w) + wg;
-    }
+    });
 
     yBase+= lh + lg;
-  }
+  });
 
+  // conflict warnings (log once per render for selected)
   if(selected){
     const w=doc.lines[selected.line]?.words[selected.word];
     if(w){ const conf=checkConflicts(resolveWordAnims(w)); if(conf.length) warn("Animation conflicts: "+conf.join(", ")); }
@@ -508,7 +607,7 @@ async function render(t=0,totalDur=seconds()){
 }
 
 /* =======================================================
-   SELECTION / INPUT / DRAG / RESIZE
+   SELECTION / INPUT / DRAG / RESIZE / DELETE HANDLE
 ======================================================= */
 function keyOf(li,wi){ return `${li}:${wi}`; }
 function forEachSelectedWord(fn){
@@ -527,12 +626,12 @@ function hitTestWord(px,py){
 
     for(let wi=0; wi<doc.lines[li].words.length; wi++){
       const w=doc.lines[li].words[wi];
-      const treatEmoji = isEmojiLike(w);
-      const ww=treatEmoji ? ((w.size??24)*(w.scale??1)) : measureText(w);
+      const isEm = isEmojiWord(w)||isAnimatedEmojiWord(w);
+      const ww=isEm ? ((w.size??24)*(w.scale??1)) : measureText(w);
       const fx=Number(w.fx||0), fy=Number(w.fy||0);
-      const by=(treatEmoji ? (y+lh*0.85 - ww) : (y+lh*0.85 - lh)) + fy;
-      const bx=x-2+fx, bw=ww+4, bh=treatEmoji ? ww : (lh+4);
-      if(px>=bx && px<=bx+bw && py>=by && py<=by+bh) return {line:li, word:wi, isEmoji:treatEmoji};
+      const by=(isEm ? (y+lh*0.85 - ww) : (y+lh*0.85 - lh)) + fy;
+      const bx=x-2+fx, bw=ww+4, bh=isEm ? ww : (lh+4);
+      if(px>=bx && px<=bx+bw && py>=by && py<=by+bh) return {line:li, word:wi, isEmoji:isEm};
       x+= ww + (doc.spacing.wordGap??6);
     }
     y+= lh + lg;
@@ -544,9 +643,35 @@ function hitTestWord(px,py){
 const snapshot=()=>JSON.parse(JSON.stringify(doc));
 function pushHistory(){ history.push(snapshot()); if(history.length>200) history.shift(); future.length=0; }
 
+/* click to select / multi */
 on(canvas,"click",(e)=>{
-  if(mode!=="edit") return;
+  if(mode!=="edit") return;   // (preview click handled to exit above)
   const r=canvas.getBoundingClientRect(), px=(e.clientX-r.left)/zoom, py=(e.clientY-r.top)/zoom;
+
+  // 1) Delete handle hit-test first
+  for(const [key,meta] of selectionMeta){
+    const d=meta.del;
+    if(px>=d.x && px<=d.x+d.w && py>=d.y && py<=d.y+d.h){
+      // delete selected target(s)
+      pushHistory();
+      if(doc.multi.size){ // delete all multi
+        const targets=[...doc.multi].map(k=>k.split(":").map(Number)).sort((a,b)=> b[1]-a[1]); // delete right->left
+        targets.forEach(([li,wi])=>{
+          const L=doc.lines[li]; if(!L) return;
+          L.words.splice(wi,1);
+          if(!L.words.length) doc.lines.splice(li,1);
+        });
+        doc.multi.clear(); selected=null;
+      }else if(selected){
+        const L=doc.lines[selected.line];
+        if(L){ L.words.splice(selected.word,1); if(!L.words.length) doc.lines.splice(selected.line,1); }
+        selected=null;
+      }
+      render(); return;
+    }
+  }
+
+  // 2) Normal hit-test
   const hit=hitTestWord(px,py);
   if(hit){
     const k=keyOf(hit.line,hit.word);
@@ -556,7 +681,7 @@ on(canvas,"click",(e)=>{
   }else{ doc.multi.clear(); selected=null; render(); }
 });
 
-/* typing */
+/* keyboard typing / delete key behavior preserved */
 document.addEventListener("keydown",(e)=>{
   if(mode!=="edit") return;
   const targets = doc.multi.size ? Array.from(doc.multi).map(k=>k.split(":").map(Number)) : (selected?[[selected.line,selected.word]]:[]);
@@ -564,24 +689,39 @@ document.addEventListener("keydown",(e)=>{
 
   if(e.key.length===1 && !e.metaKey && !e.ctrlKey){
     e.preventDefault(); pushHistory();
-    targets.forEach(([li,wi])=>{ const w=doc.lines[li]?.words[wi]; if(w && !isEmojiLike(w)) w.text=(w.text||"")+e.key; });
+    targets.forEach(([li,wi])=>{ const w=doc.lines[li]?.words[wi]; if(w && !isEmojiWord(w) && !isAnimatedEmojiWord(w)) w.text=(w.text||"")+e.key; });
     autoSizeAllIfOn(); render();
   } else if(e.key==="Backspace"){
     e.preventDefault(); pushHistory();
-    targets.forEach(([li,wi])=>{ const w=doc.lines[li]?.words[wi]; if(w && !isEmojiLike(w)) w.text=(w.text||"").slice(0,-1); });
+    targets.forEach(([li,wi])=>{ const w=doc.lines[li]?.words[wi]; if(w && !isEmojiWord(w) && !isAnimatedEmojiWord(w)) w.text=(w.text||"").slice(0,-1); });
     autoSizeAllIfOn(); render();
+  } else if(e.key==="Delete"){
+    e.preventDefault(); pushHistory();
+    if(doc.multi.size){
+      const list=[...doc.multi].map(k=>k.split(":").map(Number)).sort((a,b)=> b[1]-a[1]);
+      list.forEach(([li,wi])=>{ const L=doc.lines[li]; if(!L) return; L.words.splice(wi,1); if(!L.words.length) doc.lines.splice(li,1); });
+      doc.multi.clear(); selected=null;
+    }else if(selected){
+      const L=doc.lines[selected.line]; if(L){ L.words.splice(selected.word,1); if(!L.words.length) doc.lines.splice(selected.line,1); }
+      selected=null;
+    }
+    render();
   }
 });
 
-/* add / line / delete */
-on(addWordBtn,"click",()=>{ pushHistory(); const li=doc.lines.length? (selected?selected.line:doc.lines.length-1):0; doc.lines[li]??={words:[]}; doc.lines[li].words.push({text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color,anims:[]}); selected={line:li,word:doc.lines[li].words.length-1}; render(); });
-on(addLineBtn,"click",()=>{ pushHistory(); doc.lines.push({words:[{text:"LINE",font:defaults.font,size:defaults.size,color:defaults.color,anims:[]}]}); selected={line:doc.lines.length-1,word:0}; render(); });
-on(delWordBtn,"click",()=>{ if(!selected) return; pushHistory(); const L=doc.lines[selected.line]; L.words.splice(selected.word,1); if(!L.words.length) doc.lines.splice(selected.line,1); doc.multi.clear(); selected=null; render(); });
+/* add / line / delete buttons */
+on(addWordBtn,"click",()=>{ pushHistory(); const li=doc.lines.length? (selected?selected.line:doc.lines.length-1):0; doc.lines[li]??={words:[]}; doc.lines[li].words.push({text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color,anims:[]}); selected={line:li,word:doc.lines[li].words.length-1}; autoSizeAllIfOn(); render(); });
+on(addLineBtn,"click",()=>{ pushHistory(); doc.lines.push({words:[{text:"LINE",font:defaults.font,size:defaults.size,color:defaults.color,anims:[]}]}); selected={line:doc.lines.length-1,word:0}; autoSizeAllIfOn(); render(); });
+on(delWordBtn,"click",()=>{ if(!selected && !doc.multi.size) return; pushHistory();
+  if(doc.multi.size){ const list=[...doc.multi].map(k=>k.split(":").map(Number)).sort((a,b)=> b[1]-a[1]); list.forEach(([li,wi])=>{ const L=doc.lines[li]; if(!L) return; L.words.splice(wi,1); if(!L.words.length) doc.lines.splice(li,1); }); doc.multi.clear(); selected=null; }
+  else { const L=doc.lines[selected.line]; L.words.splice(selected.word,1); if(!L.words.length) doc.lines.splice(selected.line,1); doc.multi.clear(); selected=null; }
+  render();
+});
 
 /* font / size / color / autosize */
 on(fontSelect,"change",()=>{ pushHistory(); forEachSelectedWord(w=>w.font=fontSelect.value||defaults.font); autoSizeAllIfOn(); render(); });
-on(fontSizeInp,"input",()=>{ const v=Math.max(6,Math.min(64,parseInt(fontSizeInp.value||`${defaults.size}`,10))); pushHistory(); forEachSelectedWord(w=>{ if(!isEmojiLike(w)) w.size=v; else w.size=v; }); render(); });
-on(fontColorInp,"input",()=>{ const c=fontColorInp.value||defaults.color; pushHistory(); forEachSelectedWord(w=>{ if(!isEmojiLike(w)) w.color=c; }); render(); });
+on(fontSizeInp,"input",()=>{ const v=Math.max(6,Math.min(64,parseInt(fontSizeInp.value||`${defaults.size}`,10))); pushHistory(); forEachSelectedWord(w=>{ if(!isEmojiWord(w) && !isAnimatedEmojiWord(w)) w.size=v; }); render(); });
+on(fontColorInp,"input",()=>{ const c=fontColorInp.value||defaults.color; pushHistory(); forEachSelectedWord(w=>{ if(!isEmojiWord(w) && !isAnimatedEmojiWord(w)) w.color=c; }); render(); });
 on(autoSizeWordChk,"change",()=>{ autoSizeAllIfOn(); render(); });
 on(autoSizeLineChk,"change",()=>{ autoSizeAllIfOn(); render(); });
 
@@ -591,7 +731,7 @@ on(wordGapInp,"input",()=>{ doc.spacing.wordGap=Math.max(0,Math.min(40,parseInt(
 alignBtns.forEach(b=>on(b,"click",()=>{ if(b.disabled) return; alignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active"); doc.style.align=b.dataset.align||"center"; render(); }));
 valignBtns.forEach(b=>on(b,"click",()=>{ if(b.disabled) return; valignBtns.forEach(x=>x.classList.remove("active")); b.classList.add("active"); doc.style.valign=b.dataset.valign||"middle"; render(); }));
 
-/* multi toggle (visual) */
+/* multi toggle (visual only) */
 on(multiToggle,"click",()=> multiToggle.classList.toggle("active"));
 
 /* manual drag toggle */
@@ -691,7 +831,7 @@ function buildAnimationsUI(){
 }
 
 /* =======================================================
-   PREVIEW LOOP / GIF RENDER
+   PREVIEW LOOP / GIF RENDER (deterministic for animated emoji)
 ======================================================= */
 function startPreview(){
   stopPreview(0,true); startT=performance.now(); const dur=seconds(); if(tEnd) tEnd.textContent=`${dur.toFixed(1)}s`;
@@ -712,38 +852,103 @@ async function ensureGifLibs(){
 }
 function encoderBlob(enc){ const bytes=enc.stream().bin||enc.stream().getData(); return new Blob([bytes instanceof Uint8Array?bytes:new Uint8Array(bytes)],{type:"image/gif"}); }
 
-async function renderGif(){
-  const ok=await ensureGifLibs(); if(!ok) return;
+async function buildGifBlob(){
+  const ok=await ensureGifLibs(); if(!ok) return null;
   const F=fps(), S=seconds(), frames=Math.max(1,Math.floor(F*S)), delay=Math.max(1,Math.round(1000/F));
   const resume=(mode==="preview"); stopPreview();
 
   const W=canvas.width=doc.res.w, H=canvas.height=doc.res.h;
   const enc=new GIFEncoder(); enc.setRepeat(0); enc.setDelay(delay); enc.setQuality(10); enc.setSize(W,H); enc.start();
+
   for(let i=0;i<frames;i++){
     const t=i/F;
-    RENDER_EXPORT = { frameIndex:i, fps:F };          // lock Lottie to exact frame
-    await render(t,S);
-    RENDER_EXPORT = null;
+
+    // Render deterministic frame for animated emoji
+    const W2=W, H2=H;
+    ctx.clearRect(0,0,W2,H2);
+    // draw bg
+    ctx.fillStyle=(doc.bg?.type==="solid" ? (doc.bg.color||"#000") : "#000"); ctx.fillRect(0,0,W2,H2);
+    if(doc.bg?.image){ try{ ctx.drawImage(doc.bg.image,0,0,W2,H2); }catch{} }
+    renderForExportFrame(i,F,S); // special pass (calls drawAtFrame)
 
     enc.addFrame(ctx);
     if(progressBar) progressBar.style.setProperty("--p",(t/S)%1);
     if(tCur) tCur.textContent=`${(t%S).toFixed(1)}s`;
   }
   enc.finish();
-  const blob=encoderBlob(enc); const url=URL.createObjectURL(blob);
 
-  if(gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=url; gifPreviewImg.alt="Preview GIF"; }
-
-  const a=document.createElement("a");
-  a.href=url; a.download=`${(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"")}.gif`;
-  a.target="_blank"; a.rel="noopener"; a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),15000);
-
+  const blob=encoderBlob(enc);
+  if(lastGif.url) URL.revokeObjectURL(lastGif.url);
+  const url=URL.createObjectURL(blob);
+  lastGif={ blob, url, fps:F, seconds:S, name:(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"") };
   if(resume) startPreview();
+  return lastGif;
 }
-on(previewBtn,"click",()=>{ setMode("preview"); if(gifPreviewImg){ gifPreviewImg.src=""; gifPreviewImg.classList.add("hidden"); } });
-on(gifBtn,"click",renderGif);
-[fpsInp, secondsInp].forEach(inp=> on(inp,"input",()=>{ if(mode==="preview") startPreview(); if(tEnd) tEnd.textContent=`${seconds().toFixed(1)}s`; }));
+
+// Export-time renderer for animated emoji deterministic frames
+function renderForExportFrame(frameIndex, exportFps, totalSec){
+  const W=canvas.width=doc.res.w, H=canvas.height=doc.res.h;
+  const lg=doc.spacing.lineGap??4, wg=doc.spacing.wordGap??6;
+  const heights=doc.lines.map(lineHeight);
+  const contentH=heights.reduce((s,h)=>s+h,0)+(doc.lines.length-1)*lg;
+  let yBase; if(doc.style.valign==="top") yBase=4; else if(doc.style.valign==="bottom") yBase=H-contentH-4; else yBase=(H-contentH)/2;
+
+  const S=totalSec||seconds();
+  doc.lines.forEach((line,li)=>{
+    const lh=heights[li], wLine=lineWidth(line);
+    let xBase; if(doc.style.align==="left") xBase=4; else if(doc.style.align==="right") xBase=W-wLine-4; else xBase=(W-wLine)/2;
+
+    let x=xBase, y=yBase+lh*0.85;
+    line.words.forEach((w)=>{
+      const base={x,y};
+      const props=animatedProps(base,w, (frameIndex/exportFps)%S ,S);
+      const fx=Number(w.fx||0), fy=Number(w.fy||0);
+
+      if(isAnimatedEmojiWord(w)){
+        const box=(w.size??24)*(w.scale??1)*(props.scale||1);
+        const drawX=base.x+(props.dx||0)+fx, drawY=base.y+(props.dy||0)+fy;
+        const topY=drawY-box;
+        const AE=window.AnimatedEmoji;
+        if(AE && AE.drawAtFrame){
+          AE.drawAtFrame(ctx, { codepoint:w.codepoint, x:drawX, y:topY, w:box, h:box, speed: w.speed||1 }, frameIndex, exportFps);
+        }
+        x+= (w.size??24)*(w.scale??1) + wg;
+        return;
+      }
+      if(isEmojiWord(w)){
+        const box=(w.size??24)*(w.scale??1)*(props.scale||1);
+        const drawX=base.x+(props.dx||0)+fx, drawY=base.y+(props.dy||0)+fy;
+        const topY=drawY-box; const img=getEmojiImage(w.src);
+        if(img && img.complete && img.naturalWidth>0){
+          ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,props.alpha));
+          ctx.drawImage(img, drawX, topY, box, box); ctx.restore();
+        }
+        x+= (w.size??24)*(w.scale??1) + wg;
+        return;
+      }
+      // text
+      const txt=props.text||"", fsize=(w.size||defaults.size)*(props.scale||1);
+      ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,props.alpha));
+      ctx.textBaseline="alphabetic"; ctx.font=`${fsize}px ${w.font||defaults.font}`;
+      ctx.fillStyle=props.color||(w.color||defaults.color);
+      ctx.fillText(txt, base.x+(props.dx||0)+fx, base.y+(props.dy||0)+fy);
+      ctx.restore();
+      x+= measureText(w) + wg;
+    });
+    yBase+= lh + lg;
+  });
+}
+
+on(previewBtn,"click", async ()=>{
+  const built=await buildGifBlob();
+  if(!built) return;
+  if(gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=built.url; gifPreviewImg.alt="Preview GIF"; }
+});
+on(gifBtn,"click", async ()=>{
+  if(!lastGif.blob) await buildGifBlob();
+  if(!lastGif.blob) return;
+  const a=document.createElement("a"); a.href=lastGif.url; a.download=`${lastGif.name}.gif`; a.target="_blank"; a.rel="noopener"; a.click();
+});
 
 /* =======================================================
    RESOLUTION / UNDO / REDO / CLEAR
@@ -785,69 +990,78 @@ on(aboutBtn,"click",()=> aboutModal?.classList.remove("hidden"));
 on(aboutClose,"click",()=> aboutModal?.classList.add("hidden"));
 
 /* =======================================================
-   EMOJI PICKER — Static (OpenMoji) + Animated (Noto)
+   UNIFIED EMOJI PICKER
+   - Tabs: "Static", "Animated"
+   - Search mode selector: Static / Animated / Both
 ======================================================= */
-/* ---- Tabs (Static | Animated) ---- */
-function setEmojiTab(tab){ // 'static' | 'animated'
-  const btns = $$("#emojiTabs .tab-btn");
-  btns.forEach(b=> b.classList.toggle("active", b.dataset.tab===tab));
-  if (emojiPaneStatic)   emojiPaneStatic.classList.toggle("hidden", tab!=="static");
-  if (emojiPaneAnimated) emojiPaneAnimated.classList.toggle("hidden", tab!=="animated");
-  if (tab==="animated") refreshAE();
-}
-on(emojiTabs, "click", (e)=>{
-  const b=e.target.closest(".tab-btn"); if(!b) return;
-  setEmojiTab(b.dataset.tab);
-});
+let EMOJI_TAB="Static";            // "Static" | "Animated"
+let EMOJI_SEARCH_MODE="Static";    // "Static" | "Animated" | "Both"
 
-on(emojiBtn,"click",async ()=>{
-  // default to Static tab when opening
-  setEmojiTab("static");
-  const db=await loadEmojiManifest();
-  buildEmojiTabs(db.categories);
-  emojiSearch.value=""; filterEmoji();
-  emojiModal.classList.remove("hidden");
-});
+function buildEmojiTabs(){
+  emojiTabsEl.innerHTML="";
+  const mk=(label)=>{ const b=document.createElement("button"); b.className="tab" + (EMOJI_TAB===label?" active":""); b.textContent=label; b.onclick=()=>{ EMOJI_TAB=label; renderEmojiPanel(); }; return b; };
+  emojiTabsEl.appendChild(mk("Static"));
+  emojiTabsEl.appendChild(mk("Animated"));
+
+  // Search-mode selector
+  const modeWrap=document.createElement("div"); modeWrap.style.marginLeft="auto";
+  const select=document.createElement("select");
+  ["Static","Animated","Both"].forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=`Search: ${m}`; if(m===EMOJI_SEARCH_MODE) o.selected=true; select.appendChild(o); });
+  select.onchange=()=>{ EMOJI_SEARCH_MODE=select.value; filterEmoji(); };
+  modeWrap.appendChild(select); emojiTabsEl.appendChild(modeWrap);
+}
+
+function emojiListItem(title, imgSrc, onPick){
+  const item=document.createElement("button"); item.className="emoji-item"; item.title=title;
+  const img=document.createElement("img"); img.alt=title; img.loading="lazy"; img.src=imgSrc;
+  item.appendChild(img); item.onclick=onPick; return item;
+}
+
+function renderEmojiPanel(){ filterEmoji(); emojiModal.classList.remove("hidden"); }
+on(emojiBtn,"click",async()=>{ await loadEmojiManifest(); buildEmojiTabs(); emojiSearch.value=""; renderEmojiPanel(); });
 on(emojiClose,"click",()=>emojiModal.classList.add("hidden"));
-
-/* ---- Static tab ---- */
-function buildEmojiTabs(cats){
-  // build if empty or rebuild — keep your existing 'chip' style for static categories
-  const hasChips = $$(".chip", emojiTabs).length>0;
-  if (hasChips) return; // already built once
-  cats.forEach((c,i)=>{
-    const b=document.createElement("button");
-    b.className=`chip ${i===0?"active":""}`; b.textContent=c;
-    b.onclick=()=>{ $$(".chip",emojiTabs).forEach(x=>x.classList.remove("active")); b.classList.add("active"); filterEmoji(); };
-    emojiTabs.appendChild(b);
-  });
-}
-function renderEmojiGrid(list){
-  emojiGrid.innerHTML="";
-  const frag=document.createDocumentFragment();
-  list.forEach(e=>{
-    const item=document.createElement("button"); item.className="emoji-item"; item.title=e.name;
-    const img=document.createElement("img"); img.alt=e.name; img.loading="lazy"; img.src=e.path;
-    item.appendChild(img);
-    item.onclick=()=>{ insertStaticEmoji(e); emojiModal.classList.add("hidden"); };
-    frag.appendChild(item);
-  });
-  emojiGrid.appendChild(frag);
-}
-function filterEmoji(){
-  if(!EMOJI_DB) return;
-  const activeCat = $(".chip.active",emojiTabs)?.textContent;
-  const q=(emojiSearch.value||"").toLowerCase().trim();
-  const list = EMOJI_DB.entries.filter(e=>{
-    const hitCat = activeCat? e.category===activeCat : true;
-    const hitQ = q? (e.name.toLowerCase().includes(q) || e.id.includes(q)) : true;
-    return hitCat && hitQ;
-  });
-  renderEmojiGrid(list.slice(0,1200));
-}
 on(emojiSearch,"input",filterEmoji);
 
-/* ---- Insertions ---- */
+function filterEmoji(){
+  emojiGrid.innerHTML="";
+  const q=(emojiSearch.value||"").toLowerCase().trim();
+
+  // Helpers
+  const addStatic = (e)=> emojiGrid.appendChild(emojiListItem(e.name, e.path, ()=>{ insertStaticEmoji(e); emojiModal.classList.add("hidden"); }));
+  const addAnimated = (n)=> {
+    const code = n.cp || n.code || n.codepoint;
+    // show a generic preview tile; animated previews are drawn on canvas, not here
+    const thumb = "assets/noto/thumb.png"; // optional placeholder you can ship
+    const title = n.name || n.ch || code;
+    emojiGrid.appendChild(emojiListItem(title, thumb, ()=>{ insertAnimatedEmoji(code); emojiModal.classList.add("hidden"); }));
+  };
+
+  const wantStatic   = (EMOJI_SEARCH_MODE==="Static"   || EMOJI_SEARCH_MODE==="Both") && (EMOJI_TAB==="Static"   || EMOJI_SEARCH_MODE==="Both");
+  const wantAnimated = (EMOJI_SEARCH_MODE==="Animated" || EMOJI_SEARCH_MODE==="Both") && (EMOJI_TAB==="Animated" || EMOJI_SEARCH_MODE==="Both");
+
+  // Static (OpenMoji)
+  if(wantStatic && EMOJI_DB){
+    const list = EMOJI_DB.entries.filter(e=>{
+      if(!q) return true;
+      return (e.name?.toLowerCase().includes(q) || e.id?.includes(q));
+    });
+    list.slice(0,600).forEach(addStatic);
+  }
+
+  // Animated (Noto)
+  if(wantAnimated){
+    const AE=window.AnimatedEmoji;
+    if(!AE || !AE.filterIndex){
+      const msg=document.createElement("div"); msg.className="center"; msg.style.color="#a6b0c3";
+      msg.textContent="Animated Emoji not available (animatedEmoji.js not loaded).";
+      emojiGrid.appendChild(msg);
+    }else{
+      const list = AE.filterIndex(q);
+      list.slice(0,600).forEach(addAnimated);
+    }
+  }
+}
+
 function insertStaticEmoji(entry){
   pushHistory();
   const li = selected? selected.line : (doc.lines.length? doc.lines.length-1 : 0);
@@ -858,41 +1072,11 @@ function insertStaticEmoji(entry){
   render();
 }
 
-/* ---- Animated tab (Noto / Lottie) ---- */
-function renderAEGrid(list){
-  aeGrid.innerHTML="";
-  const frag=document.createDocumentFragment();
-  list.forEach(e=>{
-    const btn=document.createElement("button");
-    btn.className="emoji-item";
-    btn.title=`${e.name} (${e.cp})`;
-    btn.textContent = e.ch || "🙂";
-    btn.onclick=()=> addAnimatedEmojiToLine(e);
-    frag.appendChild(btn);
-  });
-  aeGrid.appendChild(frag);
-}
-function refreshAE(){
-  if (!window.AnimatedEmoji) return;
-  const list = AnimatedEmoji.filterIndex(aeSearch?.value||"");
-  renderAEGrid(list);
-}
-on(aeSearch,"input",refreshAE);
-
-function addAnimatedEmojiToLine(entry){
+function insertAnimatedEmoji(codepointHex){
   pushHistory();
   const li = selected? selected.line : (doc.lines.length? doc.lines.length-1 : 0);
   doc.lines[li] ??= {words:[]};
-  const sz = doc.res.w===96 ? 28 : 20;
-  const w = {
-    emojiAnimated:true,
-    codepoint: entry.cp,
-    name: entry.name,
-    size: sz, scale:1,
-    speed: 1.0,
-    fx:0, fy:0,
-    anims:[]
-  };
+  const w = { ae:true, codepoint:String(codepointHex).toLowerCase(), speed:1, size:24, scale:1, fx:0, fy:0, anims:[] };
   doc.lines[li].words.push(w);
   selected={line:li,word:doc.lines[li].words.length-1};
   render();
@@ -902,18 +1086,13 @@ function addAnimatedEmojiToLine(entry){
    INIT
 ======================================================= */
 function init(){
-  // init AnimatedEmoji helper if present (safe if script not loaded)
-  if (window.AnimatedEmoji && typeof AnimatedEmoji.init==="function"){
-    AnimatedEmoji.init({ useLocal:false }); // flip to true if you bundle JSON under /assets/noto/<cp>/lottie.json
-  }
-
   buildBgGrid(); rebuildTextSwatches(); rebuildBgSwatches();
-  render(); fitZoom();
+  // start with no inspector panels open
+  [accFont,accLayout,accAnim].forEach(x=>x.open=false);
+  pillTabs.forEach(p=>p.classList.remove("active"));
 
-  autoSizeWordChk.checked = true;     // Autosize (Word)
-  if (autoSizeLineChk) autoSizeLineChk.checked = true; // if present in HTML
-  autoSizeAllIfOn(); render();
-
+  render();      // draw immediately
+  fitZoom();     // auto-fit on load
   setMode("edit");
 }
 init();
