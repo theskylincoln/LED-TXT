@@ -55,8 +55,22 @@ You are free to:
 - **Adapt** — remix, transform, and build upon the material for any purpose, even commercially
 
 Under the following terms:
-- **Attribution** — You must give appropriate credit to OpenMoji.
+- **Attribution** — You must give appropriate credit to OpenMoji.  
 - **ShareAlike** — If you remix or build upon it, you must distribute your contributions under the same license.
+
+---
+
+## Google Noto Animated Emoji
+**License:** Apache License 2.0  
+© 2024 Google LLC.  
+Animated emoji data and artwork are provided by the [Noto Emoji project](https://github.com/googlefonts/noto-emoji), part of [Google Fonts](https://fonts.google.com/noto).
+
+You may obtain a copy of the License at:  
+<https://www.apache.org/licenses/LICENSE-2.0>
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an **"AS IS" BASIS**,  
+**WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND**, either express or implied.  
+See the License for the specific language governing permissions and limitations under the License.
 
 ---
 
