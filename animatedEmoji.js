@@ -19,7 +19,8 @@
   const Cache = new Map(); // code -> {anim, holder, mirror, ctx, totalFrames, fps, blit}
 
   async function ensure(code) {
-    code = code.toLowerCase();
+    code = String(code||"").toLowerCase();
+    if (!code) throw new Error("AnimatedEmoji.ensure: empty codepoint");
     if (Cache.has(code)) return Cache.get(code);
 
     const holder = document.createElement('div');
@@ -38,7 +39,11 @@
       path: urlFor(code)
     });
 
-    await new Promise(res => anim.addEventListener('DOMLoaded', res));
+    await new Promise((res,rej)=>{
+      const onErr = (e)=>{ anim.removeEventListener('data_failed', onErr); rej(e||new Error('Lottie load failed')); };
+      anim.addEventListener('DOMLoaded', ()=>{ anim.removeEventListener('data_failed', onErr); res(); });
+      anim.addEventListener('data_failed', onErr);
+    });
 
     const fps = anim.frameRate || 30;
     const totalFrames = Math.round(anim.getDuration(true));
@@ -88,8 +93,7 @@
     { cp:'1f602', ch:'😂', name:'Face with tears of joy' },
     { cp:'1f525', ch:'🔥', name:'Fire' },
     { cp:'2764',  ch:'❤️', name:'Red heart' },
-    { cp:'1f4a5', ch:'💥', name:'Collision' },
-    { cp:'1f389', ch:'🎉', name:'Party' },
+    { cp:'1f4a5', ch:'💥', name:'Collision' }
     // add more favorites as you go
   ];
 
@@ -103,5 +107,17 @@
     );
   }
 
-  global.AnimatedEmoji = { init, ensure, draw, drawAtFrame, NOTO_INDEX, filterIndex };
+  // Utility to add many codepoints quickly from hex list (unique, lowercase)
+  function addMany(hexArray){
+    const seen = new Set(NOTO_INDEX.map(e=>e.cp));
+    hexArray.forEach(cp=>{
+      const v = String(cp||"").toLowerCase().trim();
+      if(!v || seen.has(v)) return;
+      NOTO_INDEX.push({ cp:v, ch:'', name:v });
+      seen.add(v);
+    });
+    return NOTO_INDEX.length;
+  }
+
+  global.AnimatedEmoji = { init, ensure, draw, drawAtFrame, NOTO_INDEX, filterIndex, addMany };
 })(window);

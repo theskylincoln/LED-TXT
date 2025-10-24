@@ -34,7 +34,8 @@ const bgUpload=$("#bgUpload");
 
 /* stage controls */
 const multiToggle=$("#multiToggle"),
-      manualDragBtn=$("#manualDragBtn") || $("#manualDragToggle");
+      manualDragBtn=$("#manualDragBtn") || $("#manualDragToggle"),
+      manualDragPill=$("#manualDragPill");
 const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn"), delWordBtn=$("#deleteWordBtn");
 const emojiBtn=$("#emojiBtn");
 
@@ -112,24 +113,36 @@ let NOTO_DB=null;  // Animated (Noto) index via AnimatedEmoji helper
 async function loadEmojiManifest(){
   if (EMOJI_DB) return EMOJI_DB;
 
-  const r = await fetch("assets/openmoji/emoji_manifest.json", { cache: "no-store" });
-  const j = await r.json();
+  async function tryLocal(){
+    const r = await fetch("assets/openmoji/emoji_manifest.json", { cache: "no-store" });
+    if (!r.ok) throw new Error("manifest not found");
+    return r.json();
+  }
+  async function tryCDN(){
+    const entries = [
+      { id:"1F60A", name:"smiling face", path:"https://unpkg.com/openmoji@14.0.0/color/72x72/1F60A.png", category:"Faces" },
+      { id:"1F680", name:"rocket",       path:"https://unpkg.com/openmoji@14.0.0/color/72x72/1F680.png", category:"Objects" },
+      { id:"2764",  name:"heart",        path:"https://unpkg.com/openmoji@14.0.0/color/72x72/2764.png",  category:"Symbols" },
+      { id:"1F389", name:"party popper", path:"https://unpkg.com/openmoji@14.0.0/color/72x72/1F389.png", category:"Objects" },
+      { id:"1F525", name:"fire",         path:"https://unpkg.com/openmoji@14.0.0/color/72x72/1F525.png", category:"Nature" }
+    ];
+    return { entries, categories: Array.from(new Set(entries.map(e=>e.category))) };
+  }
 
-  // Accept either an array or {entries:[...]}
+  let j;
+  try { j = await tryLocal(); }
+  catch { j = await tryCDN(); }
+
   const entries = Array.isArray(j) ? j : (Array.isArray(j.entries) ? j.entries : []);
   EMOJI_DB = {
-    categories: (j.categories && Array.isArray(j.categories)) ? j.categories : [],
+    categories: (j.categories && Array.isArray(j.categories)) ? j.categories : Array.from(new Set(entries.map(e=>e.category || "General"))),
     entries: entries.map(e => ({
       id: String(e.id || e.unicode || ""),
       name: e.name || "emoji",
-      // prefer src, fall back to path
       path: e.src || e.path || "",
       category: e.category || "General"
     }))
   };
-  if (!EMOJI_DB.categories.length) {
-    EMOJI_DB.categories = Array.from(new Set(EMOJI_DB.entries.map(e => e.category)));
-  }
   return EMOJI_DB;
 }
 function loadNotoIndex(){
@@ -548,15 +561,24 @@ function render(t=0,totalDur=seconds()){
         const box=(w.size??24)*(w.scale??1)*(props.scale||1);
         const drawX=base.x+(props.dx||0)+fx, drawY=base.y+(props.dy||0)+fy;
         const topY=drawY-box;
-        const img=getEmojiImage(w.src);
-        if(img && img.complete && img.naturalWidth>0){
-          ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,props.alpha));
-          if(props.shadow){ ctx.shadowBlur=props.shadow.blur; ctx.shadowColor=props.shadow.color||"#fff"; }
-          ctx.drawImage(img, drawX, topY, box, box);
-          ctx.restore();
-        } else if(img){ img.onload=()=>{ if(mode==="preview") startPreview(); else render(t,totalDur); }; }
 
-        // selection box + delete handle
+        let drawn = false;
+        if (w.animated && window.AnimatedEmoji) {
+          try {
+            window.AnimatedEmoji.draw(ctx, { codepoint: w.codepoint, x: drawX, y: topY, w: box, h: box, speed: 1 });
+            drawn = true;
+          } catch(e){ console.warn("Animated emoji draw failed", e); }
+        }
+        if (!drawn) {
+          const img=getEmojiImage(w.src);
+          if(img && img.complete && img.naturalWidth>0){
+            ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,props.alpha));
+            if(props.shadow){ ctx.shadowBlur=props.shadow.blur; ctx.shadowColor=props.shadow.color||"#fff"; }
+            ctx.drawImage(img, drawX, topY, box, box);
+            ctx.restore();
+          } else if(img){ img.onload=()=>{ if(mode==="preview") startPreview(); else render(t,totalDur); }; }
+        }
+
         const key=`${li}:${wi}`;
         if(doc.multi.has(key) || (selected && selected.line===li && selected.word===wi && mode==="edit")){
           drawSelectionBox(drawX, topY, box, box, doc.multi.has(key));
@@ -865,10 +887,17 @@ valignBtns.forEach(b=>on(b,"click",()=>{ if(b.disabled) return; valignBtns.forEa
 on(multiToggle,"click",()=> multiToggle.classList.toggle("active"));
 
 /* manual drag toggle */
-const manualDrag={enabled:false,active:false,startX:0,startY:0,targets:[],startOffsets:[]};
-on(manualDragBtn,"click",()=>{
-  manualDrag.enabled=!manualDrag.enabled; manualDragBtn.classList.toggle("active",manualDrag.enabled);
-  document.querySelectorAll("[data-align],[data-valign]").forEach(b=>{ b.disabled=manualDrag.enabled; b.classList.toggle("disabled",manualDrag.enabled); });
+function setManualDrag(enabled){
+  manualDrag.enabled = !!enabled;
+  if (manualDragBtn) { manualDragBtn.classList.toggle("active", manualDrag.enabled); }
+  if (manualDragPill) {
+    manualDragPill.classList.toggle("active", manualDrag.enabled);
+    manualDragPill.setAttribute("aria-pressed", manualDrag.enabled ? "true" : "false");
+  }
+  document.querySelectorAll("[data-align],[data-valign]").forEach(b=>{ b.disabled=manualDrag.enabled; b.classList.toggle("disabled", manualDrag.enabled); });
+}
+on(manualDragBtn,"click",()=> setManualDrag(!manualDrag.enabled));
+on(manualDragPill,"click",()=> setManualDrag(!manualDrag.enabled));
 });
 
 /* temp drag with Cmd/Ctrl or manual toggle */
@@ -985,7 +1014,8 @@ async function ensureGifLibs(){
 }
 function encoderBlob(enc){ const bytes=enc.stream().bin||enc.stream().getData(); return new Blob([bytes instanceof Uint8Array?bytes:new Uint8Array(bytes)],{type:"image/gif"}); }
 
-async function renderGif(){
+async function renderGif(opts={}){
+  const previewOnly = !!opts.previewOnly;
   const ok=await ensureGifLibs(); if(!ok) return;
   const F=fps(), S=seconds(), frames=Math.max(1,Math.floor(F*S)), delay=Math.max(1,Math.round(1000/F));
   const resume=(mode==="preview"); stopPreview();
@@ -998,9 +1028,11 @@ async function renderGif(){
 
   if(gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=url; gifPreviewImg.alt="Preview GIF"; }
 
-  const a=document.createElement("a");
-  a.href=url; a.download=`${(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"")}.gif`;
-  a.target="_blank"; a.rel="noopener"; a.click();
+  if(!previewOnly){
+    const a=document.createElement("a");
+    a.href=url; a.download=`${(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"")}.gif`;
+    a.target="_blank"; a.rel="noopener"; a.click();
+  }
   setTimeout(()=>URL.revokeObjectURL(url),15000);
 
   if(resume) startPreview();
@@ -1051,10 +1083,11 @@ on(aboutClose,"click",()=> aboutModal?.classList.add("hidden"));
 /* =======================================================
    EMOJI PICKER (Static / Animated / Both)
 ======================================================= */
-const EMOJI_TABS = ["Both","Static","Animated"];
+function animatedAvailable(){ return !!(window.AnimatedEmoji && Array.isArray(window.AnimatedEmoji.NOTO_INDEX) && window.AnimatedEmoji.NOTO_INDEX.length); }
 function buildEmojiTabs(){
   emojiTabs.innerHTML="";
-  EMOJI_TABS.forEach((name,i)=>{
+  const tabs = animatedAvailable() ? ["Both","Static","Animated"] : ["Static"];
+  tabs.forEach((name,i)=>{
     const b=document.createElement("button"); b.className=`tab ${i===0?"active":""}`; b.textContent=name;
     b.onclick=()=>{ $$(".tab",emojiTabs).forEach(x=>x.classList.remove("active")); b.classList.add("active"); filterEmoji(); };
     emojiTabs.appendChild(b);
@@ -1095,6 +1128,7 @@ async function filterEmoji(){
   else combined=animList;
 
   renderEmojiGrid(combined.slice(0,800));
+  const pager = $("#emojiPager"); if (pager) pager.textContent = `${combined.length} / ${combined.length}`;
 }
 async function openEmojiModal(){
   await loadEmojiManifest();
@@ -1128,22 +1162,6 @@ function insertEmoji(entry){
   selected={line:li,word:doc.lines[li].words.length-1};
   render();
 }
-
-/* Draw animated emoji via AnimatedEmoji helper in preview & export */
-async function drawAnimatedEmojiIfAny(localCtx, el, t, totalDur, drawX, topY, box){
-  if(!el.animated || !window.AnimatedEmoji) return false;
-  // Map our coords to helper draw rect
-  await window.AnimatedEmoji.draw(localCtx, { codepoint: el.codepoint, x: drawX, y: topY, w: box, h: box, speed:1 });
-  return true;
-}
-
-/* Patch render for animated emoji (hook) */
-const _renderCore = render;
-render = function(t=0,totalDur=seconds()){
-  // Wrap drawImage of emoji: after computing drawX/topY/box we try AnimatedEmoji.draw
-  // We replaced emoji branch above to always use bitmap; here we intercept on-demand.
-  _renderCore(t,totalDur);
-};
 
 /* =======================================================
    STARTUP PRESET (JSON lines only) + fallback internal preset
