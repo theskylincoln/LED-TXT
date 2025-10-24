@@ -7,12 +7,14 @@ Designed for riders, creators, and makers to bring custom LED messages and emoji
 
 ---
 
+
 ## ✨ Features
 
 - Real-time canvas preview (96×128 or 64×64)  
 - Background presets, solid colors, or custom uploads  
 - Emoji picker powered by [OpenMoji](https://openmoji.org)  
-- Add and edit words or lines directly on canvas  
+- Animated emoji support using [Google Noto Animated Emoji](https://github.com/googlefonts/noto-emoji)  
+- Add and edit words, emojis, and lines directly on the canvas  
 - Centered layout with padding (no text cutoff)  
 - Undo / Redo (20 steps)  
 - Inspector panel with:  
@@ -33,6 +35,7 @@ Designed for riders, creators, and makers to bring custom LED messages and emoji
 - **gifuct-js** — GIF decoding / encoding (MIT License)  
 - **js-binary-schema-parser** — Binary schema parsing (MIT License)  
 - **OpenMoji** — Emoji artwork (CC BY-SA 4.0)  
+- **Google Noto Animated Emoji** — Animated emoji via Lottie (Apache 2.0)
 
 ---
 
@@ -56,6 +59,11 @@ MIT License — Copyright (c) 2016–2023 Matt Way
 ### OpenMoji  
 Emoji artwork provided by [OpenMoji](https://openmoji.org).  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+
+### Google Noto Animated Emoji  
+Animated emoji data and artwork provided by the [Noto Emoji project](https://github.com/googlefonts/noto-emoji),  
+part of [Google Fonts](https://fonts.google.com/noto).  
+© 2024 Google LLC. Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ---
 
