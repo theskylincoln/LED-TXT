@@ -1053,24 +1053,44 @@ async function loadStartupPreset(){
 }
 
 /* =======================================================
-   INIT
+   INIT (safe version)
 ======================================================= */
 function init(){
-  buildBgGrid(); rebuildTextSwatches(); rebuildBgSwatches();
-  render(); fitZoom();
+  buildBgGrid();
+  rebuildTextSwatches();
+  rebuildBgSwatches();
+  render();
+  fitZoom();
 
   // Pills default: none open body until clicked
-  pillTabs.forEach(p=>p.classList.remove("active"));
+  pillTabs.forEach(p => p.classList.remove("active"));
   syncPillsVisibility();
 
   // Default autosize toggles if present
-  autoSizeWordChk.checked = !!autoSizeWordChk.checked;
-  autoSizeLineChk.checked = !!autoSizeLineChk.checked;
+  if (autoSizeWordChk) autoSizeWordChk.checked = !!autoSizeWordChk.checked;
+  if (autoSizeLineChk) autoSizeLineChk.checked = !!autoSizeLineChk.checked;
 
   // Start in Edit
   setMode("edit");
 
   // Load startup preset (lines only) then render/fit
-  loadStartupPreset().finally(()=>{ autoSizeAllIfOn(); render(); fitZoom(); });
+  loadStartupPreset()
+    .finally(() => {
+      autoSizeAllIfOn();
+      render();
+      fitZoom();
+    });
 }
-init();
+
+/* =======================================================
+   DOM READY WRAPPER — ensures init runs only after HTML is loaded
+======================================================= */
+window.addEventListener("DOMContentLoaded", () => {
+  try {
+    init();
+    console.log("[LED Animator] App initialized successfully");
+  } catch (err) {
+    console.error("[LED Animator] Init failed:", err);
+    alert("App failed to load properly. Check console for details.");
+  }
+});
