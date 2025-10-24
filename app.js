@@ -33,7 +33,8 @@ const addBgSwatchBtn=$("#addBgSwatchBtn"), bgSwatches=$("#bgSwatches");
 const bgUpload=$("#bgUpload");
 
 /* stage controls */
-const multiToggle=$("#multiToggle"), manualDragBtn=$("#manualDragToggle");
+const multiToggle=$("#multiToggle"),
+      manualDragBtn=$("#manualDragBtn") || $("#manualDragToggle");
 const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn"), delWordBtn=$("#deleteWordBtn");
 const emojiBtn=$("#emojiBtn");
 
@@ -109,9 +110,25 @@ let EMOJI_DB=null; // static OpenMoji pack
 let NOTO_DB=null;  // Animated (Noto) index via AnimatedEmoji helper
 async function loadEmojiManifest(){
   if (EMOJI_DB) return EMOJI_DB;
-  const r=await fetch("assets/openmoji/emoji_manifest.json");
-  EMOJI_DB=await r.json();
-  EMOJI_DB.categories = EMOJI_DB.categories || Array.from(new Set(EMOJI_DB.entries.map(e=>e.category)));
+
+  const r = await fetch("assets/openmoji/emoji_manifest.json", { cache: "no-store" });
+  const j = await r.json();
+
+  // Accept either an array or {entries:[...]}
+  const entries = Array.isArray(j) ? j : (Array.isArray(j.entries) ? j.entries : []);
+  EMOJI_DB = {
+    categories: (j.categories && Array.isArray(j.categories)) ? j.categories : [],
+    entries: entries.map(e => ({
+      id: String(e.id || e.unicode || ""),
+      name: e.name || "emoji",
+      // prefer src, fall back to path
+      path: e.src || e.path || "",
+      category: e.category || "General"
+    }))
+  };
+  if (!EMOJI_DB.categories.length) {
+    EMOJI_DB.categories = Array.from(new Set(EMOJI_DB.entries.map(e => e.category)));
+  }
   return EMOJI_DB;
 }
 function loadNotoIndex(){
@@ -586,6 +603,22 @@ function render(t=0,totalDur=seconds()){
         }
       }else{
         ctx.fillText(txt, drawX, drawY);
+         // draw caret if active on this word
+if (caret.active && caret.line===li && caret.word===wi && mode==="edit") {
+  const baseSize = (w.size||defaults.size);
+  ctx.save();
+  ctx.font = `${baseSize}px ${w.font||defaults.font}`;
+  const leftText = (w.text||"").slice(0, Math.min(caret.index, (w.text||"").length));
+  const cx = drawX + ctx.measureText(leftText).width;
+  // blink
+  const now = performance.now();
+  if (now - (caret.lastBlink||0) > 500) { caret.blinkOn = !caret.blinkOn; caret.lastBlink = now; }
+  if (caret.blinkOn) {
+    ctx.fillStyle = "#E9EDFB";
+    ctx.fillRect(cx, drawY - baseSize, 1, baseSize + 2);
+  }
+  ctx.restore();
+}
       }
 
       // selection rectangle + delete handle
@@ -645,6 +678,7 @@ function drawSelectionBox(x,y,w,h,isMulti){
   lastHandleRect = {x:hx, y:hy, w:HANDLE_SIZE, h:HANDLE_SIZE};
 }
 let lastHandleRect=null;
+let caret = { active:false, line:-1, word:-1, index:0, blinkOn:true, lastBlink:0 };
 
 /* =======================================================
    SELECTION / INPUT / DRAG / RESIZE / DELETE HANDLE
@@ -685,6 +719,8 @@ function pushHistory(){ history.push(snapshot()); if(history.length>200) history
 
 on(canvas,"click",(e)=>{
   if(mode!=="edit") return;
+  if (uiLock?.emojiOpen) return; // pause edits while emoji is open
+
   const r=canvas.getBoundingClientRect(), px=(e.clientX-r.left)/zoom, py=(e.clientY-r.top)/zoom;
 
   // delete handle hit
@@ -694,7 +730,7 @@ on(canvas,"click",(e)=>{
       const L=doc.lines[selected.line];
       L.words.splice(selected.word,1);
       if(!L.words.length) doc.lines.splice(selected.line,1);
-      selected=null; doc.multi.clear(); lastHandleRect=null; render();
+      selected=null; doc.multi.clear(); lastHandleRect=null; caret.active=false; render();
     }
     return;
   }
@@ -702,65 +738,107 @@ on(canvas,"click",(e)=>{
   const hit=hitTestWord(px,py);
   if(hit){
     const k=keyOf(hit.line,hit.word);
-    if(e.shiftKey){ if(doc.multi.has(k)) doc.multi.delete(k); else doc.multi.add(k); selected=hit; }
-    else { doc.multi.clear(); selected=hit; }
+    if(e.shiftKey){
+      if(doc.multi.has(k)) doc.multi.delete(k); else doc.multi.add(k);
+      selected=hit; caret.active=false;
+    } else {
+      doc.multi.clear(); selected=hit;
+      // place caret inside the word
+      const w = doc.lines[hit.line]?.words[hit.word];
+      if (w && !w.emoji) {
+        // nearest char index from click x
+        const txt = w.text || "";
+        ctx.font = `${w.size||defaults.size}px ${w.font||defaults.font}`;
+        let x = hit.bbox.x + 2; // same x we use when drawing selection
+        let idx = 0, best=0, bestDist = Infinity;
+        for (let i=0;i<=txt.length;i++){
+          const part = txt.slice(0,i);
+          const width = ctx.measureText(part).width;
+          const cx = x + width;
+          const d = Math.abs(px - cx);
+          if (d < bestDist) { bestDist = d; best = i; }
+        }
+        caret.active = true;
+        caret.line   = hit.line;
+        caret.word   = hit.word;
+        caret.index  = best;
+      } else {
+        caret.active=false;
+      }
+    }
     buildAnimationsUI(); render();
-  }else{ doc.multi.clear(); selected=null; lastHandleRect=null; render(); }
+  }else{
+    doc.multi.clear(); selected=null; lastHandleRect=null; caret.active=false; render();
+  }
 });
+
 
 /* typing */
 document.addEventListener("keydown",(e)=>{
   if(mode!=="edit") return;
+  if (uiLock?.emojiOpen) return; // pause while emoji modal is open
 
-  // Space → start a new word after the current selection
-  if(e.key === " " && !e.metaKey && !e.ctrlKey && !e.altKey){
-    e.preventDefault();
-    pushHistory();
-    if(selected){
-      const L = doc.lines[selected.line];
-      const w = L?.words[selected.word];
-      const template = w && !w.emoji
-        ? { text:"", font:w.font, size:w.size, color:w.color, anims:[] }
-        : { text:"", font:defaults.font, size:defaults.size, color:defaults.color, anims:[] };
-      L.words.splice(selected.word+1, 0, template);
-      selected = { line:selected.line, word:selected.word+1 };
-      autoSizeAllIfOn(); render();
-    }
-    return;
-  }
-
-  // Enter → insert a new line after the current line
-  if(e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.altKey){
-    e.preventDefault();
-    pushHistory();
-    const li = selected ? selected.line : (doc.lines.length-1);
-    const newLine = { words:[{ text:"", font:defaults.font, size:defaults.size, color:defaults.color, anims:[] }] };
-    doc.lines.splice(li+1, 0, newLine);
-    selected = { line:li+1, word:0 };
-    autoSizeAllIfOn(); render();
-    return;
-  }
-
-  // Normal character typing on selected targets
   const targets = doc.multi.size
     ? Array.from(doc.multi).map(k=>k.split(":").map(Number))
     : (selected?[[selected.line,selected.word]]:[]);
   if(!targets.length) return;
 
-  if(e.key.length===1 && !e.metaKey && !e.ctrlKey){
+  const [li,wi] = targets[0];
+  const w = doc.lines[li]?.words[wi];
+  if (!w || w.emoji) return;
+
+  // Word-style caret typing:
+  const atCaret = caret.active && caret.line===li && caret.word===wi;
+
+  if (e.key.length===1 && !e.metaKey && !e.ctrlKey) {
     e.preventDefault(); pushHistory();
-    targets.forEach(([li,wi])=>{
-      const w=doc.lines[li]?.words[wi];
-      if(w && !w.emoji) w.text=(w.text||"")+e.key;
-    });
+    if (e.key===" ") {
+      // space => new word (split at caret if active)
+      const text = w.text||"";
+      const cut = atCaret ? caret.index : text.length;
+      const left = text.slice(0,cut), right = text.slice(cut);
+      w.text = left;
+      const newWord = { ...w, text: right };
+      doc.lines[li].words.splice(wi+1, 0, newWord);
+      selected = {line:li,word:wi+1};
+      caret.index = 0;
+    } else {
+      // insert character at caret or at end
+      const text = w.text||"";
+      const i = atCaret ? caret.index : text.length;
+      w.text = text.slice(0,i) + e.key + text.slice(i);
+      caret.index = i + 1;
+    }
     autoSizeAllIfOn(); render();
-  } else if(e.key==="Backspace"){
+    return;
+  }
+
+  if (e.key==="Backspace") {
     e.preventDefault(); pushHistory();
-    targets.forEach(([li,wi])=>{
-      const w=doc.lines[li]?.words[wi];
-      if(w && !w.emoji) w.text=(w.text||"").slice(0,-1);
-    });
+    const text = w.text||"";
+    const i = atCaret ? caret.index : text.length;
+    if (i>0) {
+      w.text = text.slice(0,i-1) + text.slice(i);
+      caret.index = i-1;
+    }
     autoSizeAllIfOn(); render();
+    return;
+  }
+
+  if (e.key==="Enter") {
+    e.preventDefault(); pushHistory();
+    // Enter => new line (split at caret if active)
+    const text = w.text||"";
+    const i = atCaret ? caret.index : text.length;
+    const left = text.slice(0,i), right = text.slice(i);
+    w.text = left;
+    // new line starts with the remainder as a first word
+    const newLine = { words: [{...w, text:right}] };
+    doc.lines.splice(li+1, 0, newLine);
+    selected = { line: li+1, word: 0 };
+    caret.line = li+1; caret.word = 0; caret.index = 0;
+    autoSizeAllIfOn(); render();
+    return;
   }
 });
 
@@ -987,7 +1065,7 @@ function renderEmojiGrid(list){
   list.forEach(e=>{
     const item=document.createElement("button"); item.className="emoji-item"; item.title=e.name;
     const img=document.createElement("img"); img.alt=e.name; img.loading="lazy";
-    if(e.path){ img.src=e.path; } else { img.src="assets/openmoji/fallback.svg"; } // animated emojis drawn at render
+    img.src = e.path || "assets/openmoji/fallback.svg";
     item.appendChild(img);
     item.onclick=()=>{ insertEmoji(e); emojiModal.classList.add("hidden"); };
     frag.appendChild(item);
@@ -1099,6 +1177,7 @@ function init(){
   rebuildBgSwatches();
   render();
   fitZoom();
+  buildAnimationsUI(); // ensure list is populated on load
 
   // Pills default: none open body until clicked
   pillTabs.forEach(p => p.classList.remove("active"));
