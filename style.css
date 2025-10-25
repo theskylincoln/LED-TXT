@@ -307,3 +307,63 @@ button.active, .pill.active {
 .blinking-caret {
     animation: blink-caret 0.8s step-end infinite;
 }
+
+/* ===== Theme (Content Omitted for Brevity) ===== */
+:root{
+  --bg: #0b0f16;
+  --panel: #121826;
+  --glass: rgba(255,255,255,0.04);
+  --text: #e9edfb;
+  --muted: #9aa5bd;
+
+  --accent: #a675ff;
+  --accent-strong: #be8cff;
+  --primary: #7b86ff;
+  --danger: #ff6b8b;
+
+  --grad-start: #ff6bd6;
+  --grad-end:   #6f79ff;
+
+  --ring: rgba(166,117,255,0.45);
+  --shadow: 0 14px 40px rgba(0,0,0,0.55);
+  --radius: 16px;
+  --radius-sm: 12px;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body.theme-midnight{
+  margin:0; padding:0;
+  background: radial-gradient(1200px 800px at 50% -20%, #1a1f2e 0%, #0b0f16 60%) fixed;
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
+  overflow-x:hidden; /* prevent horizontal scroll on iPhone */
+}
+
+/* ... (Rest of existing CSS styles) ... */
+
+/* ===== Text Editor Input for Live Editing - NEW ===== */
+.text-editor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 100; /* Above the canvas, but below modals */
+    padding: 0;
+    margin: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text); /* Match the application text color */
+    caret-color: var(--accent-strong); /* Make cursor visible */
+    white-space: nowrap;
+    overflow: hidden;
+    /* Font properties will be dynamically set in app.js */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px; 
+}
+
+.text-editor:focus {
+    /* Optional: Hide the selection border when input has focus, as we draw it on the canvas */
+    box-shadow: none;
+}
+
