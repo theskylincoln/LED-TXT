@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LED Backpack Animator — v1.0</title>
   <link rel="stylesheet" href="style.css" />
+
+<style>
+  .config-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:8px}
+  @media (max-width:700px){.config-two-col{grid-template-columns:1fr}}
+  .config-col h4{margin:4px 0 6px 0;font-weight:600;font-size:0.95rem;opacity:0.8}
+  .config-col .btn{display:block;margin:6px 0}
+</style>
+
 </head>
 <body class="theme-midnight">
 
@@ -26,7 +34,15 @@
         <select id="resSelect">
           <option value="96x128" selected>96×128</option>
           <option value="64x64">64×64</option>
-        </select>
+        <option value="custom">Custom…</option></select>
+<div class="row two-compact" id="resCustomRow" style="display:none;">
+  <label>Custom</label>
+  <div style="display:flex;gap:8px;align-items:center;justify-content:flex-start;">
+    <input type="number" id="resCustomW" min="8" max="256" value="96" style="max-width:90px;"> ×
+    <input type="number" id="resCustomH" min="8" max="256" value="128" style="max-width:90px;">
+    <button id="applyCustomRes" class="button tiny">Apply</button>
+  </div>
+</div>
       </div>
 
       <!-- 2×2 grid; tiles injected by app.js -->
@@ -45,11 +61,13 @@
           <div id="bgSwatches" class="swatches"></div>
         </div>
         <!-- Custom (single line: label + color + Add) -->
-        <div class="row custom-line">
-          <label for="bgSolidColor" class="inline-label">Custom color</label>
-          <input type="color" id="bgSolidColor" value="#000000" />
-          <button id="addBgSwatchBtn" class="button tiny">Add BG Swatch</button>
-        </div>
+        <div class="row two-compact">
+      <label class="inline-label">Custom color</label>
+      <div style="display:flex;justify-content:flex-start;gap:8px;align-items:center;">
+        <input type="color" id="fontColor" value="#FFFFFF" />
+        <button id="addSwatchBtn" class="button tiny">Add Swatch</button>
+      </div>
+    </div>
         <input type="file" id="bgUpload" accept="image/*" hidden />
       </div>
     </details>
@@ -92,8 +110,7 @@
       <div class="stage-controls">
         <div class="multi-tip">
           <button id="multiToggle" class="chip">Multi-select</button>
-          <button id="manualDragBtn" class="chip">🖐️ Drag</button>
-          <span class="tip desktop-only">Tip: Shift = select multiple, ⌘/Ctrl = drag temporarily</span>
+<span class="tip desktop-only">Tip: Shift = select multiple, ⌘/Ctrl = drag temporarily</span>
         </div>
         <div class="word-row">
           <button id="addWordBtn" class="button tiny">+ Word</button>
@@ -120,10 +137,7 @@
         <button class="pill" data-acc="accAnim">Animations</button>
 
         <!-- ▼ INSERTED: Drag pill visible on desktop -->
-        <button id="manualDragBtn" class="pill" title="Manual drag (Ctrl/⌘ also works)">
-          🖐️ Drag <span class="pill-indicator"></span>
-        </button>
-        <!-- ▲ INSERTED -->
+<!-- ▲ INSERTED -->
       </div>
 
       <div id="inspectorBody" class="inspector-body">
@@ -140,12 +154,12 @@
                 <option>Monospace</option>
                 <option>Roboto</option>
                 <option>Inter</option>
-              </select>
+              <option value="custom">Custom…</option></select>
             </div>
 
             <div class="row two-compact">
               <label for="fontSize">Size</label>
-              <div style="display:flex;justify-content:flex-start;"><input type="number" id="fontSize" min="6" max="64" value="22" /></div>
+              <input type="number" id="fontSize" min="6" max="64" value="22" />
             </div>
 
             <!-- Two autosize toggles -->
@@ -173,11 +187,13 @@
             </div>
 
             <!-- Single-line custom color + Add (font) -->
-            <div class="row custom-line">
-              <label for="fontColor" class="inline-label">Custom color</label>
-              <input type="color" id="fontColor" value="#FFFFFF" />
-              <button id="addSwatchBtn" class="button tiny">Add Swatch</button>
-            </div>
+            <div class="row two-compact">
+      <label class="inline-label">Custom color</label>
+      <div style="display:flex;justify-content:flex-start;gap:8px;align-items:center;">
+        <input type="color" id="fontColor" value="#FFFFFF" />
+        <button id="addSwatchBtn" class="button tiny">Add Swatch</button>
+      </div>
+    </div>
           </div>
         </details>
 
@@ -240,6 +256,19 @@
           <span class="button block darker">Import Config</span>
         </label>
         <button id="saveJsonBtn" class="button block primary">Download Config</button>
+<div id="configTwoCol" class="config-two-col">
+  <div class="config-col left">
+    <h4>GIF/Text</h4>
+    <div id="gifConfigSlot"></div>
+  </div>
+  <div class="config-col right">
+    <h4>App Settings</h4>
+    <button id="importAppConfigBtn" class="btn">Import App Config (.JSON)</button>
+    <input id="appConfigInput" type="file" accept=".json,application/json" style="display:none">
+    <button id="downloadAppConfigBtn" class="btn">Download App Config (.JSON)</button>
+  </div>
+</div>
+
       </div>
     </section>
 
@@ -259,8 +288,8 @@
         <input type="number" id="seconds" min="1" max="60" value="8" />
       </div>
       <div class="row two-eq">
-        <button id="previewRenderBtn" class="button block primary">Generate Preview</button>
-        <button id="gifRenderBtn" class="button block">Download File</button>
+        <button id="previewRenderBtn" class="button block primary">Generate .Gif</button>
+        <button id="gifRenderBtn" class="button block">Download .Gif File</button>
       </div>
       <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF" />
     </section>
@@ -309,7 +338,7 @@
             <option value="both" selected>Both</option>
             <option value="static">Static</option>
             <option value="animated">Animated</option>
-          </select>
+          <option value="custom">Custom…</option></select>
           <input id="emojiSearch" type="search" placeholder="Search emojis…" />
 
           <!-- ▼ INSERTED: Pager controls for emoji pages -->
@@ -335,7 +364,8 @@
   <script src="assets/libs/animatedEmoji.js"></script>
 
   <!-- App -->
-  <script defer src="app.js"></script>
+  <script src="assets/libs/lottie_canvas.min.js"></script>
+<script defer src="app.js"></script>
 
   <!-- local GIF libs -->
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
@@ -343,3 +373,43 @@
   <script defer src="assets/libs/jsgif/GIFEncoder.js"></script>
 </body>
 </html>
+
+<section class="panel glass">
+  <h3 class="section-title">Config</h3>
+  <div class="config-grid">
+    <div class="config-col left">
+      <h4 class="config-head">Project (.JSON)</h4>
+      <div class="config-actions">
+        <label class="upload-btn block">
+          <input type="file" id="loadWordsJsonInput" accept="application/json" hidden />
+          <span class="button block darker">Import Project (.JSON)</span>
+        </label>
+        <button id="saveWordsJsonBtn" class="button block primary">Download Project (.JSON)</button>
+        <button id="clearProjectLSBtn" class="button subtle">Clear Local Project</button>
+      </div>
+    </div>
+    <div class="config-col right">
+      <h4 class="config-head">App setting</h4>
+      <div class="config-actions right-align">
+        <label class="upload-btn block">
+          <input type="file" id="loadAppCfgInput" accept="application/json" hidden />
+          <span class="button block darker">Import App Config (.JSON)</span>
+        </label>
+        <button id="saveAppCfgBtn" class="button block primary">Download App Config (.JSON)</button>
+        <div class="row two-compact">
+          <label>Local autosave (this device only)</label>
+          <div class="switch-wrap">
+            <label class="switch">
+              <input type="checkbox" id="localAutosaveToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="row tiny-help">Stores Project & App settings to this browser. No servers.</div>
+        <button id="clearAppCfgLSBtn" class="button subtle">Clear Local App Settings</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="renderWarn" class="render-warn hidden"></div>

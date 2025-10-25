@@ -1,3 +1,175 @@
+
+const favorites = (() => {
+  const KEY = "led_animator_favs_v1";
+  let data = { emojis: [] };
+  try { data = JSON.parse(localStorage.getItem(KEY)) || data; } catch {}
+  const save = () => localStorage.setItem(KEY, JSON.stringify(data));
+  return {
+    addEmoji(id){ id = String(id||"").toUpperCase(); if(!id) return;
+      if(!data.emojis.includes(id)){ data.emojis.push(id); save(); }
+    },
+    removeEmoji(id){ id = String(id||"").toUpperCase(); const i=data.emojis.indexOf(id);
+      if(i>=0){ data.emojis.splice(i,1); save(); }
+    },
+    listEmojis(){ return [...data.emojis]; },
+    clear(){ data = { emojis: [] }; save(); },
+    has(id){ id = String(id||"").toUpperCase(); return data.emojis.includes(id); }
+  };
+})();
+
+function downloadJSON(obj, filename){
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type:"application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename || "config.json"; a.click();
+  setTimeout(()=> URL.revokeObjectURL(url), 5000);
+}
+
+function getCurrentColorSwatches(){
+  const btns = Array.from(document.querySelectorAll('#colorSwatches .swatch, [data-swatch-bar] .swatch, .swatch-row .swatch'));
+  const domColors = btns.map(b => b.getAttribute('data-color')).filter(Boolean);
+  const codeColors = (typeof defaultTextPalette !== "undefined" ? defaultTextPalette : [])
+    .concat(typeof defaultBgPalette !== "undefined" ? defaultBgPalette : []);
+  const unique = Array.from(new Set(domColors.concat(codeColors))).filter(Boolean);
+  return unique;
+}
+
+function getAllBackgrounds(){
+  const out = [];
+  try {
+    if (typeof PRESETS === "object" && PRESETS){
+      Object.keys(PRESETS).forEach(resKey=>{
+        (PRESETS[resKey]||[]).forEach(p=>{
+          out.push({
+            id: p.id || p.name || "Preset",
+            res: resKey,
+            thumb: p.thumb || p.preview || "",
+            path: p.full || p.path || ""
+          });
+        });
+      });
+    }
+  } catch(e){}
+  return out;
+}
+
+function buildConfigPayload(){
+  return {
+    favorite_emojis: favorites.listEmojis(),
+    color_swatches: getCurrentColorSwatches(),
+    backgrounds: getAllBackgrounds()
+  };
+}
+
+async function importAppConfigFromFile(file){
+  try{
+    const text = await file.text();
+    const cfg = JSON.parse(text);
+
+    if (Array.isArray(cfg.color_swatches)){
+      const bar = document.querySelector("#colorSwatches, [data-swatch-bar], .swatch-row");
+      const seen = new Set(getCurrentColorSwatches().map(c=>c.toLowerCase()));
+      cfg.color_swatches.forEach(hex => {
+        const h = String(hex||"").trim();
+        if (!h) return;
+        const lower = h.toLowerCase();
+        if (seen.has(lower)) return;
+        seen.add(lower);
+        if (bar){
+          const b=document.createElement("button"); b.className="swatch"; b.title=h; b.setAttribute("data-color", h); b.style.background=h;
+          b.onclick=()=>{
+            const inp = document.querySelector('#fontColor, input[type="color"]');
+            if (inp) inp.value = h;
+            if (typeof setWordColor === "function") setWordColor(h);
+          };
+          bar.appendChild(b);
+        }
+        if (typeof defaultTextPalette!=="undefined" && !defaultTextPalette.includes(h)) defaultTextPalette.push(h);
+      });
+    }
+
+    if (Array.isArray(cfg.backgrounds)){
+      if (typeof PRESETS === "object" && PRESETS){
+        cfg.backgrounds.forEach(bg => {
+          const key = (bg.res && bg.res!=="*") ? bg.res : `${doc?.res?.w||96}x${doc?.res?.h||128}`;
+          PRESETS[key] = PRESETS[key] || [];
+          const exists = PRESETS[key].some(p => (p.id||p.name) === (bg.id||bg.name));
+          if (!exists){
+            PRESETS[key].push({ id: bg.id||bg.name, thumb: bg.thumb||bg.preview||"", full: bg.path||bg.full||"" });
+          }
+        });
+        if (typeof buildBgGrid === "function") try{ buildBgGrid(); }catch{}
+      }
+    }
+
+    if (Array.isArray(cfg.static_emojis)){
+      window.EMOJI_DB = {
+        categories: Array.from(new Set(cfg.static_emojis.map(e=>e.category||"General"))),
+        entries: cfg.static_emojis.map(e => ({
+          id: String(e.id||e.unicode||"").toUpperCase(),
+          name: e.name||"emoji",
+          path: e.path||e.src||"",
+          category: e.category||"General"
+        }))
+      };
+      if (typeof filterEmoji === "function") try{ await filterEmoji(); }catch{}
+    }
+
+    if (cfg.animated_index && window.AnimatedEmoji){
+      window.AnimatedEmoji.NOTO_INDEX.length = 0;
+      (cfg.animated_index||[]).forEach(item=>{
+        window.AnimatedEmoji.NOTO_INDEX.push({
+          cp: String(item.cp||"").toLowerCase(),
+          ch: item.ch||"",
+          name: item.name||item.cp
+        });
+      });
+      document.dispatchEvent(new CustomEvent("animatedEmojiReady"));
+    }
+
+    if (Array.isArray(cfg.favorite_emojis)){
+      favorites.clear();
+      cfg.favorite_emojis.forEach(id => favorites.addEmoji(id));
+    }
+
+    alert("App config imported.");
+  }catch(e){
+    console.error(e);
+    alert("Failed to import app config: " + e.message);
+  }
+}
+
+(function(){
+  const slot = document.getElementById("gifConfigSlot");
+  if (!slot) return;
+  ["loadJsonBtn","importJsonBtn","openJsonBtn","saveJsonBtn"].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el && el.parentNode !== slot){ slot.appendChild(el); }
+  });
+})();
+
+(function(){
+  const slot = document.getElementById("gifConfigSlot");
+  if (slot){
+    ["loadJsonBtn","importJsonBtn","openJsonBtn","saveJsonBtn"].forEach(id=>{
+      const el = document.getElementById(id);
+      if (el && el.parentNode !== slot){ slot.appendChild(el); }
+    });
+  }
+  const dl = document.getElementById("downloadAppConfigBtn");
+  if (dl){ dl.addEventListener("click", ()=> downloadJSON(buildConfigPayload(), "led_animator_config.json")); }
+  const upBtn = document.getElementById("importAppConfigBtn");
+  const upInp = document.getElementById("appConfigInput");
+  if (upBtn && upInp){
+    upBtn.addEventListener("click", ()=> upInp.click());
+    upInp.addEventListener("change", async (e)=>{
+      const f = e.target.files && e.target.files[0];
+      if (f) await importAppConfigFromFile(f);
+      upInp.value = "";
+    });
+  }
+})();
+
 /* =======================================================================
    LED Backpack Animator v1.0 — app.js (updated, drop-in)
    - Startup preset loads from JSON (lines only) without altering backgrounds
@@ -34,7 +206,7 @@ const bgUpload=$("#bgUpload");
 
 /* stage controls */
 const multiToggle=$("#multiToggle"),
-      manualDragBtn=$("#manualDragBtn") || $("#manualDragToggle");
+      manualDragBtn=$("") || $("#manualDragToggle");
 const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn"), delWordBtn=$("#deleteWordBtn");
 const emojiBtn=$("#emojiBtn");
 
@@ -999,23 +1171,19 @@ async function renderGif(previewOnly=false){
   const enc=new GIFEncoder(); enc.setRepeat(0); enc.setDelay(delay); enc.setQuality(10); enc.setSize(W,H); enc.start();
   for(let i=0;i<frames;i++){ const t=i/F; render(t,S); enc.addFrame(ctx); if(progressBar) progressBar.style.setProperty("--p",(t/S)%1); if(tCur) tCur.textContent=`${(t%S).toFixed(1)}s`; }
   enc.finish();
-  const blob=encoderBlob(enc);
-  const url=URL.createObjectURL(blob);
+  const blob=encoderBlob(enc); const url=URL.createObjectURL(blob);
 
   if(gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=url; gifPreviewImg.alt="Preview GIF"; }
 
-  if (!previewOnly){
-    const a=document.createElement("a");
-    a.href=url;
-    a.download=`${(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"")}.gif`;
-    a.target="_blank"; a.rel="noopener"; a.click();
-  }
-
+  const a=document.createElement("a");
+  a.href=url; a.download=`${(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"")}.gif`;
+  a.target="_blank"; a.rel="noopener"; a.click();
   setTimeout(()=>URL.revokeObjectURL(url),15000);
+
   if(resume) startPreview();
 }
 on(previewBtn,"click",()=>{ setMode("preview"); if(gifPreviewImg){ gifPreviewImg.src=""; gifPreviewImg.classList.add("hidden"); } /* live preview only */ render(); });
-on(gifBtn,"click",()=>{ if(typeof checkFpsFramesWarn)==="function") checkFpsFramesWarn(); renderGif(false); });
+on(gifBtn,"click",()=>renderGif(false));
 [fpsInp, secondsInp].forEach(inp=> on(inp,"input",()=>{ if(mode==="preview") startPreview(); if(tEnd) tEnd.textContent=`${seconds().toFixed(1)}s`; }));
 
 /* =======================================================
@@ -1060,7 +1228,7 @@ on(aboutClose,"click",()=> aboutModal?.classList.add("hidden"));
 /* =======================================================
    EMOJI PICKER (Static / Animated / Both)
 ======================================================= */
-const EMOJI_TABS = ["Both","Static","Animated"];
+const EMOJI_TABS = ["Both","Static","Animated","⭐ Favorites"];
 function buildEmojiTabs(){
   emojiTabs.innerHTML="";
   EMOJI_TABS.forEach((name,i)=>{
@@ -1071,12 +1239,17 @@ function buildEmojiTabs(){
 }
 function renderEmojiGrid(list){
   emojiGrid.innerHTML="";
+  const favSet=new Set(favoritesEmojis||[]);
   const frag=document.createDocumentFragment();
   list.forEach(e=>{
+    const key=(e.id||e.path||"").toString();
     const item=document.createElement("button"); item.className="emoji-item"; item.title=e.name;
     const img=document.createElement("img"); img.alt=e.name; img.loading="lazy";
-    img.src = e.path || "assets/openmoji/fallback.svg";
+    img.src = e.path || (e.id ? `https://unpkg.com/openmoji@14.0.0/color/72x72/${e.id}.png` : "assets/openmoji/fallback.svg");
     item.appendChild(img);
+    const fav=document.createElement("button"); fav.type="button"; fav.className="emoji-fav"+(favSet.has(key)?" active":""); fav.title=favSet.has(key)?"Remove from favorites":"Add to favorites"; fav.innerHTML="<span>★</span>";
+    fav.onclick=(ev)=>{ ev.stopPropagation(); toggleFavEmoji(key); fav.classList.toggle("active"); };
+    item.appendChild(fav);
     item.onclick=()=>{ insertEmoji(e); emojiModal.classList.add("hidden"); };
     frag.appendChild(item);
   });
@@ -1092,6 +1265,23 @@ async function filterEmoji(){
     const ok = !q || e.name.toLowerCase().includes(q) || e.id.includes(q);
     return ok;
   }).map(e=>({ ...e, type:"static" }));
+
+  const animList = noto.entries.filter(e=>{
+    const ok = !q || e.name.toLowerCase().includes(q) || e.id.includes(q) || (e.ch||"").includes(q);
+    return ok;
+  }).map(e=>({ ...e, type:"animated", codepoint:e.cp }));
+
+  let combined=[];
+  if(tab==="Both") combined=[...animList, ...staticList];
+  else if(tab==="Static") combined=staticList;
+  else if(tab==="Animated") combined=animList;
+  else if(tab==="⭐ Favorites"){
+    const favSet=new Set(favoritesEmojis||[]);
+    combined=[...animList, ...staticList].filter(e=>favSet.has((e.id||e.path||"").toString()));
+  }
+
+  renderEmojiGrid(combined.slice(0,800));
+}).map(e=>({ ...e, type:"static" }));
 
   const animList = noto.entries.filter(e=>{
     const ok = !q || e.name.toLowerCase().includes(q) || e.id.includes(q) || (e.ch||"").includes(q);
@@ -1228,59 +1418,81 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-function checkFpsFramesWarn(){
-  const fps = parseInt(fpsInp?.value||"15",10);
-  const secs = parseInt(secondsInp?.value||"8",10);
-  const frames = fps * secs;
-  const warn = document.getElementById("renderWarn");
-  if (!warn) return frames;
-  if (frames > 1000){
-    warn.classList.remove("hidden");
-    warn.textContent = `Heads up: ${frames} total frames (${fps} fps × ${secs}s) may be slow to render.`;
-  } else {
-    warn.classList.add("hidden");
-    warn.textContent = "";
-  }
-  return frames;
-}
-
 /* KEYBOARD SHORTCUTS (Undo/Redo) */
 window.addEventListener("keydown",(e)=>{
-  const inForm = ["INPUT","TEXTAREA","SELECT"].includes((e.target && e.target.tagName) || "");
-  const isCmd = e.metaKey || e.ctrlKey;
-  if (!isCmd) return;
-  if (!inForm && (e.key.toLowerCase()==="y" || (e.shiftKey && e.key.toLowerCase()==="z"))){
+  const tag=(e.target&&e.target.tagName)||"";
+  const inForm=["INPUT","TEXTAREA","SELECT"].includes(tag);
+  const isCmd=e.metaKey||e.ctrlKey;
+  if(!isCmd) return;
+  if(!inForm && (e.key.toLowerCase()==="y" || (e.shiftKey && e.key.toLowerCase()==="z"))){
     e.preventDefault();
     if(future.length){ history.push(snapshot()); const next=future.pop(); Object.assign(doc,next); render(); }
     return;
   }
-  if (!inForm && e.key.toLowerCase()==="z"){
+  if(!inForm && e.key.toLowerCase()==="z"){
     e.preventDefault();
     if(history.length){ future.push(snapshot()); const last=history.pop(); Object.assign(doc,last); render(); }
   }
 });
 
-/* Custom resolution handling */
-const resCustomRow = document.getElementById("resCustomRow");
-const resCustomW = document.getElementById("resCustomW");
-const resCustomH = document.getElementById("resCustomH");
-const applyCustomRes = document.getElementById("applyCustomRes");
+function checkFpsFramesWarn(){
+  const fps=parseInt((fpsInp&&fpsInp.value)||"15",10);
+  const secs=parseInt((secondsInp&&secondsInp.value)||"8",10);
+  const frames=fps*secs;
+  const warn=document.getElementById("renderWarn");
+  if(!warn) return frames;
+  if(frames>1000){ warn.classList.remove("hidden"); warn.textContent=`Heads up: ${frames} total frames (${fps} fps × ${secs}s) may be slow to render.`; }
+  else { warn.classList.add("hidden"); warn.textContent=""; }
+  return frames;
+}
 
-if (resSel){
-  resSel.addEventListener("change",()=>{
-    const val = resSel.value;
-    if (val==="custom"){
-      resCustomRow.style.display="grid";
-    } else {
-      resCustomRow.style.display="none";
-    }
-  });
-}
-if (applyCustomRes){
+/* Custom resolution handling */
+const resCustomRow=document.getElementById("resCustomRow");
+const resCustomW=document.getElementById("resCustomW");
+const resCustomH=document.getElementById("resCustomH");
+const applyCustomRes=document.getElementById("applyCustomRes");
+const resSel=document.getElementById("resSelect");
+if(resSel){ resSel.addEventListener("change",()=>{ const v=resSel.value; resCustomRow && (resCustomRow.style.display=(v==="custom"?"grid":"none")); }); }
+if(applyCustomRes){
   applyCustomRes.addEventListener("click",()=>{
-    const w = Math.max(8, Math.min(256, parseInt(resCustomW.value||"96",10)));
-    const h = Math.max(8, Math.min(256, parseInt(resCustomH.value||"128",10)));
-    doc.res = { w, h };
-    buildBgGrid(); showSolidTools(doc.bg?.type==="solid"); render(); fitZoom();
+    const w=Math.max(8,Math.min(256,parseInt(resCustomW?.value||"96",10)));
+    const h=Math.max(8,Math.min(256,parseInt(resCustomH?.value||"128",10)));
+    doc.res={w,h}; buildBgGrid&&buildBgGrid(); showSolidTools&&showSolidTools(doc.bg?.type==="solid"); render&&render(); fitZoom&&fitZoom();
   });
 }
+
+// Local autosave gating
+const localToggle=document.getElementById("localAutosaveToggle");
+function isLocalOn(){ return !!(localToggle && localToggle.checked); }
+if(typeof saveProjectLS==="function"){
+  const _saveProjectLS=saveProjectLS; saveProjectLS=function(){ if(!isLocalOn()) return; _saveProjectLS(); };
+}
+if(typeof saveAppCfgLS==="function"){
+  const _saveAppCfgLS=saveAppCfgLS; saveAppCfgLS=function(){ if(!isLocalOn()) return; _saveAppCfgLS(); };
+}
+
+function getAppCfgObject(){
+  const defaults={
+    fps:parseInt(fpsInp?.value||"15",10),
+    seconds:parseInt(secondsInp?.value||"8",10),
+    font:fontSelect?.value||"Orbitron",
+    autosizeWord:!!(autoSizeWordChk&&autoSizeWordChk.checked),
+    autosizeLine:!!(autoSizeLineChk&&autoSizeLineChk.checked),
+    localAutosaveEnabled:!!(document.getElementById("localAutosaveToggle")?.checked)
+  };
+  return { favorites:{emojis:favoritesEmojis||[]}, swatches:{font:customTextPalette||[], bg:customBgPalette||[]}, defaults };
+}
+
+// Ensure App settings export uses getAppCfgObject()
+document.addEventListener("DOMContentLoaded",()=>{
+  const btn=document.getElementById("saveAppCfgBtn");
+  if(btn){
+    btn.addEventListener("click",()=>{
+      const cfg=getAppCfgObject();
+      const blob=new Blob([JSON.stringify(cfg,null,2)],{type:"application/json"});
+      const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+      a.download="app_settings.json"; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),15000);
+    });
+  }
+});
