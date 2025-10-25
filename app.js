@@ -1,8 +1,8 @@
 /* =======================================================================
-   LED Backpack Animator v2.2 — app.js (Text Editor Overlay, Preset Filtering, Alignment Fix)
-   - FIX 1: Text Editor now overlays the word for "in-place" editing.
-   - FIX 2: Presets are filtered by the current resolution (96x128 or 64x64).
-   - FIX 3: Alignment buttons in the UI are correctly synchronized with doc.style.align/valign.
+   LED Backpack Animator v2.2 — app.js (FINAL FIXED POSITIONING)
+   - FIX 1: Text Editor positioning logic revised to calculate the TOP-LEFT
+            bounding box of the canvas word for pixel-perfect HTML overlay.
+   - FIX 2: UI synchronization (Alignment, Multi-Select) confirmed.
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -15,7 +15,6 @@ const off = (el, ev, fn) => el && el.removeEventListener(ev, fn);
 const canvas=$("#led"), ctx=canvas.getContext("2d"), wrap=$(".canvas-wrap");
 const textEditor=$("#textEditor"); 
 
-// CRITICAL: Ensure the reference is available everywhere
 const multiToggle = $("#multiToggle"); 
 
 /* toolbar */
@@ -44,7 +43,8 @@ const autoSizeLineChk=$("#autoSizePerLine") || {checked:true};
 const fontColorInp=$("#fontColor"), addSwatchBtn=$("#addSwatchBtn"), textSwatches=$("#swatches");
 
 const lineGapInp=$("#lineGap"), wordGapInp=$("#wordGap");
-const alignBtns=$$("[data-align]"), valignBtns=$$("[data-valign]");
+const alignBtns=$$(".seg-btn[data-align]");
+const valignBtns=$$(".seg-btn[data-valign]");
 
 /* anims */
 const animList=$("#animList");
@@ -102,7 +102,7 @@ const doc={
 
 const THEME_COLORS = ["#FF6BD6","#7B86FF","#E9EDFB"];
 
-/* ------------------ presets catalog (CRITICALLY UPDATED) ------------------ */
+/* ------------------ presets catalog ------------------ */
 const PRESETS={
   "96x128":[
     {id:"A",thumb:"assets/presets/thumbs/Preset_A_thumb.png",full:"assets/presets/96x128/Preset_A.png"},
@@ -189,30 +189,37 @@ function updateTextEditorPosition(w, li, wi, x, y, size, width){
     const canvasRect = canvas.getBoundingClientRect();
     const wrapRect = wrap.getBoundingClientRect();
     
-    // Convert canvas coordinates (x, y) to screen coordinates
     const scale = zoom;
-    const xScreen = (x * scale) + (canvasRect.left - wrapRect.left);
-    // CRITICAL FIX: To overlay the word, we use 'y' (which is the baseline) 
-    // and subtract the adjusted text size to move the input box UP to the top of the text.
-    // The canvas Y coordinate is the text baseline, the input box Y is the top edge.
-    const yScreen = (y * scale) + (canvasRect.top - wrapRect.top) - (size * scale) + 2; 
     
-    // Font size should match the canvas for correct text wrapping/metrics
+    // x, y are the TOP-LEFT corner of the word's bounding box on the canvas
+    const xScreen = (x * scale) + (canvasRect.left - wrapRect.left);
+    const yScreen = (y * scale) + (canvasRect.top - wrapRect.top);
+    
+    // Set font size to match the canvas size
     const editorFontSize = size * scale;
-    const editorWidth = width * scale;
-    const editorHeight = size * scale * 1.2; 
+    // Set height to be slightly larger than text height to prevent clipping
+    const editorHeight = size * scale * 1.15; // 15% extra padding to contain the text
+    
+    // Calculate the width needed
+    const tempCtx = canvas.getContext('2d');
+    tempCtx.font = `${size}px ${w.font||defaults.font}`;
+    const measuredWidth = tempCtx.measureText(w.text || "").width;
+
+    const editorWidth = measuredWidth * scale;
 
     // CRITICAL: Set the editor's position and size
-    textEditor.style.left = `${xScreen - 1}px`; // -1 for a slight left adjustment
+    textEditor.style.left = `${xScreen}px`; 
     textEditor.style.top = `${yScreen}px`; 
-    textEditor.style.width = `${Math.max(10, editorWidth + 2)}px`; // +2 for border/padding tolerance
+    textEditor.style.width = `${editorWidth + 4}px`; // Add small horizontal padding
     textEditor.style.height = `${editorHeight}px`;
     textEditor.style.fontSize = `${editorFontSize}px`;
     textEditor.style.fontFamily = w.font || defaults.font;
-    textEditor.style.lineHeight = '1';
-    // Match the color, and set opacity for the overlay trick
+    textEditor.style.lineHeight = '1.15'; // Line height to center the text vertically
+    textEditor.style.padding = '0'; // Ensure no padding is applied
+
+    // Match the color
     textEditor.style.color = w.color || defaults.color; 
-    textEditor.style.textShadow = 'none'; // Clear any default shadows
+    textEditor.style.textShadow = 'none';
 
     // Update editor content and focus
     textEditor.value = w.text || "";
@@ -277,6 +284,8 @@ on(textEditor, 'keydown', (e) => {
 
 on(textEditor, 'blur', () => {
     // Only deselect if the blur wasn't caused by clicking a word on the canvas 
+    // This part is tricky; we rely on the click handler to re-select if a word was clicked.
+    // If it blurs and is not re-selected, we keep it hidden.
     if (!selected) {
         deselectWord(false);
     }
@@ -322,8 +331,10 @@ function getWordPositionInfo(li, wi) {
                 const size = w.size || defaults.size;
 
                 if (j === wi) {
-                    // x is the left edge of the word, y is the text baseline
-                    return { x, y: yCursor + lh * 0.9, size, width }; 
+                    // x is the left edge of the word. 
+                    // y is now the TOP EDGE of the word's bounding box.
+                    const topY = yCursor; 
+                    return { x, y: topY, size, width: width + 2 }; // +2 padding for the input box width
                 }
                 x += width + wg;
             }
@@ -335,7 +346,7 @@ function getWordPositionInfo(li, wi) {
 
 
 /* =======================================================
-   BACKGROUND GRID / SOLID / UPLOAD (PRESET FILTER FIX)
+   BACKGROUND GRID / SOLID / UPLOAD
 ======================================================= */
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 function buildBgGrid(){
@@ -360,8 +371,6 @@ function buildBgGrid(){
       if(t.kind==="preset"){
         const im=new Image(); 
         im.crossOrigin="anonymous"; 
-        // CRITICAL FIX: The image source might be a contentFetchId, which must be treated as a direct URL.
-        // We ensure a simple string assignment. The browser or environment must handle the ID resolution.
         im.src=t.full; 
         im.onload=()=>{ doc.bg={type:"preset",color:null,image:im,preset:t.full}; showSolidTools(false); render(); };
         // Warn if image loading fails
@@ -566,7 +575,7 @@ function autoSizeAllIfOn(){
 ======================================================= */
 function seconds(){ return Math.max(1,Math.min(60, parseInt(secondsInp?.value||"8",10))); }
 function fps(){ return Math.max(1,Math.min(30, parseInt(fpsInp?.value||"15",10))); }
-function colorToHue(hex){ const c=(hex||"#fff").replace("#",""); const r=parseInt(c.slice(0,2)||"ff",16)/255,g=parseInt(c.slice(2,4)||"ff",16)/255,b=parseInt(c.slice(4,6)||"ff",16)/255; const M=Math.max(r,g,b), m=Math.min(r,g,b); if(M===m) return 0; const d=M-m; let h=(M===r)?(g-b)/d+(g<b?6:0):(M===g)?(b-r)/d+2:(r-g)/d+4; return Math.round((h/6)*360); }
+function colorToHue(hex){ const c=(hex||"#fff").replace("#",""); const r=parseInt(c.slice(0,2)||"ff",16)/255,g=parseInt(c.slice(2,4)||"ff",16)/255,b=parseInt(c.slice(4,6)||"ff",16)/255; const M=Math.max(r,g,b), m=Math.min(r,g,b); if(M===m) return 0; const d=M-m; let h=(M===r)?(g-b)/d+(g<b?6:0):(M===g)?(b-r)/d+2:(r-g)/d+4; return Math.round((h/2)*360); }
 function easeOutCubic(x){ return 1-Math.pow(1-x,3); }
 
 // Placeholder for full animation functions
@@ -886,12 +895,13 @@ function render(t=0,totalDur=seconds()){
       const selKey=`${li}:${wi}`;
       const lh_actual = lineHeight(line); 
       if(doc.multi.has(selKey) || (selected && selected.line===li && selected.word===wi && mode==="edit")){
-        drawSelectionBox(drawX-2, drawY-lh_actual-2, ww+4, lh_actual+4, doc.multi.has(selKey));
+        drawSelectionBox(drawX-2, drawY-lh_actual*0.9, ww+4, lh_actual+4, doc.multi.has(selKey));
         
         // Update textEditor position
         if(selected && selected.line===li && selected.word===wi && mode==="edit"){
-            // CRITICAL FIX: Pass the correct text baseline Y (drawY) and size to the position updater
-            updateTextEditorPosition(w, li, wi, drawX, drawY, w.size||defaults.size, ww);
+            // CRITICAL FIX: Pass the correct TOP-LEFT corner (yCursor) to the position updater
+            const { x: topX, y: topY, size, width } = getWordPositionInfo(li, wi);
+            updateTextEditorPosition(w, li, wi, topX, topY, size, width);
         }
       }
       ctx.restore();
