@@ -1,646 +1,456 @@
 /* =======================================================================
-   LED Backpack Animator v2.1 — app.js (Step 2: Canvas Editing Engine)
-   - Implements Metrics for text size, autosize, and layout (Task A2).
-   - Implements Canvas render loop: text, caret, selection (Task A1).
-   - Implements Typing Model: char, space, enter, backspace, arrows (Task A1).
+   LED Backpack Animator v1.0 — app.js (Updated for Animated GIF Backgrounds)
+   - Integrated SuperGif (libgif.js) for frame-by-frame animated GIF parsing.
+   - Added `gifPlayer` state to manage the GIF instance.
+   - Modified `bg` state to track if the background is an animated GIF.
+   - Updated the upload handler to initialize SuperGif for .gif files.
+   - Updated `render()` to advance GIF frames only during "preview" mode.
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
 const $  = (q, el=document) => el.querySelector(q);
 const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
 const on = (el, ev, fn, opt) => el && el.addEventListener(ev, fn, opt);
-const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
 /* ------------------ DOM refs ------------------ */
-const canvas = $("#led"), ctx = canvas.getContext("2d"), wrap = $(".canvas-wrap");
-const zoomSlider = $("#zoom"), zoomReadout = $("#zoomReadout");
-const undoBtn = $("#undo"), redoBtn = $("#redo");
-const clearBtn = $("#clearCanvas");
-const fitBtn = $("#fit");
+const canvas=$("#led"), ctx=canvas.getContext("2d"), wrap=$(".canvas-wrap");
 
-/* ------------------ State & History ------------------ */
-const UNDO_LIMIT = 100;
-let doc = {}; // The Project document (what gets saved to project.json)
-let appsettings = {}; // Environment settings (what gets saved to app-config.json)
-let history = [];
-let future = [];
-let currentZoom = 100; 
-let lastCaretBlink = Date.now();
-let isCaretVisible = true;
-let animationFrameId = null;
+/* toolbar */
+const modeEditBtn=$("#modeEdit"), modePreviewBtn=$("#modePreview");
+const zoomSlider=$("#zoom"), fitBtn=$("#fit");
+const undoBtn=$("#undoBtn"), redoBtn=$("#redoBtn"), clearAllBtn=$("#clearAllBtn");
+const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn");
+const multiToggle=$("#multiToggle");
 
-// --- Default State (Hardcoded for MVP start) ---
-const defaultDoc = {
-  res: { w: 96, h: 128 },
-  bg: { type: 'preset', preset: 'A', color: '#000000', image: null, name: 'Preset_A' },
-  spacing: { lineGap: 6, wordGap: 4, padding: 8 },
-  style: { align: 'center', valign: 'middle' },
-  lines: [
-    // Initial state: one line, one word, selection at the end.
-    { words: [{ text: 'HELLO', color: '#FFFFFF', font: 'Orbitron', size: 22, autosize: true, x: 0, y: 0, manual: false, anim: { motion: [], color: [] } }], align: 'center' }
+/* inspector */
+const accFont=$("#accFont"), accLayout=$("#accLayout"), accAnim=$("#accAnim");
+const fontSelect=$("#fontSelect"), fontSize=$("#fontSize"), autoSize=$("#autoSize");
+const fontColor=$("#fontColor"), swatches=$("#swatches"), addSwatchBtn=$("#addSwatchBtn");
+const lineGap=$("#lineGap"), wordGap=$("#wordGap");
+const hAlignBtns=$$(".acc-body .row:nth-of-type(3) .seg button");
+const vAlignBtns=$$(".acc-body .row:nth-of-type(4) .seg button");
+
+/* background */
+const bgPanel=$("#bgPanel"), bgGrid=$("#bgGrid"), bgUpload=$("#bgUpload");
+const bgSolidTools=$("#bgSolidTools"), bgSolidColor=$("#bgSolidColor"), bgSwatches=$("#bgSwatches");
+const addBgSwatchBtn=$("#addBgSwatchBtn");
+
+/* render */
+const renderPanel=$("#renderPanel");
+const fpsInput=$("#fps"), secondsInput=$("#seconds");
+const previewRenderBtn=$("#previewRenderBtn"), gifRenderBtn=$("#gifRenderBtn");
+const progress=$("#progress"), progressFill=$(".progress-fill", progress);
+const progressTime=$(".progress-time"), tCur=$("#tCur"), tEnd=$("#tEnd");
+const gifPreview=$("#gifPreview");
+
+/* modals */
+const emojiModal=$("#emojiModal");
+
+/* ------------------ state ------------------ */
+let mode="edit", zoom=1, selected=null;
+let history=[], future=[];
+const UNDO_LIMIT=100;
+let startT=0, rafId=null;
+const uiLock = { emojiOpen: false };
+const defaults={ font:"Orbitron", size:22, color:"#FFFFFF" };
+
+const doc={
+  version:"1.0",
+  res:{ w:96, h:128 },
+  // MODIFIED: Added isAnimatedGif:false to the background state
+  bg:{ type:"preset", color:null, image:null, preset:"assets/presets/96x128/Preset_A.png", isAnimatedGif:false },
+  spacing:{ lineGap:4, wordGap:6 }, style:{ align:"center", valign:"middle" },
+  lines:[ // will be replaced by startup.json (lines only) if present
+    { words:[{text:"LED",      color:"#E9EDFB", font:"Orbitron", size:24, anims:[]}] },
+    { words:[{text:"Backpack", color:"#FF6BD6", font:"Orbitron", size:24, anims:[]}] },
+    { words:[{text:"Animator", color:"#7B86FF", font:"Orbitron", size:24, anims:[]}] }
   ],
-  selection: { line: 0, word: 0, caret: { index: 5 }, multi: [{ l: 0, w: 0 }] }
-};
-const defaultAppSettings = {
-  theme: 'midnight', fps: 12, seconds: 6, loop: 'forever', dither: 'fs', palette: 128,
-  hiContrast: false, autosave: false, favorites: { animations: [], colorFx: [] },
-  userBGs: [], swatches: { color: ['#fff', '#000', '#ff0000'], custom: ['#73b7ff'] },
-  defaultsPath: 'assets/defaults/'
+  anims:[], // panel defaults (used for Apply To All etc.)
+  multi:new Set()
 };
 
+let gifPlayer = null; // NEW: Global SuperGif player instance
+let customEmojiDB = [];
 
-/* ------------------ State Management (Task A3) ------------------ */
-const State = (() => {
-    
-    function snapshot() { return clone(doc); }
-    
-    function restore(snap) {
-        Object.assign(doc, snap);
-        // Re-setup canvas for new resolution
-        Canvas.setupCanvas(); 
-        UI.updateAll();
-        Canvas.render();
+// Hardcoded Presets (matching the HTML structure)
+const PRESETS = {
+  '96x128': [
+    { thumb: 'assets/thumbs/Preset_A_thumb.png', full: 'assets/presets/96x128/Preset_A.png' },
+    { thumb: 'assets/thumbs/Preset_B_thumb.png', full: 'assets/presets/96x128/Preset_B.png' }
+  ],
+  '64x64': [
+    { thumb: 'assets/thumbs/Preset_C_thumb.png', full: 'assets/presets/64x64/Preset_C.png' },
+    { thumb: 'assets/thumbs/Preset_D_thumb.png', full: 'assets/presets/64x64/Preset_D.png' }
+  ]
+};
+
+const PALETTE = {
+  default: ["#E9EDFB", "#FF6BD6", "#7B86FF", "#3FDBAD", "#FFD700", "#FF4F4F", "#000000"],
+  bg: ["#0b0f16", "#1e293b", "#334155", "#475569", "#64748b"]
+};
+
+/* ------------------ UTILS ------------------ */
+function hexToRgb(hex) {
+    const bigint = parseInt(hex.slice(1), 16);
+    return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+function rgbToHex(r, g, b) {
+    const toHex = c => c.toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+function hsvToRgb(h, s, v) {
+    let r, g, b;
+    let i = Math.floor(h * 6);
+    let f = h * 6 - i;
+    let p = v * (1 - s);
+    let q = v * (1 - f * s);
+    let t = v * (1 - (1 - f) * s);
+
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
     }
 
-    /**
-     * Executes a state change and records the previous state to history.
-     * @param {string} actionType - The action type.
-     * @param {function} mutationFn - A function that applies the change directly to the 'doc'.
-     */
-    function dispatch(actionType, mutationFn) {
-        // 1. Snapshot the CURRENT state BEFORE mutation
-        const currentState = snapshot();
-        
-        // 2. Clear the future (re-branching the timeline)
-        future.length = 0;
-        
-        // 3. Execute the mutation (updates the live 'doc')
-        mutationFn(doc, appsettings);
+    const toHex = (c) => Math.round(c * 255).toString(16).padStart(2, '0');
+    return '#' + toHex(r) + toHex(g) + toHex(b);
+}
 
-        // 4. Record the previous state
-        history.push({
-            state: currentState,
-            actionType: actionType,
-            timestamp: Date.now()
-        });
-        
-        // Enforce the 100-state limit
-        if (history.length > UNDO_LIMIT) {
-            history.shift();
-        }
-        
-        // 5. Update UI and Canvas
-        UI.updateAll();
-        Canvas.render();
-    }
-    
-    return { dispatch, restore, snapshot, getDoc: () => doc, getSettings: () => appsettings };
-})();
-
+/* ------------------ STATE & HISTORY ------------------ */
+function snapshot() { return JSON.parse(JSON.stringify(doc)); }
+function restore(snap) { Object.assign(doc, snap); initCanvas(); render(); updateUI(); }
+function pushState(actionType) {
+  future.length = 0;
+  history.push({ state: snapshot(), actionType, timestamp: Date.now() });
+  if (history.length > UNDO_LIMIT) history.shift();
+  updateUI();
+}
 
 function undo() {
-    if (history.length <= 1) return;
-    
-    const currentState = State.snapshot();
-    future.unshift({ state: currentState });
-    
-    const previousState = history.pop().state;
-    State.restore(previousState);
+  if (history.length <= 1) return;
+  future.unshift({ state: snapshot() });
+  history.pop(); // Remove current state
+  restore(history[history.length - 1].state);
 }
 
 function redo() {
-    if (future.length === 0) return;
-    
-    const nextState = future.shift().state;
-    State.restore(nextState);
-    
-    // The restored state becomes the new last state in history
-    history.push({ state: State.snapshot(), actionType: 'REDO', timestamp: Date.now() });
+  if (future.length === 0) return;
+  const nextState = future.shift().state;
+  history.push({ state: nextState, actionType: 'REDO', timestamp: Date.now() });
+  restore(nextState);
 }
 
-/* ------------------ UI Module (Task A4) ------------------ */
-const UI = (() => {
-    
-    function updateAll() {
-        undoBtn.disabled = history.length <= 1;
-        redoBtn.disabled = future.length === 0;
-        zoomReadout.textContent = `${Math.round(currentZoom)}%`;
-        
-        // Enable/Disable delete button based on selection
-        const { selection, lines } = State.getDoc();
-        const line = lines[selection.line];
-        const delSelBtn = $("#delSelBtn");
+/* ------------------ CANVAS & RENDERING ------------------ */
+function initCanvas(){
+  canvas.width=doc.res.w; canvas.height=doc.res.h;
+  canvas.style.width=`${doc.res.w}px`; canvas.style.height=`${doc.res.h}px`;
+  fitZoom();
+}
 
-        if (delSelBtn) {
-            // Check if a word is selected or if there's text to delete
-            const hasText = line && line.words[selection.word] && line.words[selection.word].text.length > 0;
-            const hasSelection = selection.multi.length > 0 || hasText;
-            delSelBtn.disabled = !hasSelection;
+function startPreview(){
+  mode="preview"; startT=Date.now(); modeEditBtn.classList.remove("active"); modePreviewBtn.classList.add("active");
+  if(rafId) cancelAnimationFrame(rafId);
+  loop();
+}
+
+function stopPreview(){
+  mode="edit"; modeEditBtn.classList.add("active"); modePreviewBtn.classList.remove("active");
+  if(rafId) cancelAnimationFrame(rafId);
+  rafId=null;
+  render(); // Final static render
+}
+
+function loop(){
+  const t = (Date.now() - startT) / 1000;
+  render(t * 1000); // Pass time in milliseconds
+  rafId = requestAnimationFrame(loop);
+}
+
+/**
+ * Renders a single frame.
+ * @param {number} t - Time in milliseconds since animation start, used for FX.
+ */
+function render(t=0){
+  const w = doc.res.w, h = doc.res.h;
+  ctx.clearRect(0, 0, w, h);
+
+  // 1. Background
+  if(doc.bg.type==="solid"){
+    ctx.fillStyle=doc.bg.color||"#000000";
+    ctx.fillRect(0,0,w,h);
+  } else if (doc.bg.image) {
+    if (doc.bg.isAnimatedGif && gifPlayer) {
+      // If in preview mode, advance the GIF frame
+      if (mode === "preview") {
+        // SuperGif frame delay is in centiseconds (10ms units)
+        const frameDur = gifPlayer.get_delay_point(gifPlayer.get_frame_index()) * 10;
+        
+        // Use a persistent timestamp on the player to manage frame timing
+        if (!gifPlayer.lastFrameTime) gifPlayer.lastFrameTime = t;
+
+        if (t >= gifPlayer.lastFrameTime + frameDur) {
+           gifPlayer.advance_frame();
+           gifPlayer.lastFrameTime = t;
         }
-    }
+      }
+      // Draw the GIF's current frame (which is on its internal canvas: doc.bg.image) to the main canvas
+      // SuperGif's internal canvas already matches doc.res.w/h from the loader
+      ctx.drawImage(doc.bg.image, 0, 0, w, h);
 
-    function setZoom(newZoom) {
-        currentZoom = Math.max(50, Math.min(400, newZoom));
-        zoomSlider.value = currentZoom;
-        updateCanvasStyle();
-        updateAll();
+    } else {
+      // Static Image/Preset
+      ctx.drawImage(doc.bg.image, 0, 0, w, h);
+    }
+  }
+
+  // 2. Layout Calculation
+  // This is where you would call your layout engine to calculate x, y, size for all words.
+  // For this simplified version, let's assume a basic centered layout for demonstration.
+  let currentY = doc.spacing.lineGap;
+  const padding = 8;
+  const lineGap = doc.spacing.lineGap;
+  const wordGap = doc.spacing.wordGap;
+  
+  doc.lines.forEach((line, lIdx) => {
+    let lineContentWidth = 0;
+    line.words.forEach(word => {
+      ctx.font = `${word.size}px ${word.font}`;
+      word.w = ctx.measureText(word.text).width;
+      lineContentWidth += word.w + wordGap;
+    });
+    lineContentWidth -= wordGap;
+    
+    // Simple vertical centering for top-level line positioning
+    if(lIdx === 0 && doc.style.valign === "middle") {
+       // A more complete calculation would sum all line heights
+       // For now, let's just make the first line a bit down for looks
+       currentY = (h / 3); 
     }
     
-    function updateCanvasStyle() {
-        const scale = currentZoom / 100;
-        canvas.style.transform = `scale(${scale})`;
-    }
+    let currentX = padding;
+    if (line.align === 'center') currentX = (w / 2) - (lineContentWidth / 2);
+    else if (line.align === 'right') currentX = w - lineContentWidth - padding;
     
-    function fitZoom() {
-        const docRes = State.getDoc().res;
-        const wrapRect = wrap.getBoundingClientRect();
-        
-        if (docRes.w === 0 || docRes.h === 0) return;
+    line.words.forEach((word, wIdx) => {
+      word.x = currentX;
+      word.y = currentY;
+      
+      let finalColor = word.color;
+      let finalX = word.x;
+      let finalY = word.y;
+      
+      // --- Apply Animation/Color FX ---
+      // Example: Rainbow FX (from previous steps)
+      if (word.anims.includes('rainbow')) {
+          finalColor = hsvToRgb((t / 3000) % 1, 1, 1);
+      }
+      // Example: Wave FX (from previous steps)
+      if (word.anims.includes('wave')) {
+          finalY += Math.sin(t / 500 * Math.PI) * 2; 
+      }
+      
+      // 3. Draw Text
+      ctx.font = `${word.size}px ${word.font}`;
+      ctx.fillStyle = finalColor;
+      ctx.textBaseline = 'top';
+      ctx.fillText(word.text, finalX, finalY);
 
-        // Account for canvas borders/padding (2px border + 10px visual gap from wrapper edge)
-        const paddedW = wrapRect.width - 24; 
-        const paddedH = wrapRect.height - 24;
-        
-        const scaleW = (paddedW / docRes.w) * 100;
-        const scaleH = (paddedH / docRes.h) * 100;
-        
-        const fitScale = Math.floor(Math.min(scaleW, scaleH));
-        setZoom(fitScale);
-    }
+      // 4. Draw Selection
+      if (mode === 'edit' && lIdx === selected?.l && wIdx === selected?.w) {
+         ctx.strokeStyle = '#a675ff';
+         ctx.lineWidth = 1;
+         ctx.strokeRect(word.x - 1, word.y - 1, word.w + 2, word.size + 2);
+      }
+      
+      currentX += word.w + wordGap;
+    });
     
-    return { updateAll, setZoom, fitZoom };
-})();
+    // Simple line height approximation
+    currentY += line.words[0]?.size + lineGap;
+  });
+}
 
-/* ------------------ Metrics Module (Task A2 - Text Sizing) ------------------ */
-const Metrics = (() => {
+
+/* ------------------ UI ------------------ */
+function updateUI(){
+  undoBtn.disabled=history.length<=1;
+  redoBtn.disabled=future.length===0;
+  
+  const scale=currentZoom/100;
+  canvas.style.transform=`scale(${scale})`;
+  zoomSlider.value=currentZoom;
+  // (You would update zoomReadout here if you had one)
+  
+  $$(".bg-tile",bgGrid).forEach(x=>{
+    x.classList.toggle("active", doc.bg.preset === x.dataset.full || doc.bg.type === x.dataset.kind);
+  });
+}
+
+function fitZoom(){
+  const wrapRect=wrap.getBoundingClientRect();
+  const scaleW=(wrapRect.width-24)/doc.res.w;
+  const scaleH=(wrapRect.height-24)/doc.res.h;
+  const fitScale=Math.floor(Math.min(scaleW, scaleH)*100);
+  currentZoom=Math.max(50, Math.min(400, fitScale));
+  updateUI();
+}
+
+/* ------------------ Backgrounds ------------------ */
+function visibleSet(){
+  const resKey = `${doc.res.w}x${doc.res.h}`;
+  return PRESETS[resKey] || [];
+}
+
+function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
+
+function buildBgGrid(){
+  bgGrid.innerHTML="";
+  const tiles=[
+    ...visibleSet().map(p=>({kind:"preset",thumb:p.thumb,full:p.full})),
+    {kind:"solid",thumb:"assets/thumbs/Solid_thumb.png"},
+    {kind:"upload",thumb:"assets/thumbs/Upload_thumb.png"}
+  ];
+  
+  tiles.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="bg-tile"; b.dataset.kind=t.kind;
+    if (t.full) b.dataset.full = t.full;
+    const img=document.createElement("img"); img.src=t.thumb; img.alt=t.kind;
+    b.appendChild(img);
     
-    const CARET_WIDTH = 1;
-    const CARET_HEIGHT = 10; // Fixed pixel height for the blinking line
-    const DEFAULT_FONT = '9px Orbitron'; // We'll assume a fixed pixel-art font size/family for initial text metrics.
+    on(b,"click",async()=>{
+      // NEW: Stop and clean up any active GIF player when switching backgrounds
+      if(gifPlayer){ gifPlayer.pause(); gifPlayer.remove(); gifPlayer=null; }
 
-    /**
-     * Measure the width of a string at a specific size, handling pixel-perfect fonts.
-     * NOTE: For true LED/Pixel accuracy, this often requires a pre-rendered font sheet or fixed-width font.
-     * We use Canvas `measureText` for layout initially, but final render must be pixel-accurate.
-     * @param {string} text - The text content.
-     * @param {number} size - The font size (e.g., 22).
-     * @param {string} font - The font family (e.g., 'Orbitron').
-     * @returns {number} The measured width in canvas pixels.
-     */
-    function measureWord(text, size, font) {
-        ctx.font = `${size}px ${font || 'Orbitron'}`;
-        // Return text.length * X if using a strict monospace pixel font
-        // For now, use measureText as a proxy.
-        return ctx.measureText(text).width;
-    }
+      $$(".bg-tile",bgGrid).forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      
+      if(t.kind==="preset"){
+        const im=new Image(); im.crossOrigin="anonymous"; im.src=t.full;
+        im.onload=()=>{ doc.bg={type:"preset",color:null,image:im,preset:t.full, isAnimatedGif:false}; showSolidTools(false); render(); };
+        im.src=t.full;
+        pushState("SET_BG_PRESET");
+      }else if(t.kind==="solid"){
+        doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null, isAnimatedGif:false};
+        showSolidTools(true); render();
+        pushState("SET_BG_SOLID");
+      }else{
+        bgUpload.click();
+      }
+    });
+    bgGrid.appendChild(b);
+  });
+  
+  // Activate initial background tile
+  const initialTile = doc.bg.type === 'preset' 
+    ? $(`[data-full="${doc.bg.preset}"]`, bgGrid)
+    : $(`.bg-tile[data-kind="${doc.bg.type}"]`, bgGrid);
+  
+  initialTile?.classList.add("active");
+}
 
-    /**
-     * Calculates the width of an entire line, including word gaps.
-     */
-    function measureLine(words, wordGap) {
-        if (words.length === 0) return 0;
-        const textWidth = words.reduce((sum, word) => sum + measureWord(word.text, word.size, word.font), 0);
-        const gapWidth = (words.length - 1) * wordGap;
-        return textWidth + gapWidth;
-    }
+// Replaces the original on(bgUpload,"change",...)
+on(bgUpload,"change",e=>{
+  const f=e.target.files?.[0]; if(!f) return;
+  const url=URL.createObjectURL(f);
 
-    /**
-     * Applies autosize logic to a line to ensure it fits within the padded width. (Task A2)
-     * @param {object} line - The line object containing words.
-     * @param {number} maxWidth - The maximum available width (canvas width - 2 * padding).
-     */
-    function fitLineToWidth(line, maxWidth, wordGap) {
-        // Simple autosize: if any word has autosize=true, scale the whole line down.
-        const autosizeWords = line.words.filter(w => w.autosize);
+  // 1. Clean up existing player (just in case)
+  if(gifPlayer){ gifPlayer.pause(); gifPlayer.remove(); gifPlayer=null; }
 
-        if (autosizeWords.length === 0) {
-            // If no autosize words, just check if it fits
-            line.words.forEach(word => { word.scale = 1; });
-            return; 
-        }
+  // 2. Handle Animated GIF
+  if (f.type === 'image/gif' && window.SuperGif) {
+    // libgif.js requires an <img> tag to parse the data
+    const img = document.createElement('img');
+    img.src = url;
 
-        let currentWidth = measureLine(line.words.map(w => ({ ...w, scale: 1 })), wordGap);
-        let scale = 1;
-        
-        if (currentWidth > maxWidth && currentWidth > 0) {
-            scale = maxWidth / currentWidth;
-        }
+    // Use a temporary container for SuperGif to work with, as we don't want the GIF DOM elements visible
+    const tempContainer = document.createElement('div');
+    tempContainer.style.display = 'none';
+    document.body.appendChild(tempContainer);
 
-        // Apply scale to all autosize words
-        line.words.forEach(word => {
-            word.scale = word.autosize ? scale : 1; 
-        });
-    }
+    // SuperGif is aliased as window.SuperGif if libgif.js is loaded
+    gifPlayer = new window.SuperGif({ 
+      gif: img,
+      auto_play: false, // We will manually advance the frame in the render loop
+      max_width: doc.res.w, // Scale the GIF to fit the canvas width
+      max_height: doc.res.h, // Scale the GIF to fit the canvas height
+      draw_canvas: false, // Tell the library NOT to draw to the canvas automatically
+      vp_obj: tempContainer // Temporary DOM parent for the decoder
+    });
 
-    /**
-     * Calculates the exact {x, y, w, h} coordinates for a single word and the caret position.
-     * This function is crucial for hit detection and rendering.
-     * NOTE: This is a simplified implementation. Real-world needs a fixed-width font map.
-     */
-    function calculateLayout() {
-        const { res, spacing, lines, style } = State.getDoc();
-        const paddedWidth = res.w - (spacing.padding * 2);
-        const { lineGap, wordGap } = spacing;
-        
-        // 1. Calculate the total height of the content block
-        let totalContentHeight = 0;
-        lines.forEach(line => {
-            // 2. Pre-calculate autosize for the line (Task A2)
-            Metrics.fitLineToWidth(line.words, paddedWidth, wordGap);
+    gifPlayer.load(()=>{
+      URL.revokeObjectURL(url); // Revoke URL now that the GIF is loaded into memory
+      tempContainer.remove(); // Clean up temporary element
 
-            // Rough max height for line (using max font size + scale)
-            const maxWordSize = line.words.reduce((max, w) => Math.max(max, w.size * (w.scale || 1)), 0);
-            line.height = maxWordSize || CARET_HEIGHT; 
-            totalContentHeight += line.height + lineGap;
-        });
-        totalContentHeight -= lineGap; // Remove last gap
+      // Update doc state for GIF background
+      doc.bg = {
+        type:"upload", color:null,
+        image: gifPlayer.get_canvas(), // SuperGif's internal canvas is the source for our main canvas
+        preset:null, isAnimatedGif:true
+      };
+      // Initialize last draw time for smooth frame rate
+      gifPlayer.lastFrameTime = 0;
+      showSolidTools(false);
+      pushState("UPLOAD_BG_GIF");
+      // Start the continuous preview loop if in preview, otherwise render first frame
+      if (mode === "preview") startPreview(); else render();
+    });
 
-        // 3. Determine the vertical start position (Task A6 - V-Align)
-        let vStart = spacing.padding;
-        if (style.valign === 'middle') {
-            vStart = (res.h / 2) - (totalContentHeight / 2);
-        } else if (style.valign === 'bottom') {
-            vStart = res.h - totalContentHeight - spacing.padding;
-        }
-        
-        // 4. Calculate X/Y for each word
-        let currentY = vStart;
-        lines.forEach((line, lineIndex) => {
-            let lineContentWidth = Metrics.measureLine(line.words.map(w => ({ ...w, text: w.text, size: w.size * (w.scale || 1) })), wordGap);
-
-            // Determine the horizontal start position (Task A6 - H-Align)
-            let currentX = spacing.padding;
-            if (line.align === 'center') {
-                currentX = (res.w / 2) - (lineContentWidth / 2);
-            } else if (line.align === 'right') {
-                currentX = res.w - lineContentWidth - spacing.padding;
-            }
-
-            line.x = currentX;
-            line.y = currentY;
-
-            line.words.forEach(word => {
-                const scaledSize = word.size * (word.scale || 1);
-                const wordW = Metrics.measureWord(word.text, scaledSize, word.font);
-                const wordH = line.height;
-
-                word.x = currentX;
-                word.y = currentY;
-                word.w = wordW;
-                word.h = wordH;
-
-                currentX += wordW + wordGap;
-            });
-
-            currentY += line.height + lineGap;
-        });
-    }
-
-    return {
-        measureWord,
-        measureLine,
-        calculateLayout,
-        CARET_WIDTH,
-        CARET_HEIGHT
+  } else {
+    // 3. Handle Static Image (PNG/JPG etc.)
+    const im=new Image();
+    im.onload=()=>{
+      URL.revokeObjectURL(url);
+      doc.bg={type:"upload",color:null,image:im,preset:null, isAnimatedGif:false};
+      showSolidTools(false); render();
+      pushState("UPLOAD_BG_STATIC");
     };
-})();
-
-/* ------------------ Canvas Module (Tasks A1, A2) ------------------ */
-const Canvas = (() => {
-    
-    function setupCanvas() {
-        const docRes = State.getDoc().res;
-        canvas.width = docRes.w;
-        canvas.height = docRes.h;
-        canvas.style.width = `${docRes.w}px`;
-        canvas.style.height = `${docRes.h}px`;
-    }
-
-    function render(t) {
-        const doc = State.getDoc();
-        
-        // 1. Re-calculate layout based on current text
-        Metrics.calculateLayout();
-
-        // 2. Clear Canvas & Draw Background
-        ctx.fillStyle = doc.bg.color || '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // 3. Draw Lines and Words
-        doc.lines.forEach((line, lineIndex) => {
-            line.words.forEach((word, wordIndex) => {
-                
-                // Set font and style
-                const scaledSize = word.size * (word.scale || 1);
-                ctx.font = `${scaledSize}px ${word.font || 'Orbitron'}`;
-                ctx.fillStyle = word.color || '#FFFFFF';
-                ctx.textBaseline = 'top';
-
-                // NOTE: Animations logic (motion/color) would modify x/y/fillstyle here
-                
-                // Draw Text
-                ctx.fillText(word.text, word.x, word.y);
-
-                // 4. Draw Selection Glow (Task A1)
-                const isSelected = doc.selection.line === lineIndex && doc.selection.word === wordIndex;
-                if (isSelected) {
-                    // Selection Glow (magenta blinking glow)
-                    ctx.strokeStyle = `var(--grid-sel)`;
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(word.x - 1, word.y - 1, word.w + 2, word.h + 2);
-                    
-                    // Red 'x' Handle (Task A1)
-                    ctx.fillStyle = `var(--danger)`;
-                    ctx.font = 'bold 14px sans-serif'; // Fixed size for the handle
-                    const handleX = word.x + word.w - 1; // Top right inside bounds
-                    const handleY = word.y;
-                    ctx.fillText('×', handleX, handleY);
-                }
-            });
-        });
-
-        // 5. Draw Caret (Task A1)
-        drawCaret(doc);
-    }
-    
-    function drawCaret(doc) {
-        // Caret blinking logic
-        const now = Date.now();
-        if (now - lastCaretBlink > 800) { // 0.8s blink cycle
-            isCaretVisible = !isCaretVisible;
-            lastCaretBlink = now;
-        }
-
-        if (!isCaretVisible || wrap.classList.contains('mode-play')) return; // Hide in Play mode
-
-        const { line: l, word: w, caret: { index: i } } = doc.selection;
-        const currentLine = doc.lines[l];
-        if (!currentLine) return;
-        const currentWord = currentLine.words[w];
-        if (!currentWord && currentLine.words.length > 0 && w === currentLine.words.length) {
-            // Caret at the start of a new, imaginary word after the last
-            const lastWord = currentLine.words[currentLine.words.length - 1];
-            const x = lastWord.x + lastWord.w + doc.spacing.wordGap;
-            const y = currentLine.y;
-            renderCaretAt(x, y);
-            return;
-        }
-        if (!currentWord) return;
-
-        // Measure text before caret
-        const textBeforeCaret = currentWord.text.substring(0, i);
-        const scaledSize = currentWord.size * (currentWord.scale || 1);
-        const offsetW = Metrics.measureWord(textBeforeCaret, scaledSize, currentWord.font);
-        
-        const x = currentWord.x + offsetW;
-        const y = currentWord.y;
-
-        renderCaretAt(x, y);
-    }
-
-    function renderCaretAt(x, y) {
-        ctx.fillStyle = `var(--caret)`;
-        ctx.fillRect(x, y, Metrics.CARET_WIDTH, Metrics.CARET_HEIGHT);
-    }
-
-    // The main animation loop (used for blinking caret)
-    function loop(t) {
-        render(t);
-        animationFrameId = requestAnimationFrame(loop);
-    }
-
-
-    /* ------------------ Input/Typing Logic (Task A1) ------------------ */
-    function handleKeydown(e) {
-        const { selection, lines } = State.getDoc();
-        let { line: l, word: w, caret: { index: i } } = selection;
-        const currentLine = lines[l];
-        const currentWord = currentLine?.words[w];
-        
-        // Always reset blink on keypress
-        isCaretVisible = true;
-        lastCaretBlink = Date.now();
-        
-        const actionType = 'TYPE_CHAR'; // Default action type
-
-        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            // --- Standard Character Input ---
-            e.preventDefault();
-            State.dispatch(actionType, (d) => {
-                // Ensure a word exists to type into
-                if (!d.lines[l].words[w]) {
-                     d.lines[l].words[w] = { text: '', color: '#FFFFFF', font: 'Orbitron', size: 22, autosize: true, x: 0, y: 0, manual: false, anim: { motion: [], color: [] } };
-                }
-
-                const word = d.lines[l].words[w];
-                word.text = word.text.slice(0, i) + e.key.toUpperCase() + word.text.slice(i);
-                d.selection.caret.index++;
-            });
-
-        } else if (e.key === ' ') {
-            // --- Space = New Word ---
-            e.preventDefault();
-            State.dispatch('ADD_WORD', (d) => {
-                if (currentWord && currentWord.text.length === 0 && w > 0) {
-                    // Do nothing if pressing space inside an empty word that isn't the first
-                    return;
-                }
-                
-                // Split the current word into two if caret is in the middle
-                if (currentWord && i < currentWord.text.length) {
-                    const nextText = currentWord.text.slice(i);
-                    currentWord.text = currentWord.text.slice(0, i);
-                    
-                    // Insert new word at w + 1
-                    d.lines[l].words.splice(w + 1, 0, { ...currentWord, text: nextText });
-                }
-                
-                // Add a new empty word after the current one
-                const newWord = { text: '', color: currentWord?.color || '#FFFFFF', font: currentWord?.font || 'Orbitron', size: currentWord?.size || 22, autosize: true, x: 0, y: 0, manual: false, anim: { motion: [], color: [] } };
-                d.lines[l].words.splice(w + 1, 0, newWord);
-
-                // Move selection to the new word
-                d.selection.word = w + 1;
-                d.selection.caret.index = 0;
-            });
-            
-        } else if (e.key === 'Enter') {
-            // --- Enter = New Line ---
-            e.preventDefault();
-            State.dispatch('ADD_LINE', (d) => {
-                // Split current line at caret position
-                const currentWord = d.lines[l].words[w];
-                const wordsToMove = d.lines[l].words.splice(w + 1);
-
-                // Split the current word and move the remainder to the new line
-                if (currentWord) {
-                    wordsToMove.unshift({ ...currentWord, text: currentWord.text.slice(i) });
-                    currentWord.text = currentWord.text.slice(0, i);
-                }
-
-                // Create the new line object
-                const newLine = { words: wordsToMove, align: d.lines[l].align };
-                d.lines.splice(l + 1, 0, newLine);
-
-                // Move selection to the new line
-                d.selection.line = l + 1;
-                d.selection.word = 0;
-                d.selection.caret.index = 0;
-            });
-
-        } else if (e.key === 'Backspace') {
-            // --- Backspace ---
-            e.preventDefault();
-            State.dispatch('DELETE_CHAR', (d) => {
-                const { line: l, word: w, caret: { index: i } } = d.selection;
-                const word = d.lines[l].words[w];
-
-                if (i > 0) {
-                    // Delete character before caret
-                    word.text = word.text.slice(0, i - 1) + word.text.slice(i);
-                    d.selection.caret.index--;
-                } else if (w > 0) {
-                    // Merge current word with previous word
-                    const prevWord = d.lines[l].words[w - 1];
-                    const newCaretIndex = prevWord.text.length;
-                    
-                    prevWord.text += word.text;
-                    d.lines[l].words.splice(w, 1); // Remove current word
-
-                    d.selection.word = w - 1;
-                    d.selection.caret.index = newCaretIndex;
-
-                } else if (l > 0 && w === 0) {
-                    // Merge line with previous line
-                    const prevLine = d.lines[l - 1];
-                    const lastWordOfPrevLine = prevLine.words[prevLine.words.length - 1];
-                    const newCaretIndex = lastWordOfPrevLine ? lastWordOfPrevLine.text.length : 0;
-                    
-                    // Merge all words from current line into previous line
-                    prevLine.words = prevLine.words.concat(d.lines[l].words);
-                    d.lines.splice(l, 1); // Remove current line
-
-                    d.selection.line = l - 1;
-                    d.selection.word = prevLine.words.length - (d.lines[l] ? d.lines[l].words.length : 1);
-                    d.selection.caret.index = newCaretIndex;
-                }
-            });
-
-        } else if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            State.dispatch('MOVE_CARET', (d) => {
-                if (i > 0) {
-                    d.selection.caret.index--;
-                } else if (w > 0) {
-                    d.selection.word--;
-                    d.selection.caret.index = d.lines[l].words[d.selection.word].text.length;
-                } else if (l > 0) {
-                    d.selection.line--;
-                    d.selection.word = d.lines[d.selection.line].words.length - 1;
-                    const word = d.lines[d.selection.line].words[d.selection.word];
-                    d.selection.caret.index = word ? word.text.length : 0;
-                }
-            });
-        
-        } else if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            State.dispatch('MOVE_CARET', (d) => {
-                const { line: l, word: w, caret: { index: i } } = d.selection;
-                const word = d.lines[l].words[w];
-
-                if (word && i < word.text.length) {
-                    d.selection.caret.index++;
-                } else if (w < d.lines[l].words.length - 1) {
-                    d.selection.word++;
-                    d.selection.caret.index = 0;
-                } else if (l < d.lines.length - 1) {
-                    d.selection.line++;
-                    d.selection.word = 0;
-                    d.selection.caret.index = 0;
-                }
-            });
-        }
-        // NOTE: ArrowUp/ArrowDown logic is complex and will be added later if needed, 
-        // as vertical movement is non-trivial in a pixel canvas.
-    }
-
-
-    function handleInputFocus() {
-        wrap.classList.add('focused');
-        if (!animationFrameId) loop();
-    }
-
-    function handleInputBlur() {
-        wrap.classList.remove('focused');
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-    }
-    
-    // Public methods for the Canvas module
-    return {
-        setupCanvas,
-        render,
-        handleKeydown,
-        handleInputFocus,
-        handleInputBlur,
-        loop // expose for manual start if needed
-    };
-})();
+    im.src=url;
+  }
+});
 
 
 /* ------------------ Initialization ------------------ */
-
 function init() {
-    // 1. Load initial state
-    Object.assign(doc, defaultDoc);
-    Object.assign(appsettings, defaultAppSettings);
-    
-    // 2. Record the initial state for the undo stack (history[0])
-    history.push({ state: State.snapshot(), actionType: 'INIT', timestamp: Date.now() });
+  // 1. Load initial preset image if available (only for non-animated)
+  const initialPreset = visibleSet()[0];
+  if (initialPreset) {
+      const im = new Image();
+      im.crossOrigin = "anonymous";
+      im.onload = () => { doc.bg.image = im; render(); };
+      im.src = initialPreset.full;
+      doc.bg.preset = initialPreset.full;
+  }
+  
+  // 2. Setup Canvas, Layout, and UI
+  initCanvas();
+  
+  // 3. Wire up listeners
+  on(modeEditBtn, "click", stopPreview);
+  on(modePreviewBtn, "click", startPreview);
+  on(undoBtn, "click", undo);
+  on(redoBtn, "click", redo);
+  on(fitBtn, "click", fitZoom);
+  on(window, "resize", fitZoom);
+  on(zoomSlider, "input", e => { currentZoom = e.target.value; updateUI(); });
+  
+  // Placeholder: Wire up clear button
+  on(clearAllBtn, "click", () => {
+    doc.lines = [{ words: [{ text: "", color: "#FFFFFF", font: "Orbitron", size: 24, anims: [] }] }];
+    selected = { l: 0, w: 0 };
+    pushState("CLEAR_CANVAS");
+  });
 
-    // 3. Setup Canvas dimensions
-    Canvas.setupCanvas();
-    
-    // 4. Wire up the Control Bar (Task A4) & Shortcuts (Task A3)
-    on(undoBtn, 'click', undo);
-    on(redoBtn, 'click', redo);
-    on(clearBtn, 'click', () => {
-        if(confirm("Are you sure you want to clear the entire canvas and all text? This is irreversible.")) {
-             State.dispatch('CLEAR_CANVAS', (d) => {
-                 d.lines = [{ words: [], align: 'center' }];
-                 d.selection = { line: 0, word: 0, caret: { index: 0 }, multi: [] };
-             });
-        }
-    });
+  // 4. Backgrounds
+  buildBgGrid();
+  on(bgSolidColor, "input", e => { doc.bg.color = e.target.value; doc.bg.type="solid"; render(); pushState("SET_BG_COLOR"); });
 
-    on(zoomSlider, 'input', (e) => UI.setZoom(e.target.value));
-    on(fitBtn, 'click', UI.fitZoom);
-    on(window, 'resize', UI.fitZoom);
-
-    // 5. Wire Canvas focus & input (Task A1)
-    on(wrap, 'focus', Canvas.handleInputFocus);
-    on(wrap, 'blur', Canvas.handleInputBlur);
-    on(wrap, 'keydown', Canvas.handleKeydown);
-
-    // 6. Global keyboard shortcuts (Task A3)
-    document.addEventListener('keydown', (e) => {
-        const isCmdOrCtrl = e.metaKey || e.ctrlKey;
-        
-        if (e.target.closest('.modal') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-        if (isCmdOrCtrl && e.key === 'z') {
-            e.preventDefault();
-            e.shiftKey ? redo() : undo(); // Shift+Z for Redo, Z for Undo
-        } else if (isCmdOrCtrl && e.key === 'y') {
-            e.preventDefault();
-            redo();
-        }
-    });
-    
-    // 7. Initial render and fit
-    UI.fitZoom();
-    Canvas.loop(); // Start the animation loop for caret blinking
-    UI.updateAll();
+  // 5. Initial State Update
+  updateUI();
+  render();
 }
 
 // Start the application
