@@ -296,3 +296,14 @@ button.active, .pill.active {
         max-height: 400px;
     }
 }
+
+/* ------------------ Canvas & Caret Styling ------------------ */
+
+@keyframes blink-caret {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.blinking-caret {
+    animation: blink-caret 0.8s step-end infinite;
+}
