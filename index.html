@@ -8,8 +8,6 @@
 </head>
 <body class="theme-midnight">
 
-  <input id="textEditor" type="text" class="text-editor" />
-
   <header class="topbar glass">
     <div class="title-wrap">
       <h1 class="app-title">LED Backpack Animator <span class="ver-badge">v2.0</span></h1>
@@ -17,180 +15,260 @@
     <button id="aboutBtn" class="icon-btn" title="About">ℹ️</button>
   </header>
 
-  <nav id="topToolbar" class="toolbar glass">
-    <div class="toolbar-row">
-      <div class="brand">
-        <span class="app-title">LED Backpack Animator</span>
-        <span class="ver-badge">v2.0</span>
-      </div>
-      <div class="toolbar-actions">
-        <button class="tb-btn" id="tbProject" aria-expanded="false">Project Settings</button>
-        <button class="tb-btn" id="tbApp" aria-expanded="false">App Configuration</button>
-        <button class="tb-btn" id="tbRender" aria-expanded="false">Render Settings</button>
-        <button class="tb-btn" id="tbAbout" aria-expanded="false">About</button>
-      </div>
+<nav id="topToolbar" class="toolbar glass">
+  <div class="toolbar-row">
+    <div class="brand">
+      <span class="app-title">LED Backpack Animator</span>
+      <span class="ver-badge">v2.0</span>
     </div>
-    <div class="toolbar-row mobile-only">
-      <div class="toolbar-actions">
-        <button id="modeEdit" class="icon-btn active">📝 Edit</button>
-        <button id="modePreview" class="icon-btn">👁️ Preview</button>
-        <button id="undoBtn" class="icon-btn" title="Undo">↩️</button>
-        <button id="redoBtn" class="icon-btn" title="Redo">↪️</button>
-        <button id="clearAllBtn" class="icon-btn" title="Clear All">🗑️</button>
-      </div>
+    <div class="toolbar-actions">
+      <button class="tb-btn" id="tbProject" aria-expanded="false">Project Settings</button>
+      <button class="tb-btn" id="tbApp" aria-expanded="false">App Configuration</button>
+      <button class="tb-btn" id="tbRender" aria-expanded="false">Render Settings</button>
+      <button class="tb-btn" id="tbAbout" aria-expanded="false">About</button>
     </div>
-  </nav>
-
-  <div class="main-app">
-
-    <div class="canvas-wrap">
-      <canvas id="led"></canvas>
-      <div id="selectionBox" class="selection-box hidden"></div>
+  </div>
+  <div class="toolbar-row mobile-only">
+    <div class="mode-controls">
+      <button id="modeEdit" class="mode-btn active">Edit</button>
+      <button id="modePreview" class="mode-btn">Preview</button>
     </div>
+    <div class="history-controls">
+      <button id="undoBtn" class="icon-btn" title="Undo">⟲</button>
+      <button id="redoBtn" class="icon-btn" title="Redo">⟳</button>
+      <button id="clearAllBtn" class="icon-btn danger" title="Clear All">🗑️</button>
+    </div>
+    <div class="zoom-controls">
+        <button id="fitBtn" class="icon-btn" title="Fit to View">🎯</button>
+        <input type="range" id="zoom" min="0.1" max="5" value="1" step="0.05" title="Zoom Slider">
+    </div>
+    </div>
+</nav>
 
-    <div class="inspector">
-      <div class="pill-group">
-        <div id="pillsTop" class="pill-row">
-          <button class="pill active" data-acc="accFont">Font & Text</button>
-          <button class="pill" data-acc="accLayout">Layout</button>
-          <button class="pill" data-acc="accAnim">Animations</button>
-        </div>
-
-        <details id="accFont" class="acc-body" open>
-          <summary>Font & Text</summary>
-          <div class="acc-content">
-            <div class="row">
-              <label for="fontSelect">Font:</label>
-              <select id="fontSelect">
-                </select>
-            </div>
-            <div class="row two-eq">
-              <label for="fontSize">Size:</label>
-              <input type="number" id="fontSize" value="24" min="6" max="128" step="1">
-            </div>
-            <div class="row">
-              <label class="checkbox"><input type="checkbox" id="autoSize"><span>Auto-size word</span></label>
-              <label class="checkbox"><input type="checkbox" id="autoSizePerLine"><span>Auto-size per line</span></label>
-            </div>
-            <div class="row">
-              <label for="fontColor">Color:</label>
-              <input type="color" id="fontColor" value="#FFFFFF">
-              <button id="addSwatchBtn" class="icon-btn" title="Add to swatches">+</button>
-            </div>
-            <div id="swatches" class="swatch-row">
-              </div>
-            </div>
-        </details>
-
-        <details id="accLayout" class="acc-body">
-          <summary>Layout & Spacing</summary>
-          <div class="acc-content">
-            <div class="block-label">Alignment</div>
-            <div class="row">
-              <button class="icon-btn" data-align="left" title="Align Left">⬅️</button>
-              <button class="icon-btn active" data-align="center" title="Align Center">↔️</button>
-              <button class="icon-btn" data-align="right" title="Align Right">➡️</button>
-              <span style="flex-grow: 1;"></span>
-            </div>
-            <div class="row">
-              <button class="icon-btn" data-valign="top" title="Vertical Align Top">⬆️</button>
-              <button class="icon-btn active" data-valign="middle" title="Vertical Align Middle">↕️</button>
-              <button class="icon-btn" data-valign="bottom" title="Vertical Align Bottom">⬇️</button>
-              <span style="flex-grow: 1;"></span>
-            </div>
-            <div class="block-label">Spacing</div>
-            <div class="row two-eq">
-              <label for="lineGap">Line Gap:</label>
-              <input type="number" id="lineGap" value="4" min="0" max="30" step="1">
-            </div>
-            <div class="row two-eq">
-              <label for="wordGap">Word Gap:</label>
-              <input type="number" id="wordGap" value="6" min="0" max="30" step="1">
-            </div>
-          </div>
-        </details>
-
-        <details id="accAnim" class="acc-body">
-          <summary>Animations</summary>
-          <div class="acc-content">
-            <div class="row">
-              <button id="applySelectedAnimBtn" class="tb-btn small-btn" title="Apply to selected word">Apply to Selected</button>
-              <button id="applyAllAnimBtn" class="tb-btn small-btn" title="Apply as default to all words">Apply as Default</button>
-            </div>
-            <div id="animList" class="anim-list">
-              </div>
-          </div>
-        </details>
+<main class="main-wrap">
+  <aside class="right-panel glass">
+    <section id="inspector" class="inspector">
+      <div class="pill-tabs">
+        <button class="pill active" data-acc="accFont">Font</button>
+        <button class="pill" data-acc="accLayout">Layout</button>
+        <button class="pill" data-acc="accAnim">Animation</button>
       </div>
+      
+      <details id="accFont" open>
+        <summary class="hidden">Font Settings</summary>
+        <div class="panel-body">
+          <label for="fontSelect">Font Family</label>
+          <select id="fontSelect">
+            <option value="Orbitron">Orbitron</option>
+            <option value="Pixel LCD-7">Pixel LCD-7</option>
+            <option value="monospace">Monospace</option>
+            <option value="sans-serif">Sans-serif</option>
+          </select>
 
-      <div class="pill-group">
-        <div class="pill">
-          <div class="block-label">Words & Lines</div>
           <div class="row">
-            <button id="addWordBtn" class="tb-btn small-btn" title="Add word/emoji after selection">➕ Word</button>
-            <button id="addLineBtn" class="tb-btn small-btn" title="Add new line after current line">➕ Line</button>
-            <button id="deleteWordBtn" class="icon-btn danger" title="Delete selected word/emoji">❌</button>
-          </div>
-          <div class="row">
-            <button id="emojiBtn" class="tb-btn small-btn" title="Add emoji or animated image">😀 Emoji</button>
+            <label for="fontSize">Size</label>
+            <input type="number" id="fontSize" value="24" min="6" max="100" />
+            <div class="check-group">
+              <input type="checkbox" id="autoSize" checked>
+              <label for="autoSize" title="Auto-size each word to fit the display width.">Auto Word</label>
+            </div>
           </div>
           <div class="row tiny-help">
-            <label class="checkbox"><input type="checkbox" id="multiToggle"><span>Multi-select</span></label>
-            <label class="checkbox"><input type="checkbox" id="manualDragBtn"><span>Manual Drag</span></label>
-          </div>
-        </div>
-      </div>
-
-      <div class="pill-group">
-        <div class="pill">
-          <div class="block-label">Background & Display</div>
-          <div class="row two-eq">
-            <label for="resSelect">Resolution:</label>
-            <select id="resSelect">
-              <option value="96x128">96x128 (Vertical)</option>
-              <option value="64x64">64x64 (Square)</option>
-            </select>
-          </div>
-          <div id="bgGrid" class="bg-grid">
+             <div class="check-group">
+              <input type="checkbox" id="autoSizePerLine" checked>
+              <label for="autoSizePerLine" title="Auto-size words to fit equally into available line height and width.">Auto Line</label>
             </div>
-          <div id="bgSolidTools" class="row hidden">
-            <input type="color" id="bgSolidColor" value="#000000">
-            <div id="bgSwatches" class="swatch-row"></div>
-            <button id="addBgSwatchBtn" class="icon-btn" title="Add to swatches">+</button>
-          </div>
-          <input type="file" id="bgUpload" accept="image/*" class="hidden">
-        </div>
-      </div>
-
-      <div class="pill-group">
-        <div class="pill">
-          <div class="block-label">Render & Export</div>
-          <div class="row">
-            <label for="fps">FPS (Rate):</label>
-            <input type="number" id="fps" value="15" min="1" max="30" step="1">
-          </div>
-          <div class="row">
-            <label for="seconds">Duration (sec):</label>
-            <input type="number" id="seconds" value="8" min="1" max="60" step="1">
-          </div>
-          <div class="row">
-            <label for="fileName">File Name:</label>
-            <input type="text" id="fileName" value="backpack_anim">
+            (Sizes in px)
           </div>
 
-          <div class="row two-eq">
-            <button id="previewRenderBtn" class="tb-btn" title="Generate static preview image">Generate Preview</button>
-            <button id="gifRenderBtn" class="tb-btn primary" title="Download animated GIF">Download GIF</button>
+          <label for="fontColor">Color</label>
+          <div class="swatch-picker">
+            <input type="color" id="fontColor" value="#E9EDFB" />
+            <div id="swatches" class="swatch-grid"></div>
+            <button id="addSwatchBtn" class="icon-btn" title="Add to palette">+</button>
           </div>
-          <div id="progress" class="row">
-            <progress id="progressBar" value="0" max="100"></progress>
-            <span id="tCur">0:00</span> / <span id="tEnd">0:00</span>
+
+          <h3 class="panel-header">Text Effects</h3>
+          <div class="fx-options">
+            <div class="fx-option">
+              <input type="checkbox" id="fxGlow">
+              <label for="fxGlow">Glow / Shadow</label>
+              <input type="range" id="fxGlowBlur" min="0" max="10" value="0" step="1">
+            </div>
+            <div class="fx-option">
+              <input type="checkbox" id="fxRainbow">
+              <label for="fxRainbow">Color Cycle</label>
+              <input type="range" id="fxRainbowSpeed" min="1" max="10" value="5" step="1">
+            </div>
+            </div>
+        </div>
+      </details>
+
+      <details id="accLayout">
+        <summary class="hidden">Layout Settings</summary>
+        <div class="panel-body">
+          <h3 class="panel-header">Alignment</h3>
+          <div class="btn-group">
+            <button class="icon-btn active" data-align="left" title="Align Left">L</button>
+            <button class="icon-btn active" data-align="center" title="Align Center">C</button>
+            <button class="icon-btn" data-align="right" title="Align Right">R</button>
+          </div>
+          <div class="btn-group">
+            <button class="icon-btn" data-valign="top" title="Align Top">T</button>
+            <button class="icon-btn active" data-valign="middle" title="Align Middle">M</button>
+            <button class="icon-btn" data-valign="bottom" title="Align Bottom">B</button>
+          </div>
+          
+          <h3 class="panel-header">Spacing</h3>
+          <div class="row">
+            <label for="lineGap">Line Gap (px)</label>
+            <input type="number" id="lineGap" value="4" min="0" max="100" />
           </div>
           <div class="row">
-            <img id="gifPreview" class="gif-preview" alt="GIF Preview" />
+            <label for="wordGap">Word Gap (px)</label>
+            <input type="number" id="wordGap" value="6" min="0" max="100" />
+          </div>
+
+          <h3 class="panel-header">Word Control</h3>
+          <div class="row">
+            <input type="checkbox" id="multiToggle">
+            <label for="multiToggle" title="Allows selecting and applying styles to multiple words at once.">Multi-Select</label>
           </div>
         </div>
+      </details>
+
+      <details id="accAnim">
+        <summary class="hidden">Animation Settings</summary>
+        <div class="panel-body">
+          <p>No words selected or Animation functions not fully implemented yet.</p>
+          <div id="animList" class="anim-list">
+            </div>
+
+          <div class="row">
+            <button id="applySelectedAnimBtn" class="btn primary">Apply to Selected</button>
+            <button id="applyAllAnimBtn" class="btn">Apply to All</button>
+          </div>
+        </div>
+      </details>
+    </section>
+  </aside>
+
+  <section class="canvas-panel">
+    <div class="canvas-wrap edit-mode">
+      <textarea id="textEditor" class="text-editor"></textarea>
+      <canvas id="led" width="96" height="128"></canvas>
+    </div>
+    <div class="stage-controls">
+      <button id="addWordBtn" class="btn primary">Add Word</button>
+      <button id="addLineBtn" class="btn">Add Line</button>
+      <button id="deleteWordBtn" class="btn danger" title="Delete Selected Word">Delete Selected</button>
+      <button id="emojiBtn" class="btn">Add Emoji</button>
+      <button id="manualDragBtn" class="btn" title="Manual drag mode toggle (not implemented)">Manual Drag</button>
+    </div>
+  </section>
+
+  <aside class="left-panel glass">
+    <section class="resolution-control">
+      <h3>Resolution</h3>
+      <select id="resSelect">
+        <option value="96x128" selected>96 x 128 (LED Backpack)</option>
+        <option value="64x64">64 x 64 (Tiny LED Grid)</option>
+        <option value="32x32">32 x 32 (Smallest Grid)</option>
+      </select>
+    </section>
+
+    <section class="background-control">
+      <h3>Background</h3>
+      <div id="bgGrid" class="bg-grid">
+        </div>
+
+      <div id="bgSolidTools" class="row hidden">
+        <label for="bgSolidColor">Solid Color</label>
+        <input type="color" id="bgSolidColor" value="#000000" />
+        <button id="addBgSwatchBtn" class="icon-btn" title="Add to palette">+</button>
       </div>
+
+      <div id="bgSwatches" class="swatch-grid">
+        </div>
+      <input type="file" id="bgUpload" accept="image/*" class="hidden" />
+    </section>
+
+    <section class="project-control">
+      <h3>Project</h3>
+      <div class="row">
+        <button id="loadProjectBtn" class="btn">Load Project</button>
+        <input type="file" id="loadWordsJsonInput" accept=".json" class="hidden">
+        <button id="saveWordsJsonBtn" class="btn">Save Project</button>
+      </div>
+    </section>
+
+    <section class="app-control">
+      <h3>Configuration</h3>
+      <div class="row">
+        <button id="loadAppCfgBtn" class="btn">Load App Config</button>
+        <input type="file" id="loadAppCfgInput" accept=".json" class="hidden">
+        <button id="saveAppCfgBtn" class="btn">Save App Config</button>
+      </div>
+    </section>
+
+    <section class="render-control">
+      <h3>Render</h3>
+      <div class="row">
+        <label for="fps">FPS</label>
+        <input type="number" id="fps" value="15" min="1" max="60" />
+        <label for="seconds">Duration (s)</label>
+        <input type="number" id="seconds" value="8" min="1" max="60" />
+      </div>
+      <label for="fileName">File Name</label>
+      <input type="text" id="fileName" value="backpack_animation" />
+      <div class="row">
+        <button id="previewRenderBtn" class="btn primary">Preview Render</button>
+        <button id="gifRenderBtn" class="btn">Download GIF</button>
+      </div>
+      <img id="gifPreview" class="hidden" alt="Render Preview" />
+      <div class="render-warn">
+        GIF rendering takes time. Use Preview first!
+      </div>
+    </section>
+  </aside>
+</main>
+
+  <div id="aboutModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>About LED Backpack Animator</h2>
+        <button id="aboutClose" class="icon-btn">✖</button>
+      </div>
+      <div class="modal-body">
+        <p>Version 2.0</p>
+        <p>A simple, web-based tool for creating animations for LED backpacks and matrices.</p>
+        <p>All source code is available on GitHub.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="emojiModal" class="modal-backdrop hidden">
+    <div class="modal large">
+      <div class="modal-header">
+        <h2>Insert Emoji</h2>
+        <div class="emoji-toolbar">
+          <select id="emojiTabs">
+            <option value="all">All Emojis</option>
+            <option value="static">Static</option>
+            <option value="animated">Animated</option>
+            <option value="custom">Custom…</option></select>
+          <input id="emojiSearch" type="search" placeholder="Search emojis…" />
+
+          <div class="emoji-pager">
+            <button id="emojiPrev" class="icon-btn" title="Prev page">◀</button>
+            <span id="emojiPager">0 / 0</span>
+            <button id="emojiNext" class="icon-btn" title="Next page">▶</button>
+          </div>
+          <button id="emojiClose" class="icon-btn">✖</button>
+        </div>
+      </div>
+      <div id="emojiGrid" aria-live="polite" class="emoji-grid"></div>
+      <div class="emoji-zoom-hint">Pinch to zoom on mobile • Use resize handle on desktop</div>
     </div>
   </div>
 
