@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1F389",
+    "name": "Party popper",
+    "path": "assets/openmoji/color/72x72/1F389.png",
+    "category": "Objects"
+  },
+  {
+    "id": "1F60A",
+    "name": "Smiling face with smiling eyes",
+    "path": "assets/openmoji/color/72x72/1F60A.png",
+    "category": "Faces"
+  },
+  {
+    "id": "1F525",
+    "name": "Fire",
+    "path": "assets/openmoji/color/72x72/1F525.png",
+    "category": "Nature"
+  },
+  {
+    "id": "1F602",
+    "name": "Face with tears of joy",
+    "path": "assets/openmoji/color/72x72/1F602.png",
+    "category": "Faces"
+  },
+  {
+    "id": "2764",
+    "name": "Red heart",
+    "path": "assets/openmoji/color/72x72/2764.png",
+    "category": "Symbols"
+  }
+]
