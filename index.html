@@ -15,6 +15,161 @@
     </div>
     <button id="aboutBtn" class="icon-btn" title="About">ℹ️</button>
   </header>
+<nav id="topToolbar" class="toolbar glass">
+  <div class="toolbar-row">
+    <div class="brand">
+      <span class="app-title">LED Backpack Animator</span>
+      <span class="ver-badge">v2.0</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="tb-btn" id="tbProject" aria-expanded="false">Project Settings</button>
+      <button class="tb-btn" id="tbApp" aria-expanded="false">App Configuration</button>
+      <button class="tb-btn" id="tbRender" aria-expanded="false">Render Settings</button>
+      <button class="tb-btn" id="tbAbout" aria-expanded="false">About</button>
+    </div>
+  </div>
+  <div class="toolbar-row mobile-only">
+    <label class="projname-label" for="projectNameInput">Project</label>
+    <input id="projectNameInput" placeholder="Untitled Project" />
+  </div>
+</nav>
+
+<!-- ===== Toolbar Modals ===== -->
+<div class="modal hidden" id="projectSettingsModal">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content glass strong">
+    <h3>Project Settings</h3>
+    <div class="stack">
+      <div class="row two-compact">
+        <label>Project Name</label>
+        <input id="projectNameModal" placeholder="Untitled Project" />
+      </div>
+
+      <div class="row two-compact">
+        <label>New Project</label>
+        <button id="newProjectBtn" class="button">Open New Project (New Tab)</button>
+      </div>
+
+      <div class="row two-compact">
+        <label>Upload before open</label>
+        <label class="upload-btn block">
+          <input type="file" id="preloadZipInput" accept=".zip,application/zip" hidden />
+          <span class="button block darker">Upload Project (.ZIP)</span>
+        </label>
+      </div>
+
+      <div class="row two-compact">
+        <label>Import Project</label>
+        <label class="upload-btn block">
+          <input type="file" id="importZipInput" accept=".zip,application/zip" hidden />
+          <span class="button block darker">Import Project (.ZIP)</span>
+        </label>
+      </div>
+
+      <div class="row two-compact">
+        <label>Download Project</label>
+        <button id="downloadZipBtn" class="button primary">Download Project (.ZIP)</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="button" data-close="#projectSettingsModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="appConfigModal">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content glass strong">
+    <h3>App Configuration</h3>
+    <div class="stack">
+      <div class="row two-compact">
+        <label>Import App Config</label>
+        <label class="upload-btn block">
+          <input type="file" id="importAppCfgZipInput" accept=".zip,application/zip,application/json" hidden />
+          <span class="button block darker">Import</span>
+        </label>
+      </div>
+      <div class="row two-compact">
+        <label>Download</label>
+        <button id="downloadAppCfgZipBtn" class="button primary">Download Custom App Configuration</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="button" data-close="#appConfigModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="renderSettingsModal">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content glass strong">
+    <h3>Render Settings</h3>
+    <div class="stack">
+      <div class="row two-compact">
+        <label>File Name</label>
+        <div class="link-field">
+          <input id="renderFileName" placeholder="animation" />
+          <button id="linkProjectNameBtn" class="icon-btn" title="Link to Project Name">🔗</button>
+        </div>
+      </div>
+      <div class="row two-compact">
+        <label>Rendered Resolution</label>
+        <div class="seg">
+          <button class="seg-btn" data-rres="96x128">96×128</button>
+          <button class="seg-btn" data-rres="64x64">64×64</button>
+          <button class="seg-btn" data-rres="custom">Custom</button>
+        </div>
+      </div>
+      <div class="row two-compact">
+        <label>Follow Background Res</label>
+        <button id="linkBgResBtn" class="seg-btn">🔗 Linked</button>
+      </div>
+      <div id="renderWarn" class="render-warn hidden"></div>
+      <div class="row two-compact">
+        <label>Restore Defaults</label>
+        <button id="restoreAnimDefaultsBtn" class="button subtle">Animations</button>
+        <button id="restoreColorDefaultsBtn" class="button subtle">Color Animations</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="button" data-close="#renderSettingsModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="aboutModalV2">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content glass strong">
+    <h3>About</h3>
+    <details open><summary>About</summary>
+      <p>LED Backpack Animator v2.0 — creator tool for LED matrix text &amp; effects.</p>
+    </details>
+    <details><summary>Licenses</summary>
+      <p>OpenMoji, Noto Emoji, JSZip and others under their respective licenses.</p>
+    </details>
+    <details><summary>Help</summary>
+      <ul class="shortcuts">
+        <li><kbd>Ctrl/Cmd+Z</kbd> Undo • <kbd>Ctrl/Cmd+Y</kbd> Redo • <kbd>Shift+Ctrl/Cmd+Z</kbd> Redo</li>
+        <li><kbd>Ctrl/Cmd+S</kbd> Download Project • <kbd>Ctrl/Cmd+Shift+S</kbd> Download GIF</li>
+        <li><kbd>Ctrl/Cmd+O</kbd> Import Project • <kbd>Ctrl/Cmd+G</kbd> Generate GIF</li>
+      </ul>
+    </details>
+    <div class="easter-egg">
+      <button id="followBtn" class="button">Follow</button>
+      <div id="eggPrompt" class="hidden egg-prompt">
+        <p>Would you like to see my favorite designs?</p>
+        <div class="row two-eq">
+          <button id="eggYes" class="button primary">Yes</button>
+          <button id="eggNo" class="button">No</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="button" data-close="#aboutModalV2">Close</button>
+    </div>
+  </div>
+</div>
+
 
   <main class="layout">
     <!-- ===== Background & Resolution (collapsible, open) ===== -->
@@ -26,7 +181,15 @@
         <select id="resSelect">
           <option value="96x128" selected>96×128</option>
           <option value="64x64">64×64</option>
-        </select>
+        <option value="custom">Custom…</option></select>
+<div class="row two-compact" id="resCustomRow" style="display:none;">
+  <label>Custom</label>
+  <div style="display:flex;gap:8px;align-items:center;justify-content:flex-start;">
+    <input type="number" id="resCustomW" min="8" max="256" value="96" style="max-width:90px;"> ×
+    <input type="number" id="resCustomH" min="8" max="256" value="128" style="max-width:90px;">
+    <button id="applyCustomRes" class="button tiny">Apply</button>
+  </div>
+</div>
       </div>
 
       <!-- 2×2 grid; tiles injected by app.js -->
@@ -92,8 +255,8 @@
       <div class="stage-controls">
         <div class="multi-tip">
           <button id="multiToggle" class="chip">Multi-select</button>
-          <button id="manualDragBtn" class="chip">🖐️ Drag</button>
-          <span class="tip desktop-only">Tip: Shift = select multiple, ⌘/Ctrl = drag temporarily</span>
+			 <button id="manualDragBtn" class="chip">🖐️ Drag&nbsp;</button>
+<span class="tip desktop-only">Tip: Shift = select multiple, ⌘/Ctrl = drag temporarily</span>
         </div>
         <div class="word-row">
           <button id="addWordBtn" class="button tiny">+ Word</button>
@@ -120,10 +283,7 @@
         <button class="pill" data-acc="accAnim">Animations</button>
 
         <!-- ▼ INSERTED: Drag pill visible on desktop -->
-        <button id="manualDragBtn" class="pill" title="Manual drag (Ctrl/⌘ also works)">
-          🖐️ Drag <span class="pill-indicator"></span>
-        </button>
-        <!-- ▲ INSERTED -->
+<!-- ▲ INSERTED -->
       </div>
 
       <div id="inspectorBody" class="inspector-body">
@@ -140,7 +300,7 @@
                 <option>Monospace</option>
                 <option>Roboto</option>
                 <option>Inter</option>
-              </select>
+              <option value="custom">Custom…</option></select>
             </div>
 
             <div class="row two-compact">
@@ -197,19 +357,11 @@
             <div class="block-label">Alignment</div>
             <div class="row two">
               <label>Horizontal</label>
-              <div class="seg">
-                <button class="seg-btn active" data-align="center">Center</button>
-                <button class="seg-btn" data-align="left">Left</button>
-                <button class="seg-btn" data-align="right">Right</button>
-              </div>
+              <div class="seg"><button class="seg-btn" data-align="left">Left</button><button class="seg-btn" data-align="center">Center</button><button class="seg-btn" data-align="right">Right</button></div>
             </div>
             <div class="row two">
               <label>Vertical</label>
-              <div class="seg">
-                <button class="seg-btn active" data-valign="middle">Middle</button>
-                <button class="seg-btn" data-valign="top">Top</button>
-                <button class="seg-btn" data-valign="bottom">Bottom</button>
-              </div>
+              <div class="seg"><button class="seg-btn" data-valign="top">Top</button><button class="seg-btn" data-valign="middle">Middle</button><button class="seg-btn" data-valign="bottom">Bottom</button></div>
             </div>
            </div>
         </details>
@@ -231,17 +383,43 @@
       </div>
     </section>
 
-    <!-- ===== Config (standalone) ===== -->
-    <section class="panel glass">
-      <h3 class="section-title">Config</h3>
-      <div class="row two-eq">
+<section class="panel glass">
+  <h3 class="section-title">Config</h3>
+  <div class="config-grid">
+    <div class="config-col left">
+      <h4 class="config-head">Project (.JSON)</h4>
+      <div class="config-actions">
         <label class="upload-btn block">
-          <input type="file" id="loadJsonInput" accept="application/json" hidden />
-          <span class="button block darker">Import Config</span>
+          <input type="file" id="loadWordsJsonInput" accept="application/json" hidden />
+          <span class="button block darker">Import Project (.JSON)</span>
         </label>
-        <button id="saveJsonBtn" class="button block primary">Download Config</button>
+        <button id="saveWordsJsonBtn" class="button block primary">Download Project (.JSON)</button>
+        <button id="clearProjectLSBtn" class="button subtle">Clear Local Project</button>
       </div>
-    </section>
+    </div>
+    <div class="config-col right">
+      <h4 class="config-head">App setting</h4>
+      <div class="config-actions right-align">
+        <label class="upload-btn block">
+          <input type="file" id="loadAppCfgInput" accept="application/json" hidden />
+          <span class="button block darker">Import App Config (.JSON)</span>
+        </label>
+        <button id="saveAppCfgBtn" class="button block primary">Download App Config (.JSON)</button>
+        <div class="row two-compact">
+          <label>Local autosave (this device only)</label>
+          <div class="switch-wrap">
+            <label class="switch">
+              <input type="checkbox" id="localAutosaveToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="row tiny-help">Stores Project & App settings to this browser. No servers.</div>
+        <button id="clearAppCfgLSBtn" class="button subtle">Clear Local App Settings</button>
+      </div>
+    </div>
+  </div>
+</section>
 
     <!-- ===== Render GIF (standalone at bottom) ===== -->
     <section class="panel glass">
@@ -259,8 +437,8 @@
         <input type="number" id="seconds" min="1" max="60" value="8" />
       </div>
       <div class="row two-eq">
-        <button id="previewRenderBtn" class="button block primary">Generate Preview</button>
-        <button id="gifRenderBtn" class="button block">Download File</button>
+        <button id="previewRenderBtn" class="button block primary">Generate .Gif</button>
+        <button id="gifRenderBtn" class="button block">Download .Gif File</button>
       </div>
       <img id="gifPreview" class="gif-preview hidden" alt="Preview GIF" />
     </section>
@@ -309,7 +487,7 @@
             <option value="both" selected>Both</option>
             <option value="static">Static</option>
             <option value="animated">Animated</option>
-          </select>
+          <option value="custom">Custom…</option></select>
           <input id="emojiSearch" type="search" placeholder="Search emojis…" />
 
           <!-- ▼ INSERTED: Pager controls for emoji pages -->
@@ -323,7 +501,7 @@
           <button id="emojiClose" class="icon-btn">✖</button>
         </div>
       </div>
-      <div id="emojiGrid" class="emoji-grid"></div>
+      <div id="emojiGrid" aria-live="polite" class="emoji-grid"></div>
       <div class="emoji-zoom-hint">Pinch to zoom on mobile • Use resize handle on desktop</div>
     </div>
   </div>
@@ -341,5 +519,10 @@
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
   <script defer src="assets/libs/jsgif/LZWEncoder.js"></script>
   <script defer src="assets/libs/jsgif/GIFEncoder.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
 </html>
+
+
+
+<div id="renderWarn" class="render-warn hidden"></div>

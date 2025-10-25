@@ -58,7 +58,10 @@ const applySelBtn=$("#applySelectedAnimBtn"), applyAllBtn=$("#applyAllAnimBtn");
 const progressBar=$("#progress"), tCur=$("#tCur"), tEnd=$("#tEnd");
 
 /* config + render */
-const loadJsonInput=$("#loadJsonInput"), saveJsonBtn=$("#saveJsonBtn");
+const loadProjectInput = $("#loadWordsJsonInput");
+const saveProjectBtn   = $("#saveWordsJsonBtn");
+const loadAppCfgInput  = $("#loadAppCfgInput");
+const saveAppCfgBtn    = $("#saveAppCfgBtn");
 const fpsInp=$("#fps"), secondsInp=$("#seconds"), fileNameInp=$("#fileName");
 const previewBtn=$("#previewRenderBtn"), gifBtn=$("#gifRenderBtn"), gifPreviewImg=$("#gifPreview");
 
@@ -72,6 +75,7 @@ const emojiSearch=$("#emojiSearch"), emojiClose=$("#emojiClose");
 /* ------------------ state ------------------ */
 let mode="edit", zoom=1, selected=null;
 let history=[], future=[];
+const UNDO_LIMIT=100;
 let startT=0, rafId=null;
 const uiLock = { emojiOpen: false };
 const defaults={ font:"Orbitron", size:22, color:"#FFFFFF" };
@@ -643,7 +647,7 @@ if (caret.active && caret.line===li && caret.word===wi && mode==="edit") {
 }
 
 /* draw selection + delete handle clamped inside canvas */
-const HANDLE_SIZE=9;
+const HANDLE_SIZE=14;
 function drawSelectionBox(x,y,w,h,isMulti){
   ctx.save();
   ctx.setLineDash([3,2]); ctx.lineWidth=1;
@@ -658,7 +662,7 @@ function drawSelectionBox(x,y,w,h,isMulti){
   hy = Math.min(canvas.height - HANDLE_SIZE - 2, Math.max(2, hy));
 
   // draw handle square with X
-  ctx.fillStyle="#ff6bd6";
+  ctx.fillStyle="#ff4d4d";
   ctx.strokeStyle="rgba(0,0,0,0.5)";
   ctx.lineWidth=1;
   ctx.fillRect(hx, hy, HANDLE_SIZE, HANDLE_SIZE);
@@ -716,7 +720,11 @@ function hitTestWord(px,py){
 
 /* history helpers */
 const snapshot=()=>JSON.parse(JSON.stringify(doc));
-function pushHistory(){ history.push(snapshot()); if(history.length>200) history.shift(); future.length=0; }
+function pushHistory(){
+  history.push(snapshot());
+  if(history.length>UNDO_LIMIT) history.shift();
+  future.length=0;
+}
 
 on(canvas,"click",(e)=>{
   if(mode!=="edit") return;
@@ -845,12 +853,22 @@ document.addEventListener("keydown",(e)=>{
 
 /* add / line / delete */
 on(addWordBtn,"click",()=>{ pushHistory(); const li=doc.lines.length? (selected?selected.line:doc.lines.length-1):0; doc.lines[li]??={words:[]}; doc.lines[li].words.push({text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color,anims:[]}); selected={line:li,word:doc.lines[li].words.length-1}; autoSizeAllIfOn(); render(); });
+
+ if(typeof saveProjectLS==="function") saveProjectLS();
 on(addLineBtn,"click",()=>{ pushHistory(); doc.lines.push({words:[{text:"LINE",font:defaults.font,size:defaults.size,color:defaults.color,anims:[]}]}); selected={line:doc.lines.length-1,word:0}; autoSizeAllIfOn(); render(); });
+
+ if(typeof saveProjectLS==="function") saveProjectLS();
 on(delWordBtn,"click",()=>{ if(!selected) return; pushHistory(); const L=doc.lines[selected.line]; L.words.splice(selected.word,1); if(!L.words.length) doc.lines.splice(selected.line,1); doc.multi.clear(); selected=null; render(); });
 
+
+ if(typeof saveProjectLS==="function") saveProjectLS();
 /* font / size / color / autosize */
 on(fontSelect,"change",()=>{ pushHistory(); forEachSelectedWord(w=>w.font=fontSelect.value||defaults.font); autoSizeAllIfOn(); render(); });
+
+ if(typeof saveProjectLS==="function") saveProjectLS();
 on(fontSizeInp,"input",()=>{ const v=Math.max(6,Math.min(64,parseInt(fontSizeInp.value||`${defaults.size}`,10))); pushHistory(); forEachSelectedWord(w=>{ if(!w.emoji) w.size=v; }); render(); });
+
+ if(typeof saveProjectLS==="function") saveProjectLS();
 on(fontColorInp,"input",()=>{ const c=fontColorInp.value||defaults.color; pushHistory(); forEachSelectedWord(w=>{ if(!w.emoji) w.color=c; }); render(); });
 on(autoSizeWordChk,"change",()=>{ autoSizeAllIfOn(); render(); });
 on(autoSizeLineChk,"change",()=>{ autoSizeAllIfOn(); render(); });
@@ -866,11 +884,10 @@ on(multiToggle,"click",()=> multiToggle.classList.toggle("active"));
 
 /* manual drag toggle */
 const manualDrag={enabled:false,active:false,startX:0,startY:0,targets:[],startOffsets:[]};
-on(manualDragBtn,"click",()=>{
-  manualDrag.enabled=!manualDrag.enabled; manualDragBtn.classList.toggle("active",manualDrag.enabled);
-  document.querySelectorAll("[data-align],[data-valign]").forEach(b=>{ b.disabled=manualDrag.enabled; b.classList.toggle("disabled",manualDrag.enabled); });
+document.querySelectorAll("[data-align],[data-valign]").forEach(b=>{
+  b.disabled = manualDrag.enabled;
+  b.classList.toggle("disabled", manualDrag.enabled);
 });
-
 /* temp drag with Cmd/Ctrl or manual toggle */
 on(canvas,"pointerdown",(e)=>{
   const rect=canvas.getBoundingClientRect(); const px=(e.clientX-rect.left)/zoom, py=(e.clientY-rect.top)/zoom;
@@ -985,7 +1002,7 @@ async function ensureGifLibs(){
 }
 function encoderBlob(enc){ const bytes=enc.stream().bin||enc.stream().getData(); return new Blob([bytes instanceof Uint8Array?bytes:new Uint8Array(bytes)],{type:"image/gif"}); }
 
-async function renderGif(){
+async function renderGif(previewOnly=false){
   const ok=await ensureGifLibs(); if(!ok) return;
   const F=fps(), S=seconds(), frames=Math.max(1,Math.floor(F*S)), delay=Math.max(1,Math.round(1000/F));
   const resume=(mode==="preview"); stopPreview();
@@ -1021,29 +1038,66 @@ on(redoBtn,"click",()=>{ if(!future.length) return; history.push(snapshot()); co
 on(clearAllBtn,"click",()=>{ pushHistory(); doc.lines=[{words:[{text:"NEW",font:defaults.font,size:defaults.size,color:defaults.color,anims:[]}]}]; doc.multi.clear(); selected={line:0,word:0}; render(); });
 
 /* =======================================================
-   CONFIG SAVE / LOAD
+   CONFIG SAVE / LOAD (Project & App Config)
 ======================================================= */
-on(saveJsonBtn,"click",()=>{
-  const data=snapshot();
-  if(data.bg?.image && data.bg.type==="image"){
-    try{ const c=document.createElement("canvas"); c.width=doc.res.w; c.height=doc.res.h; const c2=c.getContext("2d"); c2.drawImage(doc.bg.image,0,0,c.width,c.height); data.bg.dataURL=c.toDataURL("image/png"); }catch{}
+// Project (.JSON) — full document: res, spacing, style, bg, lines
+on(saveProjectBtn, "click", () => {
+  const data = JSON.parse(JSON.stringify(doc));
+  if (data.bg?.image && data.bg.type === "image") {
+    try {
+      const c = document.createElement("canvas");
+      c.width = doc.res.w; c.height = doc.res.h;
+      c.getContext("2d").drawImage(doc.bg.image, 0, 0, c.width, c.height);
+      data.bg.dataURL = c.toDataURL("image/png");
+    } catch {}
   }
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="led_anim_config.json"; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "led_project.json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 });
-on(loadJsonInput,"change",async(e)=>{
-  const f=e.target.files?.[0]; if(!f) return;
-  try{
-    const txt=await f.text(); const obj=JSON.parse(txt);
-    // Merge lines only; keep background
-    if(obj.lines) doc.lines=obj.lines;
-    buildBgGrid(); render(); fitZoom();
-  }catch{ warn("Invalid config"); }
+
+on(loadProjectInput, "change", async (e) => {
+  const f = e.target.files?.[0]; if (!f) return;
+  try {
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    applyProjectObject(obj);
+  } catch {
+    warn("Invalid project file");
+  }
+});
+
+// App Config (.JSON) — swatches, favorites, defaults (fps, seconds, font, autosize)
+on(saveAppCfgBtn, "click", () => {
+  const cfg = getAppCfgObject();
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "led_app_settings.json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
+
+on(loadAppCfgInput, "change", async (e) => {
+  const f = e.target.files?.[0]; if (!f) return;
+  try {
+    const txt = await f.text();
+    const cfg = JSON.parse(txt);
+    applyAppCfgObject(cfg);
+  } catch {
+    warn("Invalid app config file");
+  }
 });
 
 /* =======================================================
    ABOUT
+======================================================= */
+on(aboutBtn,"click",()=> aboutModal?.classList.remove("hidden"));
+on(aboutClose,"click",()=> aboutModal?.classList.add("hidden"));
+
 ======================================================= */
 on(aboutBtn,"click",()=> aboutModal?.classList.remove("hidden"));
 on(aboutClose,"click",()=> aboutModal?.classList.add("hidden"));
@@ -1282,3 +1336,429 @@ async function initLocalLoad(){
   const localOn = !!(tgl && tgl.checked);
   if (localOn && typeof loadProjectLS === "function") loadProjectLS();
 }
+
+function setEmojiEmptyState(show){
+  const emptyMsg=document.getElementById("emojiEmptyMsg");
+  const grid=document.getElementById("emojiGrid");
+  if(!emptyMsg||!grid) return;
+  if(show){ emptyMsg.classList.remove("hidden"); grid.classList.add("dim"); }
+  else { emptyMsg.classList.add("hidden"); grid.classList.remove("dim"); }
+}
+try{ if(typeof renderEmojiGrid==="function"){ const __old=renderEmojiGrid; renderEmojiGrid=function(list){ setEmojiEmptyState && setEmojiEmptyState(!list || list.length===0); return __old(list); }; } }catch{}
+
+const LS_KEYS={project:"ledanim_project_v1",appcfg:"ledanim_appcfg_v1"};
+
+function getAppCfgObject(){
+  const defaults={
+    fps:parseInt(fpsInp?.value||"15",10),
+    seconds:parseInt(secondsInp?.value||"8",10),
+    font:fontSelect?.value||"Orbitron",
+    autosizeWord:!!(autoSizeWordChk&&autoSizeWordChk.checked),
+    autosizeLine:!!(autoSizeLineChk&&autoSizeLineChk.checked),
+    localAutosaveEnabled:!!(document.getElementById("localAutosaveToggle")?.checked)
+  };
+  return {favorites:{emojis:window.favoritesEmojis||[]},swatches:{font:window.customTextPalette||[],bg:window.customBgPalette||[]},defaults};
+}
+
+function loadAppCfgLS(){
+  try{ const t=localStorage.getItem(LS_KEYS.appcfg); if(!t) return false; const c=JSON.parse(t);
+    if(c.swatches){ if(Array.isArray(c.swatches.font)) window.customTextPalette=[...c.swatches.font]; if(Array.isArray(c.swatches.bg)) window.customBgPalette=[...c.swatches.bg]; }
+    if(c.favorites&&Array.isArray(c.favorites.emojis)) window.favoritesEmojis=[...c.favorites.emojis];
+    if(c.defaults){
+      if(typeof c.defaults.fps==="number"&&fpsInp) fpsInp.value=String(c.defaults.fps);
+      if(typeof c.defaults.seconds==="number"&&secondsInp) secondsInp.value=String(c.defaults.seconds);
+      if(c.defaults.font&&fontSelect) fontSelect.value=c.defaults.font;
+      if(autoSizeWordChk&&typeof c.defaults.autosizeWord==="boolean") autoSizeWordChk.checked=c.defaults.autosizeWord;
+      if(autoSizeLineChk&&typeof c.defaults.autosizeLine==="boolean") autoSizeLineChk.checked=c.defaults.autosizeLine;
+      const tgl=document.getElementById("localAutosaveToggle"); if(tgl&&typeof c.defaults.localAutosaveEnabled==="boolean") tgl.checked=c.defaults.localAutosaveEnabled;
+    }
+    return true;
+  }catch{return false;}
+}
+
+// Local autosave gating
+const localToggle=document.getElementById("localAutosaveToggle");
+function isLocalOn(){ return !!(localToggle&&localToggle.checked); }
+if(typeof saveProjectLS==="function"){
+  const _saveProjectLS=saveProjectLS; saveProjectLS=function(){ if(!isLocalOn()) return; _saveProjectLS(); };
+}
+if(typeof saveAppCfgLS==="function"){
+  const _saveAppCfgLS=saveAppCfgLS; saveAppCfgLS=function(){ if(!isLocalOn()) return; _saveAppCfgLS(); };
+}
+const clearProjectLSBtn=document.getElementById("clearProjectLSBtn");
+if(clearProjectLSBtn){ clearProjectLSBtn.addEventListener("click",()=>{ try{ localStorage.removeItem(LS_KEYS.project);}catch{} }); }
+const clearAppCfgLSBtn=document.getElementById("clearAppCfgLSBtn");
+if(clearAppCfgLSBtn){ clearAppCfgLSBtn.addEventListener("click",()=>{ try{ localStorage.removeItem(LS_KEYS.appcfg);}catch{} }); }
+
+function showGifPreview(url){
+  const img=document.getElementById("gifPreview");
+  if(!img) return;
+  img.classList.remove("hidden");
+  img.src=url; img.alt="Preview GIF";
+}
+
+/* KEYBOARD SHORTCUTS (Undo/Redo) */
+window.addEventListener("keydown",(e)=>{
+  const tag=(e.target&&e.target.tagName)||"";
+  const inForm=["INPUT","TEXTAREA","SELECT"].includes(tag);
+  const isCmd=e.metaKey||e.ctrlKey;
+  if(!isCmd) return;
+  if(!inForm && (e.key.toLowerCase()==="y" || (e.shiftKey && e.key.toLowerCase()==="z"))){
+    e.preventDefault();
+    if(future.length){ history.push(snapshot()); const next=future.pop(); Object.assign(doc,next); render&&render(); }
+    return;
+  }
+  if(!inForm && e.key.toLowerCase()==="z"){
+    e.preventDefault();
+    if(history.length){ future.push(snapshot()); const last=history.pop(); Object.assign(doc,last); render&&render(); }
+  }
+});
+
+/* Custom resolution handling */
+const resCustomRow=document.getElementById("resCustomRow");
+const resCustomW=document.getElementById("resCustomW");
+const resCustomH=document.getElementById("resCustomH");
+const applyCustomRes=document.getElementById("applyCustomRes");
+if(resSel){ resSel.addEventListener("change",()=>{ const v=resSel.value; resCustomRow && (resCustomRow.style.display=(v==="custom"?"grid":"none")); }); }
+if(applyCustomRes){
+  applyCustomRes.addEventListener("click",()=>{
+    const w=Math.max(8,Math.min(256,parseInt(resCustomW?.value||"96",10)));
+    const h=Math.max(8,Math.min(256,parseInt(resCustomH?.value||"128",10)));
+    doc.res={w,h}; if(typeof buildBgGrid==="function") buildBgGrid(); if(typeof showSolidTools==="function") showSolidTools(doc.bg?.type==="solid"); render&&render(); fitZoom&&fitZoom();
+  });
+}
+
+function checkFpsFramesWarn(){
+  const fps=parseInt((fpsInp&&fpsInp.value)||"15",10);
+  const secs=parseInt((secondsInp&&secondsInp.value)||"8",10);
+  const frames=fps*secs;
+  const warn=document.getElementById("renderWarn");
+  if(!warn) return frames;
+  if(frames>1000){ warn.classList.remove("hidden"); warn.textContent=`Heads up: ${frames} total frames (${fps} fps × ${secs}s) may be slow to render.`; }
+  else { warn.classList.add("hidden"); warn.textContent=""; }
+  return frames;
+}
+
+
+/* =======================================================
+   LOCAL STORAGE SAVE / LOAD (helpers)
+======================================================= */
+function saveProjectLS(){
+  try{ localStorage.setItem(LS_KEYS.project, JSON.stringify(doc)); }catch(e){}
+}
+function saveAppCfgLS(){
+  try{ localStorage.setItem(LS_KEYS.appcfg, JSON.stringify(getAppCfgObject())); }catch(e){}
+}
+function loadProjectLS(){
+  try{ const t=localStorage.getItem(LS_KEYS.project); if(!t) return false; const o=JSON.parse(t); return applyProjectObject(o); }catch(e){ return false; }
+}
+
+
+/* ===== Toolbar, Modals, Naming Link, ZIP, Easter Egg ===== */
+(() => {
+  const $= (q,el=document)=> el.querySelector(q);
+  const $$=(q,el=document)=> Array.from(el.querySelectorAll(q));
+
+  const tbProject=$("#tbProject"), tbApp=$("#tbApp"), tbRender=$("#tbRender"), tbAbout=$("#tbAbout");
+  const modals = {
+    project: $("#projectSettingsModal"),
+    app: $("#appConfigModal"),
+    render: $("#renderSettingsModal"),
+    about: $("#aboutModalV2"),
+  };
+  function openModal(el){ if(!el) return; el.classList.remove("hidden"); }
+  function closeModal(el){ if(!el) return; el.classList.add("hidden"); }
+  $$('[data-close]').forEach(btn => btn.addEventListener('click', () => closeModal($(btn.getAttribute('data-close')))));
+  tbProject && tbProject.addEventListener('click',()=>openModal(modals.project));
+  tbApp && tbApp.addEventListener('click',()=>openModal(modals.app));
+  tbRender && tbRender.addEventListener('click',()=>openModal(modals.render));
+  tbAbout && tbAbout.addEventListener('click',()=>openModal(modals.about));
+
+  // Project name <-> Render file name
+  const projectNameInput=$("#projectNameInput");
+  const projectNameModal=$("#projectNameModal");
+  const renderFileName=$("#renderFileName");
+  const linkProjectNameBtn=$("#linkProjectNameBtn");
+  let fileNameLinked=true;
+
+  window.doc = window.doc || {};
+  doc.projectName = doc.projectName || "Untitled Project";
+  function sanitizeFileName(s){ return String(s||"animation").trim().replace(/[\/:*?"<>|]+/g,"_"); }
+  function setProjectName(n){
+    doc.projectName = n || "Untitled Project";
+    if(projectNameInput) projectNameInput.value = doc.projectName;
+    if(projectNameModal) projectNameModal.value = doc.projectName;
+    const fileNameInp = document.getElementById("fileName");
+    if(fileNameLinked && renderFileName) renderFileName.value = sanitizeFileName(doc.projectName);
+    if(fileNameLinked && fileNameInp) fileNameInp.value = sanitizeFileName(doc.projectName);
+    try{ saveProjectLS && saveProjectLS(); }catch{}
+  }
+  setProjectName(doc.projectName);
+  projectNameInput && projectNameInput.addEventListener('input', e=> setProjectName(e.target.value));
+  projectNameModal && projectNameModal.addEventListener('input', e=> setProjectName(e.target.value));
+  linkProjectNameBtn && linkProjectNameBtn.addEventListener('click', ()=>{
+    fileNameLinked = !fileNameLinked;
+    linkProjectNameBtn.textContent = fileNameLinked ? "🔗" : "🔓";
+    if(fileNameLinked && renderFileName) renderFileName.value = sanitizeFileName(doc.projectName);
+    const fileNameInp = document.getElementById("fileName");
+    if(fileNameLinked && fileNameInp) fileNameInp.value = sanitizeFileName(doc.projectName);
+  });
+  const fileNameInp = document.getElementById("fileName");
+  if(renderFileName){
+    renderFileName.value = (fileNameInp && fileNameInp.value) || sanitizeFileName(doc.projectName);
+    renderFileName.addEventListener('input', ()=>{ fileNameLinked=false; if(linkProjectNameBtn) linkProjectNameBtn.textContent="🔓"; if(fileNameInp) fileNameInp.value = renderFileName.value; });
+  }
+  if(fileNameInp){
+    fileNameInp.addEventListener('input', ()=>{ if(fileNameLinked && renderFileName) renderFileName.value = fileNameInp.value; });
+  }
+
+  // Render resolution + link to background res
+  let renderLinkedToBg = doc.renderLinkedToBg !== false; // default true
+  const linkBgResBtn = $("#linkBgResBtn");
+  linkBgResBtn && linkBgResBtn.addEventListener('click', ()=>{
+    renderLinkedToBg = !renderLinkedToBg;
+    doc.renderLinkedToBg = renderLinkedToBg;
+    linkBgResBtn.textContent = renderLinkedToBg ? "🔗 Linked" : "🔓 Unlinked";
+    try{ saveProjectLS && saveProjectLS(); }catch{}
+  });
+  $$(".seg-btn[data-rres]").forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const v=btn.getAttribute('data-rres');
+      if(v==="96x128") doc.renderRes = {w:96,h:128};
+      else if(v==="64x64") doc.renderRes = {w:64,h:64};
+      else { doc.renderRes = {w:doc.res.w,h:doc.res.h}; try{ alert("⚠️ Custom resolution may not be ideal for LED Backpack"); }catch{} }
+      try{ saveProjectLS && saveProjectLS(); }catch{}
+    });
+  });
+
+  // Restore Defaults buttons
+  const restoreAnimDefaultsBtn = $("#restoreAnimDefaultsBtn");
+  const restoreColorDefaultsBtn = $("#restoreColorDefaultsBtn");
+  function getAnimDefaults(){ return []; } // use empty list as baseline
+  function getColorFxDefaults(){ return {}; } // baseline
+  restoreAnimDefaultsBtn && restoreAnimDefaultsBtn.addEventListener('click', ()=>{
+    try{ pushHistory && pushHistory(); }catch{}
+    doc.anims = getAnimDefaults();
+    try{ render && render(); }catch{}
+    try{ alert("Animation defaults restored"); }catch{}
+  });
+  restoreColorDefaultsBtn && restoreColorDefaultsBtn.addEventListener('click', ()=>{
+    try{ pushHistory && pushHistory(); }catch{}
+    // Remove colorcycle/rainbow/glow from all words
+    (doc.lines||[]).forEach(line => (line.words||[]).forEach(w => { if(w.anims){ w.anims = w.anims.filter(a=>!["colorcycle","rainbow","glow","sweep"].includes(a.id)); } }));
+    try{ render && render(); }catch{}
+    try{ alert("Color animation defaults restored"); }catch{}
+  });
+
+  // About Easter Egg
+  const followBtn=$("#followBtn"), eggPrompt=$("#eggPrompt"), eggYes=$("#eggYes"), eggNo=$("#eggNo");
+  followBtn && followBtn.addEventListener('click', ()=>{
+    try{ window.open("https://instagram.com/", "_blank"); }catch{}
+    eggPrompt && eggPrompt.classList.remove("hidden");
+  });
+  eggNo && eggNo.addEventListener('click', ()=> eggPrompt && eggPrompt.classList.add("hidden"));
+  eggYes && eggYes.addEventListener('click', ()=>{
+    if(window.EASTER_EGG_JSON){
+      try{
+        pushHistory && pushHistory();
+        applyProjectObject && applyProjectObject(window.EASTER_EGG_JSON);
+        render && render();
+        fitZoom && fitZoom();
+      }catch(e){ console.warn("Easter egg load failed", e); }
+    } else {
+      alert("Easter egg data not bundled yet.");
+    }
+  });
+
+  // Project ZIP export/import (basic)
+  async function makeProjectZip(){
+    const zip = new JSZip();
+    const data = JSON.parse(JSON.stringify(doc));
+    try{
+      if (data.bg && data.bg.image) {
+        const c=document.createElement("canvas");
+        c.width = doc.res.w; c.height = doc.res.h;
+        const cctx=c.getContext("2d");
+        cctx.drawImage(doc.bg.image, 0,0,c.width,c.height);
+        data.bg.dataURL = c.toDataURL("image/png");
+        delete data.bg.image;
+        zip.file("assets/backgrounds/bg.png", data.bg.dataURL.split(",",1)[1], {base64:true});
+      }
+    }catch{}
+    data.version = "2.0";
+    zip.file("project.json", JSON.stringify(data, null, 2));
+    return zip;
+  }
+  async function downloadProjectZip(){
+    const zip = await makeProjectZip();
+    const blob = await zip.generateAsync({type:"blob"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=((document.getElementById("renderFileName")?.value)||"project")+".zip";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  }
+  async function importProjectZip(file){
+    try{
+      const zip = await JSZip.loadAsync(file);
+      const projTxt = await zip.file("project.json").async("string");
+      const obj = JSON.parse(projTxt);
+      applyProjectObject && applyProjectObject(obj);
+      if(obj.bg && obj.bg.dataURL){
+        const im=new Image(); im.src=obj.bg.dataURL; im.onload=()=>{ doc.bg.image = im; render && render(); };
+      } else if(zip.file("assets/backgrounds/bg.png")){
+        const b64 = await zip.file("assets/backgrounds/bg.png").async("base64");
+        const url = "data:image/png;base64,"+b64;
+        const im=new Image(); im.src=url; im.onload=()=>{ doc.bg.image = im; render && render(); };
+      }
+      render && render(); fitZoom && fitZoom();
+    }catch(e){
+      alert("Invalid or unsupported project .zip");
+      console.warn(e);
+    }
+  }
+  const downloadZipBtn=$("#downloadZipBtn"), importZipInput=$("#importZipInput");
+  downloadZipBtn && downloadZipBtn.addEventListener('click', downloadProjectZip);
+  importZipInput && importZipInput.addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importProjectZip(f); });
+
+  // New Project flow (new tab) with optional preload zip
+  const newProjectBtn=$("#newProjectBtn"), preloadZipInput=$("#preloadZipInput");
+  let preloadZipFile = null;
+  preloadZipInput && preloadZipInput.addEventListener('change', e=> preloadZipFile = e.target.files?.[0] || null);
+  newProjectBtn && newProjectBtn.addEventListener('click', async ()=>{
+    const url = new URL(window.location.href);
+    const projectId = "p_"+Math.random().toString(36).slice(2);
+    url.searchParams.set("projectId", projectId);
+    const tab = window.open(url.toString(), "_blank");
+    if(preloadZipFile){
+      try{
+        const buf = await preloadZipFile.arrayBuffer();
+        sessionStorage.setItem("preloadZip:"+projectId, JSON.stringify(Array.from(new Uint8Array(buf))));
+      }catch{}
+    }
+  });
+  try{
+    const params = new URL(location.href).searchParams;
+    const pid = params.get("projectId");
+    if(pid){
+      const raw = sessionStorage.getItem("preloadZip:"+pid);
+      if(raw){
+        const arr = new Uint8Array(JSON.parse(raw));
+        importProjectZip(new Blob([arr],{type:"application/zip"}));
+        sessionStorage.removeItem("preloadZip:"+pid);
+      }
+    }
+  }catch{}
+
+  // App Config ZIP export (JSON-only baseline)
+  const downloadAppCfgZipBtn=$("#downloadAppCfgZipBtn"), importAppCfgZipInput=$("#importAppCfgZipInput");
+  downloadAppCfgZipBtn && downloadAppCfgZipBtn.addEventListener('click', async ()=>{
+    const zip = new JSZip();
+    const cfg = getAppCfgObject ? getAppCfgObject() : {};
+    zip.file("app-config.json", JSON.stringify(cfg, null, 2));
+    const blob = await zip.generateAsync({type:"blob"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="led_app_config.zip";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  });
+  importAppCfgZipInput && importAppCfgZipInput.addEventListener('change', async (e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    try{
+      const zip = await JSZip.loadAsync(f);
+      const txt = await zip.file("app-config.json").async("string");
+      const cfg = JSON.parse(txt);
+      applyAppCfgObject && applyAppCfgObject(cfg);
+      alert("App config imported");
+    }catch{ alert("Not a valid app-config ZIP"); }
+  });
+
+  // Hook the original About button to open the new About modal
+  const aboutBtn = document.getElementById("aboutBtn");
+  aboutBtn && aboutBtn.addEventListener('click', ()=> openModal(modals.about));
+})();
+
+/* ===== Custom Emoji (minimal MVP) ===== */
+(() => {
+  const scopeSel = document.getElementById("emojiScope");
+  const grid = document.getElementById("emojiGrid");
+  const tabs = document.getElementById("emojiTabs");
+  const search = document.getElementById("emojiSearch");
+  const uploadId = "customEmojiUploadInput";
+  if(!scopeSel || !grid) return;
+
+  window.customEmojiDB = window.customEmojiDB || []; // [{id,name,kind,src,thumb}]
+  function renderCustomGrid(){
+    grid.innerHTML="";
+    const q=(search.value||"").toLowerCase();
+    const list = customEmojiDB.filter(e=>!q || (e.name||"").toLowerCase().includes(q));
+    list.forEach(e=>{
+      const item=document.createElement("button"); item.className="emoji-item"; item.title=e.name||"Custom";
+      const img=document.createElement("img"); img.alt=e.name||"custom"; img.loading="lazy"; img.src=e.thumb||e.src;
+      item.appendChild(img);
+      item.onclick=()=>{
+        const li = (selected?selected.line : (doc.lines.length?doc.lines.length-1 : 0));
+        doc.lines[li] ??= {words:[]};
+        doc.lines[li].words.push({ emoji:true, src:e.src, size:24, scale:1, fx:0, fy:0, anims:[] });
+        selected = { line: li, word: doc.lines[li].words.length-1 };
+        render();
+        document.getElementById("emojiModal")?.classList.add("hidden");
+      };
+      grid.appendChild(item);
+    });
+  }
+
+  function ensureUploadButton(){
+    let up = document.getElementById(uploadId);
+    if(!up){
+      up = document.createElement("input");
+      up.type="file"; up.id=uploadId; up.accept="image/png,image/jpeg,image/gif"; up.hidden=true;
+      document.body.appendChild(up);
+      up.addEventListener("change", async (e)=>{
+        const f=e.target.files?.[0]; if(!f) return;
+        const url = URL.createObjectURL(f);
+        let thumb = url;
+        try{
+          if(f.type!=="image/gif"){
+            const img=new Image(); img.src=url;
+            await img.decode();
+            const c=document.createElement("canvas"); const s=72;
+            c.width=s; c.height=s; const cx=c.getContext("2d");
+            const scale=Math.min(s/img.width, s/img.height);
+            const w=img.width*scale, h=img.height*scale;
+            cx.fillStyle="#111827"; cx.fillRect(0,0,s,s);
+            cx.drawImage(img, (s-w)/2,(s-h)/2,w,h);
+            thumb=c.toDataURL("image/png");
+          }
+        }catch{}
+        customEmojiDB.push({ id:"cem_"+Date.now(), name:f.name, kind:(f.type==="image/gif"?"gif":"image"), src:url, thumb });
+        renderCustomGrid();
+      });
+    }
+    return up;
+  }
+
+  if(tabs && !tabs.querySelector('[data-custom-tab]')){
+    const b=document.createElement("button"); b.className="tab"; b.textContent="Custom"; b.setAttribute("data-custom-tab","1");
+    b.addEventListener("click", ()=>{
+      tabs.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      renderCustomGrid();
+    });
+    tabs.appendChild(b);
+  }
+
+  scopeSel.addEventListener("change", ()=>{
+    if(scopeSel.value==="custom"){
+      const up = ensureUploadButton();
+      up.click();
+      if(tabs){
+        const btn = tabs.querySelector('[data-custom-tab]');
+        btn && btn.click();
+      } else {
+        renderCustomGrid();
+      }
+    }
+  });
+})();
