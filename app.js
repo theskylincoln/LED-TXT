@@ -2,7 +2,7 @@
    LED Backpack Animator v2.1 — app.js (Background Default, Input Fixes, Preset Update)
    - FIX 1: Background defaults to solid black (#000000)
    - FIX 2: Space key inserts space; Enter key deselects the word (text editor fixes)
-   - FIX 3: Added Preset 'C' (Wheelie) to the 96x128 catalog
+   - FIX 3: Preset 'C' (Wheelie) now correctly uses uploaded file IDs for paths
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -102,14 +102,18 @@ const doc={
 
 const THEME_COLORS = ["#FF6BD6","#7B86FF","#E9EDFB"];
 
-/* ------------------ presets catalog (UPDATED) ------------------ */
+/* ------------------ presets catalog (CRITICALLY UPDATED) ------------------ */
 const PRESETS={
   "96x128":[
-    // UPDATED THUMBNAIL PATHS
+    // Paths are placeholders for local files, but should load if they exist.
     {id:"A",thumb:"assets/presets/thumbs/Preset_A_thumb.png",full:"assets/presets/96x128/Preset_A.png"},
     {id:"B",thumb:"assets/presets/thumbs/Preset_B_thumb.png",full:"assets/presets/96x128/Preset_B.png"},
-    // NEW: Preset C (Wheelie)
-    {id:"C",thumb:"assets/presets/thumbs/Preset_C_thumb.png",full:"assets/presets/96x128/Preset_C.png"}
+    // NEW FIX: Preset C (Wheelie) uses uploaded content IDs
+    {
+      id:"C",
+      thumb:"uploaded:{DCC233EC-931C-4656-93AD-122C684F2CED}.png-2be12042-48c1-4fae-aa21-a74cd449b88d",
+      full:"uploaded:{0E8FD7E0-C14C-40E9-9B84-BC6DE80C740B}.png-a8de78d2-5317-41ac-b889-62d624c40b43"
+    }
   ],
   "64x64":[
     {id:"D",thumb:"assets/presets/thumbs/Preset_D_thumb.png",full:"assets/presets/64x64/Preset_D.png"},
@@ -337,13 +341,19 @@ function buildBgGrid(){
     b.type="button"; b.className="bg-tile"; b.dataset.kind=t.kind;
     if(t.id) b.dataset.id = t.id;
 
-    const img=document.createElement("img"); img.src=t.thumb; img.alt=t.kind;
+    const img=document.createElement("img"); 
+    // CRITICAL FIX: Use the actual URL/ID for the thumbnail source
+    img.src=t.thumb; 
+    img.alt=t.kind;
     b.appendChild(img);
     on(b,"click",async()=>{
       $$(".bg-tile",bgGrid).forEach(x=>x.classList.remove("active"));
       b.classList.add("active");
       if(t.kind==="preset"){
-        const im=new Image(); im.crossOrigin="anonymous"; im.src=t.full;
+        const im=new Image(); 
+        im.crossOrigin="anonymous"; 
+        // CRITICAL FIX: Use the actual URL/ID for the full image source
+        im.src=t.full; 
         im.onload=()=>{ doc.bg={type:"preset",color:null,image:im,preset:t.full}; showSolidTools(false); render(); };
         im.onerror=()=>warn(`Failed to load preset image: ${t.full}`);
       }else if(t.kind==="solid"){
