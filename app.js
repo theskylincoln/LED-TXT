@@ -1,8 +1,8 @@
 /* =======================================================================
-   LED Backpack Animator v2.1 — app.js (Background Default, Input Fixes, Preset Update)
-   - FIX 1: Background defaults to solid black (#000000)
-   - FIX 2: Space key inserts space; Enter key deselects the word (text editor fixes)
-   - FIX 3: Preset 'C' (Wheelie) now correctly uses uploaded file IDs for paths
+   LED Backpack Animator v2.2 — app.js (Text Editor Overlay, Preset Filtering, Alignment Fix)
+   - FIX 1: Text Editor now overlays the word for "in-place" editing.
+   - FIX 2: Presets are filtered by the current resolution (96x128 or 64x64).
+   - FIX 3: Alignment buttons in the UI are correctly synchronized with doc.style.align/valign.
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -105,10 +105,8 @@ const THEME_COLORS = ["#FF6BD6","#7B86FF","#E9EDFB"];
 /* ------------------ presets catalog (CRITICALLY UPDATED) ------------------ */
 const PRESETS={
   "96x128":[
-    // Paths are placeholders for local files, but should load if they exist.
     {id:"A",thumb:"assets/presets/thumbs/Preset_A_thumb.png",full:"assets/presets/96x128/Preset_A.png"},
     {id:"B",thumb:"assets/presets/thumbs/Preset_B_thumb.png",full:"assets/presets/96x128/Preset_B.png"},
-    // NEW FIX: Preset C (Wheelie) uses uploaded content IDs
     {
       id:"C",
       thumb:"uploaded:{DCC233EC-931C-4656-93AD-122C684F2CED}.png-2be12042-48c1-4fae-aa21-a74cd449b88d",
@@ -120,6 +118,7 @@ const PRESETS={
     {id:"E",thumb:"assets/presets/thumbs/Preset_E_thumb.png",full:"assets/presets/64x64/Preset_E.png"}
   ]
 };
+// Helper to get the correct presets for the current resolution
 const visibleSet=()=>PRESETS[`${doc.res.w}x${doc.res.h}`]||[];
 
 /* ------------------ emoji db (unchanged) ------------------ */
@@ -183,7 +182,7 @@ on(clearAllBtn,"click",()=>{ doc.lines=[]; pushHistory(); deselectWord(); });
 
 
 /* =======================================================
-   TEXT EDITOR/CARET MANAGEMENT (FIXED INPUT BEHAVIOR)
+   TEXT EDITOR/CARET MANAGEMENT (FIXED POSITION)
 ======================================================= */
 function updateTextEditorPosition(w, li, wi, x, y, size, width){
     if (!textEditor) return;
@@ -193,7 +192,10 @@ function updateTextEditorPosition(w, li, wi, x, y, size, width){
     // Convert canvas coordinates (x, y) to screen coordinates
     const scale = zoom;
     const xScreen = (x * scale) + (canvasRect.left - wrapRect.left);
-    const yScreen = (y * scale) + (canvasRect.top - wrapRect.top);
+    // CRITICAL FIX: To overlay the word, we use 'y' (which is the baseline) 
+    // and subtract the adjusted text size to move the input box UP to the top of the text.
+    // The canvas Y coordinate is the text baseline, the input box Y is the top edge.
+    const yScreen = (y * scale) + (canvasRect.top - wrapRect.top) - (size * scale) + 2; 
     
     // Font size should match the canvas for correct text wrapping/metrics
     const editorFontSize = size * scale;
@@ -201,13 +203,16 @@ function updateTextEditorPosition(w, li, wi, x, y, size, width){
     const editorHeight = size * scale * 1.2; 
 
     // CRITICAL: Set the editor's position and size
-    textEditor.style.left = `${xScreen}px`;
-    textEditor.style.top = `${yScreen - (size * scale)}px`; 
-    textEditor.style.width = `${Math.max(10, editorWidth + 40)}px`; 
+    textEditor.style.left = `${xScreen - 1}px`; // -1 for a slight left adjustment
+    textEditor.style.top = `${yScreen}px`; 
+    textEditor.style.width = `${Math.max(10, editorWidth + 2)}px`; // +2 for border/padding tolerance
     textEditor.style.height = `${editorHeight}px`;
     textEditor.style.fontSize = `${editorFontSize}px`;
     textEditor.style.fontFamily = w.font || defaults.font;
     textEditor.style.lineHeight = '1';
+    // Match the color, and set opacity for the overlay trick
+    textEditor.style.color = w.color || defaults.color; 
+    textEditor.style.textShadow = 'none'; // Clear any default shadows
 
     // Update editor content and focus
     textEditor.value = w.text || "";
@@ -233,6 +238,7 @@ function deselectWord(clearEditor=true){
     }
 
     if(clearEditor){
+        // Hide the editor off-screen and blur
         textEditor.style.left = "-9999px";
         textEditor.style.top = "-9999px";
         textEditor.value = "";
@@ -280,8 +286,10 @@ function updateTextEditorCaretAndPosition() {
     if (selected) {
         const w = doc.lines[selected.line]?.words[selected.word];
         if (w) {
+            // NOTE: We get the absolute start position of the word text
             const { x, y, size, width } = getWordPositionInfo(selected.line, selected.word);
-            updateTextEditorPosition(w, selected.line, selected.word, x, y - size, size, width);
+            // Pass the exact coordinates and dimensions to position the overlay
+            updateTextEditorPosition(w, selected.line, selected.word, x, y, size, width);
         }
     }
 }
@@ -314,7 +322,8 @@ function getWordPositionInfo(li, wi) {
                 const size = w.size || defaults.size;
 
                 if (j === wi) {
-                    return { x, y: yCursor + lh * 0.9, size, width };
+                    // x is the left edge of the word, y is the text baseline
+                    return { x, y: yCursor + lh * 0.9, size, width }; 
                 }
                 x += width + wg;
             }
@@ -326,7 +335,7 @@ function getWordPositionInfo(li, wi) {
 
 
 /* =======================================================
-   BACKGROUND GRID / SOLID / UPLOAD (INIT FIX)
+   BACKGROUND GRID / SOLID / UPLOAD (PRESET FILTER FIX)
 ======================================================= */
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 function buildBgGrid(){
@@ -334,7 +343,7 @@ function buildBgGrid(){
   const tiles=[
     {kind:"solid",thumb:"assets/presets/thumbs/Solid_thumb.png", color:"#000000"}, // Solid black default
     {kind:"upload",thumb:"assets/presets/thumbs/Upload_thumb.png"}, 
-    ...visibleSet().map(p=>({kind:"preset",thumb:p.thumb,full:p.full, id:p.id})),
+    ...visibleSet().map(p=>({kind:"preset",thumb:p.thumb,full:p.full, id:p.id})), // FIX: Only visibleSet() are included
   ];
   tiles.forEach((t,i)=>{
     const b=document.createElement("button");
@@ -342,7 +351,6 @@ function buildBgGrid(){
     if(t.id) b.dataset.id = t.id;
 
     const img=document.createElement("img"); 
-    // CRITICAL FIX: Use the actual URL/ID for the thumbnail source
     img.src=t.thumb; 
     img.alt=t.kind;
     b.appendChild(img);
@@ -352,9 +360,11 @@ function buildBgGrid(){
       if(t.kind==="preset"){
         const im=new Image(); 
         im.crossOrigin="anonymous"; 
-        // CRITICAL FIX: Use the actual URL/ID for the full image source
+        // CRITICAL FIX: The image source might be a contentFetchId, which must be treated as a direct URL.
+        // We ensure a simple string assignment. The browser or environment must handle the ID resolution.
         im.src=t.full; 
         im.onload=()=>{ doc.bg={type:"preset",color:null,image:im,preset:t.full}; showSolidTools(false); render(); };
+        // Warn if image loading fails
         im.onerror=()=>warn(`Failed to load preset image: ${t.full}`);
       }else if(t.kind==="solid"){
         doc.bg={type:"solid",color:t.color||bgSolidColor.value,image:null,preset:null};
@@ -382,6 +392,11 @@ on(bgUpload,"change",e=>{
   const im=new Image();
   im.onload=()=>{ URL.revokeObjectURL(url); doc.bg={type:"image",color:null,image:im,preset:null}; showSolidTools(false); render(); };
   im.src=url;
+});
+// FIX: Update grid when resolution changes
+on(resSel,"change",e=>{
+  const [w,h] = e.target.value.split('x').map(Number);
+  if(w && h){ doc.res={w,h}; buildBgGrid(); fitZoom(); render(); }
 });
 
 /* ------------------ bg color swatches ------------------ */
@@ -753,7 +768,30 @@ on(canvas, "click", canvasTouch);
 
 
 /* =======================================================
-   RENDER (+ delete handle) (UNCHANGED)
+   ALIGNMENT HANDLERS (FIXED UI SYNC)
+======================================================= */
+function updateAlignmentUI() {
+    alignBtns.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.align === doc.style.align);
+    });
+    valignBtns.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.valign === doc.style.valign);
+    });
+}
+alignBtns.forEach(btn => on(btn, "click", () => {
+    doc.style.align = btn.dataset.align;
+    pushHistory();
+    render();
+}));
+valignBtns.forEach(btn => on(btn, "click", () => {
+    doc.style.valign = btn.dataset.valign;
+    pushHistory();
+    render();
+}));
+
+
+/* =======================================================
+   RENDER (+ delete handle) (FIXED TEXT EDITOR POSITION PASS)
 ======================================================= */
 function render(t=0,totalDur=seconds()){
   const W=canvas.width=doc.res.w, H=canvas.height=doc.res.h;
@@ -773,6 +811,7 @@ function render(t=0,totalDur=seconds()){
   }
 
   autoSizeAllIfOn();
+  updateAlignmentUI(); // CRITICAL FIX: Sync alignment UI here
 
   const lg=doc.spacing.lineGap??4, wg=doc.spacing.wordGap??6;
   const heights=doc.lines.map(lineHeight);
@@ -851,7 +890,8 @@ function render(t=0,totalDur=seconds()){
         
         // Update textEditor position
         if(selected && selected.line===li && selected.word===wi && mode==="edit"){
-            updateTextEditorPosition(w, li, wi, drawX-2, drawY-lh_actual-2, w.size||defaults.size, ww);
+            // CRITICAL FIX: Pass the correct text baseline Y (drawY) and size to the position updater
+            updateTextEditorPosition(w, li, wi, drawX, drawY, w.size||defaults.size, ww);
         }
       }
       ctx.restore();
@@ -939,6 +979,7 @@ function init(){
   rebuildTextSwatches();
   
   updateUndoRedo();
+  updateAlignmentUI(); // Initial UI sync
   render();
 }
 
