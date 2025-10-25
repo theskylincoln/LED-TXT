@@ -375,3 +375,5 @@ input[type="color"]{
 
 /* ====== PATCH: Ensure pills look clickable and consistent ====== */
 .pill:hover { filter: brightness(1.08); }
+
+/* PATCH: v2 surgical fixes applied */

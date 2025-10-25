@@ -1218,3 +1218,5 @@ window.addEventListener("DOMContentLoaded", () => {
     alert("App failed to load properly. Check console for details.");
   }
 });
+
+// PATCH: v2 surgical fixes applied
