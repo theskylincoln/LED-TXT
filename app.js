@@ -1,9 +1,5 @@
 /* =======================================================================
-   LED Backpack Animator v1.0 — app.js (Updated for GIF, Selection, and Inspector)
-   - Implemented Word Selection via canvas click.
-   - Implemented functions to update the Inspector UI based on the selected word.
-   - ADDED: Utility function to update properties of the selected word.
-   - ADDED: Event handlers for Font, Size, and Color inputs.
+   LED Backpack Animator v1.0 — app.js (Updated for: Live Text Fixes, Add Word/Line, Auto-Size)
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -49,13 +45,17 @@ const gifPreview=$("#gifPreview");
 /* modals */
 const emojiModal=$("#emojiModal");
 
+// Text Editor
+const textEditor=$("#textEditor");
+
 /* ------------------ state ------------------ */
 let mode="edit", zoom=1, selected=null;
 let history=[], future=[];
 const UNDO_LIMIT=100;
 let startT=0, rafId=null;
 const uiLock = { emojiOpen: false };
-const defaults={ font:"Orbitron", size:22, color:"#FFFFFF" };
+// ADDED autoSize to defaults
+const defaults={ font:"Orbitron", size:22, color:"#FFFFFF", autoSize: true };
 
 const doc={
   version:"1.0",
@@ -63,9 +63,10 @@ const doc={
   bg:{ type:"preset", color:null, image:null, preset:"assets/presets/96x128/Preset_A.png", isAnimatedGif:false },
   spacing:{ lineGap:4, wordGap:6 }, style:{ align:"center", valign:"middle" },
   lines:[
-    { words:[{text:"LED",      color:"#E9EDFB", font:"Orbitron", size:24, anims:[]}] },
-    { words:[{text:"Backpack", color:"#FF6BD6", font:"Orbitron", size:24, anims:[]}] },
-    { words:[{text:"Animator", color:"#7B86FF", font:"Orbitron", size:24, anims:[]}] }
+    // ADDED autoSize to word objects
+    { words:[{text:"LED",      color:"#E9EDFB", font:"Orbitron", size:24, anims:[], autoSize:false}] },
+    { words:[{text:"Backpack", color:"#FF6BD6", font:"Orbitron", size:24, anims:[], autoSize:false}] },
+    { words:[{text:"Animator", color:"#7B86FF", font:"Orbitron", size:24, anims:[], autoSize:false}] }
   ],
   anims:[],
   multi:new Set()
@@ -134,12 +135,12 @@ function redo() {
 }
 
 // ----------------------------------------------------
-// NEW: Word Property Utility Function
+// Word Property Utility Function
 // ----------------------------------------------------
 
 /**
  * Utility function to update a property on the currently selected word.
- * @param {string} prop - The property name ('font', 'size', 'color').
+ * @param {string} prop - The property name ('font', 'size', 'color', 'autoSize').
  * @param {any} value - The new value for the property.
  */
 function applySelectedWordProperty(prop, value) {
@@ -147,18 +148,52 @@ function applySelectedWordProperty(prop, value) {
 
   const word = doc.lines[selected.l].words[selected.w];
   
-  if (word[prop] === value) return; // No change
+  if (word[prop] === value) return; 
 
   word[prop] = value;
 
-  // Special handling for number inputs (like font size)
-  if (typeof word[prop] === 'string' && !isNaN(parseFloat(value))) {
+  // Handle number conversion for size
+  if (prop === 'size' && typeof word[prop] === 'string' && !isNaN(parseFloat(value))) {
     word[prop] = parseFloat(value);
+  }
+
+  // Handle boolean conversion for autoSize
+  if (prop === 'autoSize') {
+    word[prop] = !!value;
   }
 
   pushState(`UPDATE_WORD_${prop.toUpperCase()}`);
   render();
+  updateInspector(); 
 }
+
+// ----------------------------------------------------
+// Auto-Size Logic (NEW)
+// ----------------------------------------------------
+
+/**
+ * Checks if a word fits on the canvas width and reduces its size if necessary.
+ * Mutates the word object directly.
+ * @param {object} word - The word object to adjust.
+ */
+function autoSizeWord(word) {
+    if (!word.autoSize) return;
+
+    // Define the available width (canvas width minus 8px padding on both sides)
+    const MAX_WIDTH = doc.res.w - (8 * 2);
+    
+    // Safety check to prevent infinite loop or tiny font
+    let reductionCount = 0;
+    
+    // Check if the current width exceeds the maximum
+    while (word.w > MAX_WIDTH && word.size > 6 && reductionCount < 50) {
+        word.size -= 1; // Decrease font size by 1px
+        ctx.font = `${word.size}px ${word.font}`;
+        word.w = ctx.measureText(word.text).width; // Recalculate word width
+        reductionCount++;
+    }
+}
+
 
 /* ------------------ CANVAS & RENDERING ------------------ */
 function initCanvas(){
@@ -194,7 +229,7 @@ function render(t=0){
   const w = doc.res.w, h = doc.res.h;
   ctx.clearRect(0, 0, w, h);
 
-  // 1. Background
+  // 1. Background (Unchanged)
   if(doc.bg.type==="solid"){
     ctx.fillStyle=doc.bg.color||"#000000";
     ctx.fillRect(0, 0, w, h);
@@ -217,7 +252,7 @@ function render(t=0){
     }
   }
 
-  // 2. Layout Calculation (Simplified for hit testing)
+  // 2. Layout Calculation
   let currentY = doc.spacing.lineGap;
   const padding = 8;
   const lineGap = doc.spacing.lineGap;
@@ -226,9 +261,14 @@ function render(t=0){
   doc.lines.forEach((line, lIdx) => {
     let lineContentWidth = 0;
     line.words.forEach(word => {
+      // Set font and measure width BEFORE auto-sizing
       ctx.font = `${word.size}px ${word.font}`;
       word.w = ctx.measureText(word.text).width; 
       word.h = word.size; 
+      
+      // NEW: Run auto-size logic
+      autoSizeWord(word);
+      
       lineContentWidth += word.w + wordGap;
     });
     lineContentWidth -= wordGap;
@@ -249,7 +289,7 @@ function render(t=0){
       let finalX = word._x;
       let finalY = word._y;
       
-      // --- Apply Animation/Color FX ---
+      // --- Apply Animation/Color FX --- (Unchanged)
       if (word.anims.includes('rainbow')) {
           finalColor = hsvToRgb((t / 3000) % 1, 1, 1);
       }
@@ -258,7 +298,7 @@ function render(t=0){
       }
       
       // 3. Draw Text
-      ctx.font = `${word.size}px ${word.font}`;
+      ctx.font = `${word.size}px ${word.font}`; // Must re-set font after autoSizeWord runs
       ctx.fillStyle = finalColor;
       ctx.textBaseline = 'top';
       ctx.fillText(word.text, finalX, finalY);
@@ -267,7 +307,6 @@ function render(t=0){
       if (mode === 'edit' && selected && lIdx === selected.l && wIdx === selected.w) {
          ctx.strokeStyle = '#a675ff';
          ctx.lineWidth = 1;
-         // Draw box slightly larger for visibility
          ctx.strokeRect(word._x - 2, word._y - 2, word.w + 4, word.h + 4); 
       }
       
@@ -279,14 +318,30 @@ function render(t=0){
 }
 
 // ----------------------------------------------------
-// Word Selection Logic
+// Word Selection Logic (Unchanged)
 // ----------------------------------------------------
 
+/**
+ * Updates the selected word state and UI.
+ * @param {number|null} lIdx - Line index, or null to clear selection.
+ * @param {number|null} wIdx - Word index, or null to clear selection.
+ */
 function selectWord(lIdx, wIdx) {
   if (lIdx === null) {
     selected = null;
+    textEditor.classList.add("hidden"); 
   } else {
+    // Check if the selection is changing 
+    const isNewSelection = !selected || selected.l !== lIdx || selected.w !== wIdx;
+    
     selected = { l: lIdx, w: wIdx };
+    textEditor.classList.remove("hidden"); 
+    
+    if (isNewSelection) {
+      // If a new word is selected, focus the editor and move cursor to end
+      textEditor.focus();
+      textEditor.selectionStart = textEditor.selectionEnd = textEditor.value.length;
+    }
   }
   updateUI();
   updateInspector();
@@ -311,7 +366,6 @@ function handleCanvasClick(e) {
     line.words.forEach((word, wIdx) => {
       if (hit) return;
       
-      // Check if click (x, y) is inside the word's bounds
       const isHit = (
         x >= word._x && x <= word._x + word.w &&
         y >= word._y && y <= word._y + word.h
@@ -330,7 +384,7 @@ function handleCanvasClick(e) {
 }
 
 // ----------------------------------------------------
-// Inspector Update Logic
+// Inspector Update Logic (FIXED CLIPPING)
 // ----------------------------------------------------
 
 function updateInspector() {
@@ -339,6 +393,8 @@ function updateInspector() {
     fontSelect.value = defaults.font;
     fontSize.value = defaults.size;
     fontColor.value = defaults.color;
+    // Set autoSize checkbox to default state
+    autoSize.checked = defaults.autoSize; 
     $$('#accFont input, #accFont select').forEach(el => el.disabled = true);
     return;
   }
@@ -350,12 +406,95 @@ function updateInspector() {
   fontSelect.value = word.font;
   fontSize.value = word.size;
   fontColor.value = word.color;
+  autoSize.checked = word.autoSize; // Update checkbox state
   
-  // Note: We skip the Font Size Input validation/autoSize for now
+  // Update the Text Editor properties and position
+  textEditor.value = word.text;
+  textEditor.style.fontFamily = word.font;
+  // Use the size as calculated by render (which may have been auto-sized)
+  textEditor.style.fontSize = `${word.size}px`; 
+  textEditor.style.color = word.color;
+  
+  // Position the editor over the word (uses the last calculated positions)
+  const scale = currentZoom / 100;
+  const canvasRect = canvas.getBoundingClientRect();
+  const wrapRect = wrap.getBoundingClientRect();
+
+  // Calculate position relative to the parent wrap, scaled by zoom
+  // -2px margin added to match the selection box border
+  const xPos = (word._x * scale) + (canvasRect.left - wrapRect.left) - 2; 
+  const yPos = (word._y * scale) + (canvasRect.top - wrapRect.top) - 2; 
+  
+  textEditor.style.left = `${xPos}px`;
+  textEditor.style.top = `${yPos}px`;
+  
+  // FIX: Increase the width padding to prevent clipping of text and cursor.
+  const horizontalPadding = 12; // Extra room for the cursor
+  const borderAdjustment = 4; // 2px border on each side
+  
+  textEditor.style.width = `${word.w * scale + horizontalPadding + borderAdjustment}px`; 
+  textEditor.style.height = `${word.h * scale + borderAdjustment}px`;
 }
 
 
-/* ------------------ UI ------------------ */
+/* ----------------------------------------------------
+   New Word and Line Logic (NEW)
+   ---------------------------------------------------- */
+
+/**
+ * Creates a new word object using defaults.
+ */
+function createNewWord(text = 'NEW WORD') {
+    return {
+        text: text,
+        color: defaults.color,
+        font: defaults.font,
+        size: defaults.size,
+        anims: [],
+        autoSize: defaults.autoSize 
+    };
+}
+
+function addWord() {
+    if (!selected) {
+        // If nothing is selected, select the last word of the last line.
+        const lIdx = doc.lines.length - 1;
+        const wIdx = doc.lines[lIdx].words.length - 1;
+        selectWord(lIdx, wIdx);
+    }
+    
+    const lIdx = selected.l;
+    const wIdx = selected.w;
+    
+    // Insert new word right after the selected one
+    doc.lines[lIdx].words.splice(wIdx + 1, 0, createNewWord());
+    
+    // Select the newly added word
+    selectWord(lIdx, wIdx + 1);
+    pushState('ADD_WORD');
+}
+
+function addLine() {
+    if (!selected) {
+        // If nothing is selected, add a new line to the end.
+        selected = { l: doc.lines.length - 1, w: 0 };
+    }
+    
+    const lIdx = selected.l;
+    
+    // Create new line with one word
+    const newLine = { words: [createNewWord('NEW LINE')] };
+    
+    // Insert new line after the selected line
+    doc.lines.splice(lIdx + 1, 0, newLine);
+    
+    // Select the first word of the newly added line
+    selectWord(lIdx + 1, 0);
+    pushState('ADD_LINE');
+}
+
+
+/* ------------------ UI (Unchanged) ------------------ */
 function updateUI(){
   undoBtn.disabled=history.length<=1;
   redoBtn.disabled=future.length===0;
@@ -386,7 +525,7 @@ function fitZoom(){
   updateUI();
 }
 
-/* ------------------ Backgrounds ------------------ */
+/* ------------------ Backgrounds (Unchanged) ------------------ */
 function visibleSet(){
   const resKey = `${doc.res.w}x${doc.res.h}`;
   return PRESETS[resKey] || [];
@@ -530,7 +669,8 @@ function init() {
   on(zoomSlider, "input", e => { currentZoom = e.target.value; updateUI(); });
   
   on(clearAllBtn, "click", () => {
-    doc.lines = [{ words: [{ text: "", color: "#FFFFFF", font: "Orbitron", size: 24, anims: [] }] }];
+    // Ensure the initial word has the new autoSize property
+    doc.lines = [{ words: [{ text: "", color: "#FFFFFF", font: "Orbitron", size: 24, anims: [], autoSize: defaults.autoSize }] }];
     selectWord(0, 0); 
     pushState("CLEAR_CANVAS");
   });
@@ -564,23 +704,64 @@ function init() {
   // 6. Word Selection
   on(canvas, "click", handleCanvasClick);
   
-  // ▼ NEW: Inspector Control Handlers
+  // 7. Inspector Control Handlers
   on(fontSelect, 'change', e => {
     applySelectedWordProperty('font', e.target.value);
   });
   
   on(fontSize, 'input', e => {
-    // Input event for live feedback as user types a number
     applySelectedWordProperty('size', e.target.value);
   });
   
   on(fontColor, 'input', e => {
-    // Input event for live feedback as user changes the color picker
     applySelectedWordProperty('color', e.target.value);
   });
-  // ▲ NEW
+  
+  // NEW: Auto-Size Checkbox Handler
+  on(autoSize, 'change', e => {
+    applySelectedWordProperty('autoSize', e.target.checked);
+  });
+  
+  // NEW: Add Word/Line Handlers
+  on(addWordBtn, 'click', addWord);
+  on(addLineBtn, 'click', addLine);
+  
+  // 8. Text Editor Input and History Handlers
+  
+  // Track original value on focus
+  on(textEditor, 'focus', e => {
+      e.target.lastValue = e.target.value;
+  });
 
-  // 7. Initial State Update
+  // Live update the text on the canvas (no history push)
+  on(textEditor, 'input', e => {
+    if (!selected) return;
+    const newText = e.target.value;
+    const word = doc.lines[selected.l].words[selected.w];
+    
+    if (word.text !== newText) {
+      word.text = newText;
+      // Re-render and re-position immediately for live feedback
+      render(); 
+      updateInspector(); 
+    }
+  });
+
+  // CRITICAL: Push history when the user finishes typing (on blur)
+  on(textEditor, 'blur', e => {
+    if (!selected) return;
+    
+    const word = doc.lines[selected.l].words[selected.w];
+    const newText = e.target.value;
+    const originalText = e.target.lastValue;
+    
+    // Only push state if the text actually changed since focus
+    if (originalText !== newText) {
+      pushState('EDIT_TEXT');
+    }
+  });
+
+  // 9. Initial State Update
   selectWord(0, 0); 
   updateUI();
   render();
