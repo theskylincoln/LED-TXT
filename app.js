@@ -1,4 +1,3 @@
-const UNDO_LIMIT = 100;
 /* =======================================================================
    LED Backpack Animator v1.0 — app.js (updated, drop-in)
    - Startup preset loads from JSON (lines only) without altering backgrounds
@@ -191,13 +190,6 @@ function buildBgGrid(){
 on(bgUpload,"change",e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const url=URL.createObjectURL(f);
-  if (previewOnly) {
-    try {
-      const img = document.getElementById('gifPreview');
-      if (img) { img.src = url; img.style.display = 'block'; }
-    } catch {}
-  }
-
   const im=new Image();
   im.onload=()=>{ URL.revokeObjectURL(url); doc.bg={type:"image",color:null,image:im,preset:null}; showSolidTools(false); render(); };
   im.src=url;
@@ -993,8 +985,7 @@ async function ensureGifLibs(){
 }
 function encoderBlob(enc){ const bytes=enc.stream().bin||enc.stream().getData(); return new Blob([bytes instanceof Uint8Array?bytes:new Uint8Array(bytes)],{type:"image/gif"}); }
 
-async function renderGif(opts={}){
-  const previewOnly = !!opts.previewOnly;
+async function renderGif(){
   const ok=await ensureGifLibs(); if(!ok) return;
   const F=fps(), S=seconds(), frames=Math.max(1,Math.floor(F*S)), delay=Math.max(1,Math.round(1000/F));
   const resume=(mode==="preview"); stopPreview();
@@ -1006,14 +997,11 @@ async function renderGif(opts={}){
   const blob=encoderBlob(enc); const url=URL.createObjectURL(blob);
 
   if(gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=url; gifPreviewImg.alt="Preview GIF"; }
-if (!previewOnly) {
-
 
   const a=document.createElement("a");
   a.href=url; a.download=`${(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"")}.gif`;
   a.target="_blank"; a.rel="noopener"; a.click();
-  }
-setTimeout(()=>URL.revokeObjectURL(url),15000);
+  setTimeout(()=>URL.revokeObjectURL(url),15000);
 
   if(resume) startPreview();
 }
@@ -1231,62 +1219,19 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Keyboard shortcuts for undo/redo
-window.addEventListener('keydown', (e)=>{
-  const mod = e.ctrlKey || e.metaKey;
-  if (!mod) return;
-  const k = (e.key||'').toLowerCase();
-  if (k==='z' && !e.shiftKey){
-    if (typeof undo==='function'){ e.preventDefault(); undo(); }
-  } else if (k==='y' || (k==='z' && e.shiftKey)){
-    if (typeof redo==='function'){ e.preventDefault(); redo(); }
-  }
+function pushHistoryDebounced(delay=400){
+  clearTimeout(typingDebounceTimer);
+  typingDebounceTimer = setTimeout(()=>{ pushHistory(); }, delay);
+}
+
+
+/* STEP9: Pill .active state sync */
+const pillButtons = $$(".pillbar .pill");
+pillButtons.forEach(btn=>{
+  on(btn,"click",()=>{
+    // toggle current, close others
+    pillButtons.forEach(b=>{ if (b!==btn) b.classList.remove("active"); });
+    btn.classList.toggle("active");
+  });
 });
 
-// Custom resolution UI injector
-(function(){
-  const sel = document.getElementById('resSelect');
-  if (!sel) return;
-  if (![...sel.options].some(o=>o.value==='custom')){
-    const opt=document.createElement('option'); opt.value='custom'; opt.textContent='Custom'; sel.appendChild(opt);
-  }
-  let box=document.getElementById('customResInputs');
-  if (!box){
-    box=document.createElement('div');
-    box.id='customResInputs';
-    box.style.cssText='display:none;gap:6px;align-items:center;margin-top:6px;';
-    box.innerHTML=`
-      <label>W <input id="customResW" type="number" min="8" max="1024" step="1" style="width:72px"></label>
-      <label>H <input id="customResH" type="number" min="8" max="1024" step="1" style="width:72px"></label>
-      <button id="applyCustomRes" class="btn small">Apply</button>`;
-    sel.parentNode.insertBefore(box, sel.nextSibling);
-  }
-  const w=document.getElementById('customResW');
-  const h=document.getElementById('customResH');
-  const apply=document.getElementById('applyCustomRes');
-  sel.addEventListener('change', ()=>{ box.style.display = sel.value==='custom' ? 'flex' : 'none'; });
-  apply.addEventListener('click', ()=>{
-    const W=Math.max(8,Math.min(1024,parseInt(w.value||'0',10)));
-    const H=Math.max(8,Math.min(1024,parseInt(h.value||'0',10)));
-    if (!W || !H) return;
-    if (typeof setResolution==='function') setResolution(W,H);
-    if (typeof fitZoom==='function') fitZoom();
-  });
-})();
-// Reorder alignment buttons visually
-(function(){
-  const hwrap=document.querySelector('[data-align-wrap]')||document.getElementById('alignHWrap');
-  if (hwrap){
-    const L=hwrap.querySelector('[data-align="left"]');
-    const C=hwrap.querySelector('[data-align="center"]');
-    const R=hwrap.querySelector('[data-align="right"]');
-    [L,C,R].forEach(b=>b&&hwrap.appendChild(b));
-  }
-  const vwrap=document.querySelector('[data-valign-wrap]')||document.getElementById('alignVWrap');
-  if (vwrap){
-    const T=vwrap.querySelector('[data-valign="top"]');
-    const M=vwrap.querySelector('[data-valign="middle"]');
-    const B=vwrap.querySelector('[data-valign="bottom"]');
-    [T,M,B].forEach(b=>b&&vwrap.appendChild(b));
-  }
-})();
