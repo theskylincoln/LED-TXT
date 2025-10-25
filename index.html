@@ -3,390 +3,206 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LED Backpack Animator — v1.0</title>
+  <title>LED Backpack Animator — v2.0</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="theme-midnight">
 
+  <input id="textEditor" type="text" class="text-editor" />
+
   <header class="topbar glass">
     <div class="title-wrap">
-      <h1 class="app-title">LED Backpack Animator <span class="ver-badge">v1.0</span></h1>
+      <h1 class="app-title">LED Backpack Animator <span class="ver-badge">v2.0</span></h1>
     </div>
     <button id="aboutBtn" class="icon-btn" title="About">ℹ️</button>
   </header>
-<nav id="topToolbar" class="toolbar glass">
-  <div class="toolbar-row">
-    <div class="brand">
-      <span class="app-title">LED Backpack Animator</span>
-      <span class="ver-badge">v2.0</span>
-    </div>
-    <div class="toolbar-actions">
-      <button class="tb-btn" id="tbProject" aria-expanded="false">Project Settings</button>
-      <button class="tb-btn" id="tbApp" aria-expanded="false">App Configuration</button>
-      <button class="tb-btn" id="tbRender" aria-expanded="false">Render Settings</button>
-      <button class="tb-btn" id="tbAbout" aria-expanded="false">About</button>
-    </div>
-  </div>
-  <div class="toolbar-row mobile-only">
-    <label class="projname-label" for="projectNameInput">Project</label>
-    <input id="projectNameInput" placeholder="Untitled Project" />
-  </div>
-</nav>
 
-<div class="modal hidden" id="projectSettingsModal">
-  <div class="modal-backdrop"></div>
-  <div class="modal-content glass strong">
-    <h3>Project Settings</h3>
-    <div class="stack">
-      <div class="row two-compact">
-        <label>Project Name</label>
-        <input id="projectNameModal" placeholder="Untitled Project" />
+  <nav id="topToolbar" class="toolbar glass">
+    <div class="toolbar-row">
+      <div class="brand">
+        <span class="app-title">LED Backpack Animator</span>
+        <span class="ver-badge">v2.0</span>
       </div>
-
-      <div class="row two-compact">
-        <label>New Project</label>
-        <button id="newProjectBtn" class="button">Open New Project (New Tab)</button>
-      </div>
-
-      <div class="row two-compact">
-        <label>Upload before open</label>
-        <label class="upload-btn block">
-          <input type="file" id="preloadZipInput" accept=".zip,application/zip" hidden />
-          <span class="button block darker">Upload Project (.ZIP)</span>
-        </label>
-      </div>
-
-      <div class="row two-compact">
-        <label>Import Project</label>
-        <label class="upload-btn block">
-          <input type="file" id="importZipInput" accept=".zip,application/zip" hidden />
-          <span class="button block darker">Import Project (.ZIP)</span>
-        </label>
-      </div>
-
-      <div class="row two-compact">
-        <label>Download Project</label>
-        <button id="downloadZipBtn" class="button primary">Download Project (.ZIP)</button>
+      <div class="toolbar-actions">
+        <button class="tb-btn" id="tbProject" aria-expanded="false">Project Settings</button>
+        <button class="tb-btn" id="tbApp" aria-expanded="false">App Configuration</button>
+        <button class="tb-btn" id="tbRender" aria-expanded="false">Render Settings</button>
+        <button class="tb-btn" id="tbAbout" aria-expanded="false">About</button>
       </div>
     </div>
-    <div class="modal-actions">
-      <button class="button" data-close="#projectSettingsModal">Close</button>
+    <div class="toolbar-row mobile-only">
+      <div class="toolbar-actions">
+        <button id="modeEdit" class="icon-btn active">📝 Edit</button>
+        <button id="modePreview" class="icon-btn">👁️ Preview</button>
+        <button id="undoBtn" class="icon-btn" title="Undo">↩️</button>
+        <button id="redoBtn" class="icon-btn" title="Redo">↪️</button>
+        <button id="clearAllBtn" class="icon-btn" title="Clear All">🗑️</button>
+      </div>
     </div>
-  </div>
-</div>
+  </nav>
 
-<div class="modal hidden" id="appConfigModal">
-  <div class="modal-backdrop"></div>
-  <div class="modal-content glass strong">
-    <h3>App Configuration</h3>
-    <div class="stack">
-      <div class="row two-compact">
-        <label>Import App Config</label>
-        <label class="upload-btn block">
-          <input type="file" id="importAppCfgZipInput" accept=".zip,application/zip,application/json" hidden />
-          <span class="button block darker">Import</span>
-        </label>
-      </div>
-      <div class="row two-compact">
-        <label>Download</label>
-        <button id="downloadAppCfgZipBtn" class="button primary">Download Custom App Configuration</button>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="button" data-close="#appConfigModal">Close</button>
-    </div>
-  </div>
-</div>
+  <div class="main-app">
 
-<div class="modal hidden" id="renderSettingsModal">
-  <div class="modal-backdrop"></div>
-  <div class="modal-content glass strong">
-    <h3>Render Settings</h3>
-    <div class="stack">
-      <div class="row two-compact">
-        <label>File Name</label>
-        <div class="link-field">
-          <input id="renderFileName" placeholder="animation" />
-          <button id="linkProjectNameBtn" class="icon-btn" title="Link to Project Name">🔗</button>
-        </div>
-      </div>
-      <div class="row two-compact">
-        <label>Rendered Resolution</label>
-        <div class="seg">
-          <button class="seg-btn" data-rres="96x128">96×128</button>
-          <button class="seg-btn" data-rres="64x64">64×64</button>
-          <button class="seg-btn" data-rres="custom">Custom</button>
-        </div>
-      </div>
-      <div class="row two-compact">
-        <label>Follow Background Res</label>
-        <button id="linkBgResBtn" class="seg-btn">🔗 Linked</button>
-      </div>
-      <div id="renderWarn" class="render-warn hidden"></div>
-      <div class="row two-compact">
-        <label>Restore Defaults</label>
-        <button id="restoreAnimDefaultsBtn" class="button subtle">Animations</button>
-        <button id="restoreColorDefaultsBtn" class="button subtle">Color Animations</button>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="button" data-close="#renderSettingsModal">Close</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal hidden" id="aboutModalV2">
-  <div class="modal-backdrop"></div>
-  <div class="modal-content glass strong">
-    <h3>About</h3>
-    <details open><summary>About</summary>
-      <p>LED Backpack Animator v2.0 — creator tool for LED matrix text &amp; effects.</p>
-    </details>
-    <details><summary>Licenses</summary>
-      <p>OpenMoji, Noto Emoji, JSZip and others under their respective licenses.</p>
-    </details>
-    <details><summary>Help</summary>
-      <ul class="shortcuts">
-        <li><kbd>Ctrl/Cmd+Z</kbd> Undo • <kbd>Ctrl/Cmd+Y</kbd> Redo • <kbd>Shift+Ctrl/Cmd+Z</kbd> Redo</li>
-        <li><kbd>Ctrl/Cmd+S</kbd> Download Project • <kbd>Ctrl/Cmd+Shift+S</kbd> Download GIF</li>
-        <li><kbd>Ctrl/Cmd+O</kbd> Import Project • <kbd>Ctrl/Cmd+G</kbd> Generate GIF</li>
-      </ul>
-    </details>
-    <div class="easter-egg">
-      <button id="toggleThemeBtn" class="icon-btn">Toggle Theme</button>
-      <button id="resetDefaultsBtn" class="icon-btn danger">Reset All</button>
-    </div>
-    <div class="modal-actions">
-      <button class="button" data-close="#aboutModalV2">Close</button>
-    </div>
-  </div>
-</div>
-
-<main class="layout">
-
-  <section class="panel stage glass">
     <div class="canvas-wrap">
-      <canvas id="led" width="96" height="128"></canvas>
-    </div>
-  </section>
-
-  <section class="controls">
-    <div class="top-controls">
-      <div class="left-controls">
-        <div class="seg">
-          <button class="seg-btn active" id="modeEdit">Edit</button>
-          <button class="seg-btn" id="modePreview">Preview</button>
-        </div>
-        <div class="seg">
-          <button class="seg-btn icon-btn" id="undoBtn" title="Undo (Ctrl/Cmd+Z)">↩</button>
-          <button class="seg-btn icon-btn" id="redoBtn" title="Redo (Ctrl/Cmd+Y)">↪</button>
-          <button class="seg-btn icon-btn danger" id="clearAllBtn" title="Clear All Text">✖</button>
-        </div>
-      </div>
-      <div class="right-controls">
-        <button class="button block tiny" id="addWordBtn">Add Word</button>
-        <button class="button block tiny" id="addLineBtn">New Line</button>
-        <div class="seg">
-          <button class="seg-btn active" id="multiToggle" title="Toggle Multi-Select">Multi</button>
-          <button class="seg-btn" id="manualDragToggle" title="Manual Drag">Drag</button>
-        </div>
-      </div>
-      <div class="zoom-wrap">
-        <label for="zoom">Zoom</label>
-        <input type="range" id="zoom" min="0.1" max="5.0" value="1.0" step="0.05" />
-        <button class="seg-btn" id="fitBtn">Fit</button>
-      </div>
+      <canvas id="led"></canvas>
+      <div id="selectionBox" class="selection-box hidden"></div>
     </div>
 
     <div class="inspector">
-      <div class="pill-nav">
-        <button class="pill" data-acc="accFont">Font</button>
-        <button class="pill" data-acc="accLayout">Layout</button>
-        <button class="pill" data-acc="accAnim">Animations</button>
-      </div>
-
-      <details id="accFont" class="acc-panel panel glass strong">
-        <summary class="panel-title">Font & Color</summary>
-        <div class="acc-body stack">
-          <div class="row two-compact">
-            <label for="fontSelect">Font</label>
-            <select id="fontSelect">
-              <option value="Orbitron">Orbitron</option>
-              <option value="Monoton">Monoton</option>
-              <option value="Alfa Slab One">Alfa Slab One</option>
-              <option value="Roboto">Roboto</option>
-              <option value="VT323">VT323 (Retro)</option>
-              <option value="Custom">Custom…</option>
-            </select>
-          </div>
-          <div class="row two-compact">
-            <label for="fontSize">Size (px)</label>
-            <input type="number" id="fontSize" value="22" min="6" max="64" />
-          </div>
-          <div class="row one-eq">
-            <label class="checkbox"><input type="checkbox" id="autoSize" checked><span>Auto-Size Word to Fit</span></label>
-          </div>
-
-          <div class="row two-compact">
-            <label for="fontColor">Color</label>
-            <input type="color" id="fontColor" value="#E9EDFB" />
-          </div>
-          <div class="row">
-            <div id="swatches" class="swatches"></div>
-            <button class="icon-btn" id="addSwatchBtn" title="Add to Palette">+</button>
-          </div>
+      <div class="pill-group">
+        <div id="pillsTop" class="pill-row">
+          <button class="pill active" data-acc="accFont">Font & Text</button>
+          <button class="pill" data-acc="accLayout">Layout</button>
+          <button class="pill" data-acc="accAnim">Animations</button>
         </div>
-      </details>
 
-      <details id="accLayout" class="acc-panel panel glass strong">
-        <summary class="panel-title">Layout & Spacing</summary>
-        <div class="acc-body stack">
-          <div class="row two-compact">
-            <label for="lineGap">Line Gap (px)</label>
-            <input type="number" id="lineGap" value="4" min="-10" max="30" />
-          </div>
-          <div class="row two-compact">
-            <label for="wordGap">Word Gap (px)</label>
-            <input type="number" id="wordGap" value="6" min="-10" max="30" />
-          </div>
-
-          <div class="row">
-            <label>Horizontal Align</label>
-            <div class="seg">
-              <button class="seg-btn" data-align="left">Left</button>
-              <button class="seg-btn active" data-align="center">Center</button>
-              <button class="seg-btn" data-align="right">Right</button>
+        <details id="accFont" class="acc-body" open>
+          <summary>Font & Text</summary>
+          <div class="acc-content">
+            <div class="row">
+              <label for="fontSelect">Font:</label>
+              <select id="fontSelect">
+                </select>
             </div>
-          </div>
-          <div class="row">
-            <label>Vertical Align</label>
-            <div class="seg">
-              <button class="seg-btn" data-valign="top">Top</button>
-              <button class="seg-btn active" data-valign="middle">Middle</button>
-              <button class="seg-btn" data-valign="bottom">Bottom</button>
-            </div>
-          </div>
-        </div>
-      </details>
-
-      <details id="accAnim" class="acc-panel panel glass strong">
-        <summary class="panel-title">Animations</summary>
-        <div class="acc-body stack">
-          <div id="animList" class="anim-list stack">
-            </div>
-          <div class="row two-compact">
-            <button class="button tiny block" id="applySelectedAnimBtn">Apply to Selected Word(s)</button>
-            <button class="button tiny block primary" id="applyAllAnimBtn">Apply to All Words</button>
-          </div>
-        </div>
-      </details>
-
-      <section id="bgPanel" class="panel glass strong">
-        <h3 class="panel-title">Background</h3>
-        <div class="stack">
-          <div class="bg-grid-wrap">
-            <div id="bgGrid" class="bg-grid">
-              </div>
-            <input type="file" id="bgUpload" accept="image/*" hidden />
-          </div>
-
-          <div id="bgSolidTools" class="hidden">
-            <div class="row two-compact">
-              <label for="bgSolidColor">Solid Color</label>
-              <input type="color" id="bgSolidColor" value="#0b0f16" />
+            <div class="row two-eq">
+              <label for="fontSize">Size:</label>
+              <input type="number" id="fontSize" value="24" min="6" max="128" step="1">
             </div>
             <div class="row">
-              <div id="bgSwatches" class="swatches"></div>
-              <button class="icon-btn" id="addBgSwatchBtn" title="Add to Palette">+</button>
+              <label class="checkbox"><input type="checkbox" id="autoSize"><span>Auto-size word</span></label>
+              <label class="checkbox"><input type="checkbox" id="autoSizePerLine"><span>Auto-size per line</span></label>
             </div>
-          </div>
-
-          <div id="bgGifTools" class="hidden">
-            <div class="row one-eq">
-              <label>Animated GIF Controls</label>
-              <div class="seg">
-                <button class="seg-btn icon-btn" id="bgGifPlayBtn" title="Play/Pause GIF">▶️</button>
-                <button class="seg-btn icon-btn" id="bgGifResetBtn" title="Restart GIF">↩️</button>
+            <div class="row">
+              <label for="fontColor">Color:</label>
+              <input type="color" id="fontColor" value="#FFFFFF">
+              <button id="addSwatchBtn" class="icon-btn" title="Add to swatches">+</button>
+            </div>
+            <div id="swatches" class="swatch-row">
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+        </details>
 
-      <section id="renderPanel" class="panel glass strong">
-        <h3 class="panel-title">Render & Export</h3>
-        <div class="stack">
-          <div class="row two-compact">
-            <label for="fps">FPS</label>
-            <input type="number" id="fps" value="15" min="1" max="30" />
+        <details id="accLayout" class="acc-body">
+          <summary>Layout & Spacing</summary>
+          <div class="acc-content">
+            <div class="block-label">Alignment</div>
+            <div class="row">
+              <button class="icon-btn" data-align="left" title="Align Left">⬅️</button>
+              <button class="icon-btn active" data-align="center" title="Align Center">↔️</button>
+              <button class="icon-btn" data-align="right" title="Align Right">➡️</button>
+              <span style="flex-grow: 1;"></span>
+            </div>
+            <div class="row">
+              <button class="icon-btn" data-valign="top" title="Vertical Align Top">⬆️</button>
+              <button class="icon-btn active" data-valign="middle" title="Vertical Align Middle">↕️</button>
+              <button class="icon-btn" data-valign="bottom" title="Vertical Align Bottom">⬇️</button>
+              <span style="flex-grow: 1;"></span>
+            </div>
+            <div class="block-label">Spacing</div>
+            <div class="row two-eq">
+              <label for="lineGap">Line Gap:</label>
+              <input type="number" id="lineGap" value="4" min="0" max="30" step="1">
+            </div>
+            <div class="row two-eq">
+              <label for="wordGap">Word Gap:</label>
+              <input type="number" id="wordGap" value="6" min="0" max="30" step="1">
+            </div>
           </div>
-          <div class="row two-compact">
-            <label for="seconds">Duration (sec)</label>
-            <input type="number" id="seconds" value="8" min="1" max="60" />
+        </details>
+
+        <details id="accAnim" class="acc-body">
+          <summary>Animations</summary>
+          <div class="acc-content">
+            <div class="row">
+              <button id="applySelectedAnimBtn" class="tb-btn small-btn" title="Apply to selected word">Apply to Selected</button>
+              <button id="applyAllAnimBtn" class="tb-btn small-btn" title="Apply as default to all words">Apply as Default</button>
+            </div>
+            <div id="animList" class="anim-list">
+              </div>
           </div>
-          <div class="row two-compact">
-            <button class="button block" id="previewRenderBtn">Generate Preview</button>
-            <button class="button block primary" id="gifRenderBtn">Download GIF</button>
+        </details>
+      </div>
+
+      <div class="pill-group">
+        <div class="pill">
+          <div class="block-label">Words & Lines</div>
+          <div class="row">
+            <button id="addWordBtn" class="tb-btn small-btn" title="Add word/emoji after selection">➕ Word</button>
+            <button id="addLineBtn" class="tb-btn small-btn" title="Add new line after current line">➕ Line</button>
+            <button id="deleteWordBtn" class="icon-btn danger" title="Delete selected word/emoji">❌</button>
+          </div>
+          <div class="row">
+            <button id="emojiBtn" class="tb-btn small-btn" title="Add emoji or animated image">😀 Emoji</button>
           </div>
           <div class="row tiny-help">
-            <p>Download takes time. Preview first.</p>
+            <label class="checkbox"><input type="checkbox" id="multiToggle"><span>Multi-select</span></label>
+            <label class="checkbox"><input type="checkbox" id="manualDragBtn"><span>Manual Drag</span></label>
           </div>
-          <div id="progress" class="progress-bar hidden">
-            <div class="progress-fill"></div>
-          </div>
-          <div class="progress-time hidden">
-            <span id="tCur">00:00</span> / <span id="tEnd">00:00</span>
-          </div>
-          <img id="gifPreview" class="gif-preview" src="assets/thumbs/gif_placeholder.png" alt="GIF Preview" />
-        </div>
-      </section>
-    </div>
-  </section>
-
-<input id="textEditor" type="text" class="text-editor" />
-</main>
-
-<div class="modal hidden" id="emojiModal">
-  <div class="modal-backdrop"></div>
-  <div class="modal-content glass strong emoji-modal-content">
-    <div class="modal-header">
-      <h3>Add Emoji</h3>
-      <div class="emoji-toolbar">
-        <div class="seg">
-          <button class="tab active" data-tab="static">Static</button>
-          <button class="tab" data-tab="animated">Animated</button>
-          <button class="tab" data-tab="custom">Custom</button>
-        </div>
-        <div class="search-and-close">
-          <select id="emojiCategory">
-            <option value="all">All</option>
-            <option value="static">Static</option>
-            <option value="animated">Animated</option>
-            <option value="custom">Custom…</option></select>
-          <input id="emojiSearch" type="search" placeholder="Search emojis…" />
-
-          <div class="emoji-pager">
-            <button id="emojiPrev" class="icon-btn" title="Prev page">◀</button>
-            <span id="emojiPager">0 / 0</span>
-            <button id="emojiNext" class="icon-btn" title="Next page">▶</button>
-          </div>
-
-          <button id="emojiClose" class="icon-btn">✖</button>
         </div>
       </div>
-      <div id="emojiGrid" aria-live="polite" class="emoji-grid"></div>
-      <div class="emoji-zoom-hint">Pinch to zoom on mobile • Use resize handle on desktop</div>
+
+      <div class="pill-group">
+        <div class="pill">
+          <div class="block-label">Background & Display</div>
+          <div class="row two-eq">
+            <label for="resSelect">Resolution:</label>
+            <select id="resSelect">
+              <option value="96x128">96x128 (Vertical)</option>
+              <option value="64x64">64x64 (Square)</option>
+            </select>
+          </div>
+          <div id="bgGrid" class="bg-grid">
+            </div>
+          <div id="bgSolidTools" class="row hidden">
+            <input type="color" id="bgSolidColor" value="#000000">
+            <div id="bgSwatches" class="swatch-row"></div>
+            <button id="addBgSwatchBtn" class="icon-btn" title="Add to swatches">+</button>
+          </div>
+          <input type="file" id="bgUpload" accept="image/*" class="hidden">
+        </div>
+      </div>
+
+      <div class="pill-group">
+        <div class="pill">
+          <div class="block-label">Render & Export</div>
+          <div class="row">
+            <label for="fps">FPS (Rate):</label>
+            <input type="number" id="fps" value="15" min="1" max="30" step="1">
+          </div>
+          <div class="row">
+            <label for="seconds">Duration (sec):</label>
+            <input type="number" id="seconds" value="8" min="1" max="60" step="1">
+          </div>
+          <div class="row">
+            <label for="fileName">File Name:</label>
+            <input type="text" id="fileName" value="backpack_anim">
+          </div>
+
+          <div class="row two-eq">
+            <button id="previewRenderBtn" class="tb-btn" title="Generate static preview image">Generate Preview</button>
+            <button id="gifRenderBtn" class="tb-btn primary" title="Download animated GIF">Download GIF</button>
+          </div>
+          <div id="progress" class="row">
+            <progress id="progressBar" value="0" max="100"></progress>
+            <span id="tCur">0:00</span> / <span id="tEnd">0:00</span>
+          </div>
+          <div class="row">
+            <img id="gifPreview" class="gif-preview" alt="GIF Preview" />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <script src="assets/libs/animatedEmoji.js"></script>
 
-  <script defer src="assets/libs/libgif/gif.js"></script>
   <script defer src="app.js"></script>
 
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
   <script defer src="assets/libs/jsgif/LZWEncoder.js"></script>
   <script defer src="assets/libs/jsgif/GIFEncoder.js"></script>
+  <script defer src="assets/libs/jsgif/b64.js"></script>
+
 </body>
 </html>
