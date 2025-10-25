@@ -1,9 +1,8 @@
 /* =======================================================================
-   LED Backpack Animator v2.0 — app.js (Complete, All Fixes Applied)
-   - FIX 1: Corrected all background/thumbnail paths to use 'assets/presets/thumbs/'
-   - FIX 2: Re-implemented Add/Delete Word/Line and History functions
-   - FIX 3: Multi-select checkbox synchronization is now robust
-   - FIX 4: Re-implemented the zoom/fit logic and referenced the new HTML element
+   LED Backpack Animator v2.1 — app.js (Background Default, Input Fixes, Preset Update)
+   - FIX 1: Background defaults to solid black (#000000)
+   - FIX 2: Space key inserts space; Enter key deselects the word (text editor fixes)
+   - FIX 3: Added Preset 'C' (Wheelie) to the 96x128 catalog
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -89,7 +88,8 @@ const caret = { // CARET STATE FOR TEXT CURSOR
 const doc={
   version:"1.0",
   res:{ w:96, h:128 },
-  bg:{ type:"preset", color:null, image:null, preset:"assets/presets/96x128/Preset_A.png" },
+  // FIX: Default to solid black
+  bg:{ type:"solid", color:"#000000", image:null, preset:null }, 
   spacing:{ lineGap:4, wordGap:6 }, style:{ align:"center", valign:"middle" },
   lines:[ 
     { words:[{text:"LED",    color:"#E9EDFB", font:"Orbitron", size:24, anims:[]}] },
@@ -102,17 +102,18 @@ const doc={
 
 const THEME_COLORS = ["#FF6BD6","#7B86FF","#E9EDFB"];
 
-/* ------------------ presets catalog (PATH FIX) ------------------ */
+/* ------------------ presets catalog (UPDATED) ------------------ */
 const PRESETS={
   "96x128":[
-    // UPDATED THUMBNAIL PATH
+    // UPDATED THUMBNAIL PATHS
     {id:"A",thumb:"assets/presets/thumbs/Preset_A_thumb.png",full:"assets/presets/96x128/Preset_A.png"},
-    {id:"B",thumb:"assets/presets/thumbs/Preset_B_thumb.png",full:"assets/presets/96x128/Preset_B.png"}
+    {id:"B",thumb:"assets/presets/thumbs/Preset_B_thumb.png",full:"assets/presets/96x128/Preset_B.png"},
+    // NEW: Preset C (Wheelie)
+    {id:"C",thumb:"assets/presets/thumbs/Preset_C_thumb.png",full:"assets/presets/96x128/Preset_C.png"}
   ],
   "64x64":[
-    // UPDATED THUMBNAIL PATH
-    {id:"C",thumb:"assets/presets/thumbs/Preset_C_thumb.png",full:"assets/presets/64x64/Preset_C.png"},
-    {id:"D",thumb:"assets/presets/thumbs/Preset_D_thumb.png",full:"assets/presets/64x64/Preset_D.png"}
+    {id:"D",thumb:"assets/presets/thumbs/Preset_D_thumb.png",full:"assets/presets/64x64/Preset_D.png"},
+    {id:"E",thumb:"assets/presets/thumbs/Preset_E_thumb.png",full:"assets/presets/64x64/Preset_E.png"}
   ]
 };
 const visibleSet=()=>PRESETS[`${doc.res.w}x${doc.res.h}`]||[];
@@ -160,7 +161,7 @@ function warn(...a){ console.warn("[WARN]",...a); }
 
 
 /* =======================================================
-   HISTORY (RE-IMPLEMENTED)
+   HISTORY (UNCHANGED)
 ======================================================= */
 function updateUndoRedo(){ undoBtn.disabled=history.length===0; redoBtn.disabled=future.length===0; }
 function pushHistory(){ history.unshift(JSON.parse(JSON.stringify(doc))); if(history.length>UNDO_LIMIT) history.pop(); future.length=0; updateUndoRedo(); }
@@ -178,7 +179,7 @@ on(clearAllBtn,"click",()=>{ doc.lines=[]; pushHistory(); deselectWord(); });
 
 
 /* =======================================================
-   TEXT EDITOR/CARET MANAGEMENT (UNCHANGED)
+   TEXT EDITOR/CARET MANAGEMENT (FIXED INPUT BEHAVIOR)
 ======================================================= */
 function updateTextEditorPosition(w, li, wi, x, y, size, width){
     if (!textEditor) return;
@@ -240,7 +241,7 @@ on(textEditor, 'input', (e) => {
     if (!selected) return;
     const w = doc.lines[selected.line]?.words[selected.word];
     if (w) {
-        // Prevent newlines in the word editor
+        // FIX: Allow spaces, but prevent newlines
         w.text = e.target.value.replace(/(\r\n|\n|\r)/gm, "");
         caret.index = e.target.selectionStart;
         render(); 
@@ -250,9 +251,11 @@ on(textEditor, 'input', (e) => {
 });
 
 on(textEditor, 'keydown', (e) => {
+    // FIX: Enter key should deselect the word
     if (e.key === 'Enter') {
         e.preventDefault(); 
-        deselectWord(); 
+        deselectWord(true); // Deselect and clear editor
+        return;
     }
     // Update caret index on key press
     setTimeout(() => {
@@ -319,22 +322,20 @@ function getWordPositionInfo(li, wi) {
 
 
 /* =======================================================
-   BACKGROUND GRID / SOLID / UPLOAD (FIXED PRESET PATHS)
+   BACKGROUND GRID / SOLID / UPLOAD (INIT FIX)
 ======================================================= */
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 function buildBgGrid(){
   bgGrid.innerHTML="";
   const tiles=[
-    {kind:"solid",thumb:"assets/presets/thumbs/Solid_thumb.png"}, // Path updated
-    {kind:"upload",thumb:"assets/presets/thumbs/Upload_thumb.png"}, // Path updated
-    ...visibleSet().map(p=>({kind:"preset",thumb:p.thumb,full:p.full})),
+    {kind:"solid",thumb:"assets/presets/thumbs/Solid_thumb.png", color:"#000000"}, // Solid black default
+    {kind:"upload",thumb:"assets/presets/thumbs/Upload_thumb.png"}, 
+    ...visibleSet().map(p=>({kind:"preset",thumb:p.thumb,full:p.full, id:p.id})),
   ];
   tiles.forEach((t,i)=>{
     const b=document.createElement("button");
     b.type="button"; b.className="bg-tile"; b.dataset.kind=t.kind;
-    // Check if the tile has a specific ID or if it's based on an existing preset
-    const presetInfo = visibleSet().find(p => p.thumb === t.thumb);
-    if(presetInfo) b.dataset.id = presetInfo.id;
+    if(t.id) b.dataset.id = t.id;
 
     const img=document.createElement("img"); img.src=t.thumb; img.alt=t.kind;
     b.appendChild(img);
@@ -346,7 +347,8 @@ function buildBgGrid(){
         im.onload=()=>{ doc.bg={type:"preset",color:null,image:im,preset:t.full}; showSolidTools(false); render(); };
         im.onerror=()=>warn(`Failed to load preset image: ${t.full}`);
       }else if(t.kind==="solid"){
-        doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null};
+        doc.bg={type:"solid",color:t.color||bgSolidColor.value,image:null,preset:null};
+        bgSolidColor.value = t.color || "#000000";
         showSolidTools(true); render();
       }else if(t.kind==="upload"){
         bgUpload.click();
@@ -354,18 +356,14 @@ function buildBgGrid(){
     });
     bgGrid.appendChild(b);
   });
-  // Auto-select the first preset on startup
-  const firstPreset=$(".bg-tile[data-kind='preset']",bgGrid);
-  if(firstPreset){
-    firstPreset.classList.add("active");
-    // Manually set the initial doc.bg state based on the default preset
-    const defaultPreset = visibleSet().find(p => p.id === firstPreset.dataset.id || p.thumb === firstPreset.querySelector('img').src);
-    if (defaultPreset) {
-      doc.bg = { type: "preset", color: null, image: null, preset: defaultPreset.full };
-      // Load the image asynchronously
-      const im = new Image(); im.crossOrigin = "anonymous"; im.src = defaultPreset.full;
-      im.onload = () => { doc.bg.image = im; render(); };
-    }
+  
+  // FIX: Auto-select the solid tile on startup for black background
+  const solidTile=$(".bg-tile[data-kind='solid']",bgGrid);
+  if(solidTile){
+    solidTile.classList.add("active");
+    doc.bg = { type: "solid", color: "#000000", image: null, preset: null };
+    bgSolidColor.value = "#000000";
+    showSolidTools(true);
   }
 }
 on(bgUpload,"change",e=>{
@@ -396,7 +394,7 @@ on(bgSolidColor,"input",()=>{ doc.bg={type:"solid",color:bgSolidColor.value,imag
 
 
 /* =======================================================
-   ZOOM / FIT / MODE (RE-IMPLEMENTED)
+   ZOOM / FIT / MODE (UNCHANGED)
 ======================================================= */
 function setZoom(z){ zoom=z; if(zoomSlider) zoomSlider.value=String(z); canvas.style.transform=`translate(-50%,-50%) scale(${z})`; }
 function fitZoom(){
@@ -570,7 +568,7 @@ function animatedProps(base, word, t, totalDur){
 
 
 /* =======================================================
-   ADD / DELETE WORDS/LINES (RE-IMPLEMENTED)
+   ADD / DELETE WORDS/LINES (UNCHANGED)
 ======================================================= */
 function addWord(){
   // Determine which line to add the word to, default to last line or first line (index 0)
