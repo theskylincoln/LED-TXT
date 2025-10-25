@@ -849,7 +849,10 @@ on(addLineBtn,"click",()=>{ pushHistory(); doc.lines.push({words:[{text:"LINE",f
 on(delWordBtn,"click",()=>{ if(!selected) return; pushHistory(); const L=doc.lines[selected.line]; L.words.splice(selected.word,1); if(!L.words.length) doc.lines.splice(selected.line,1); doc.multi.clear(); selected=null; render(); });
 
 /* font / size / color / autosize */
-on(fontSelect,"change",()=>{ pushHistory(); forEachSelectedWord(w=>w.font=fontSelect.value||defaults.font); autoSizeAllIfOn(); render(); });
+on(fontSelect,"change",()=>{
+  const f = fontSelect.value;
+  batchApplyToSelection((W)=>{ W.font = f; });
+});
 on(fontSizeInp,"input",()=>{ const v=Math.max(6,Math.min(64,parseInt(fontSizeInp.value||`${defaults.size}`,10))); pushHistory(); forEachSelectedWord(w=>{ if(!w.emoji) w.size=v; }); render(); });
 on(fontColorInp,"input",()=>{ const c=fontColorInp.value||defaults.color; pushHistory(); forEachSelectedWord(w=>{ if(!w.emoji) w.color=c; }); render(); });
 on(autoSizeWordChk,"change",()=>{ autoSizeAllIfOn(); render(); });
@@ -941,8 +944,7 @@ function buildAnimationsUI(){
       });
     });
 
-    on(chk,"change",()=>{
-      let targetPack=doc.anims;
+    on(chk,"change",()=>{ pushHistory(); let targetPack=doc.anims;
       if(selected){ const w=doc.lines[selected.line]?.words[selected.word]; w.anims ??=[]; targetPack=w.anims; }
       const has=!!targetPack.find(a=>a.id===def.id);
       if(chk.checked && !has){ targetPack.push({id:def.id, params:{...def.params}}); params.style.display="grid"; }
@@ -1235,3 +1237,43 @@ pillButtons.forEach(btn=>{
   });
 });
 
+
+
+/* =======================================================
+   Multi-select polish: batch apply & undo
+======================================================= */
+function getSelectionTargets(){
+  // If multi-select mode has a list, use it; otherwise use the single selected word.
+  if (Array.isArray(selectedList) && selectedList.length){
+    return selectedList.slice(); // clone
+  }
+  if (selected && typeof selected.line==="number" && typeof selected.word==="number"){
+    return [ { line:selected.line, word:selected.word } ];
+  }
+  // Fallback: last word of last line
+  const li = (doc.lines.length? doc.lines.length-1 : 0);
+  const wi = (doc.lines[li] && doc.lines[li].words.length? doc.lines[li].words.length-1 : 0);
+  return [ { line:li, word:wi } ];
+}
+function batchApplyToSelection(mutator){
+  // push a single undo snapshot for the whole batch
+  pushHistory();
+  const targets = getSelectionTargets();
+  for (const t of targets){
+    const L = doc.lines[t.line]; if(!L) continue;
+    const W = L.words[t.word];  if(!W) continue;
+    mutator(W, L, t);
+  }
+  render();
+}
+
+
+let multiSelectEnabled = false;
+const multiSelectBtn = $("#multiSelectBtn") || $(".chip.multi-select");
+if (multiSelectBtn){
+  on(multiSelectBtn,"click",()=>{
+    multiSelectEnabled = !multiSelectEnabled;
+    multiSelectBtn.classList.toggle("active", multiSelectEnabled);
+    if (!multiSelectEnabled) selectedList.length = 0;
+  });
+}
