@@ -1,7 +1,8 @@
 /* =======================================================================
-   LED Backpack Animator v2.0 — FINAL WORKING app.js
-   - Includes all bug fixes (centering, caret, typing, rendering, deselect)
-   - CRITICAL FIX: Added 'change' listener to #multiToggle for robust state sync
+   LED Backpack Animator v2.0 — app.js (Complete, All Fixes Applied)
+   - FIX 1: Corrected all background/thumbnail paths to use 'assets/presets/thumbs/'
+   - FIX 2: Re-implemented Add/Delete Word/Line and History functions
+   - FIX 3: Multi-select checkbox synchronization is now robust
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -100,20 +101,22 @@ const doc={
 
 const THEME_COLORS = ["#FF6BD6","#7B86FF","#E9EDFB"];
 
-/* ------------------ presets catalog ------------------ */
+/* ------------------ presets catalog (PATH FIX) ------------------ */
 const PRESETS={
   "96x128":[
-    {id:"A",thumb:"assets/thumbs/Preset_A_thumb.png",full:"assets/presets/96x128/Preset_A.png"},
-    {id:"B",thumb:"assets/thumbs/Preset_B_thumb.png",full:"assets/presets/96x128/Preset_B.png"}
+    // UPDATED THUMBNAIL PATH
+    {id:"A",thumb:"assets/presets/thumbs/Preset_A_thumb.png",full:"assets/presets/96x128/Preset_A.png"},
+    {id:"B",thumb:"assets/presets/thumbs/Preset_B_thumb.png",full:"assets/presets/96x128/Preset_B.png"}
   ],
   "64x64":[
-    {id:"C",thumb:"assets/thumbs/Preset_C_thumb.png",full:"assets/presets/64x64/Preset_C.png"},
-    {id:"D",thumb:"assets/thumbs/Preset_D_thumb.png",full:"assets/presets/64x64/Preset_D.png"}
+    // UPDATED THUMBNAIL PATH
+    {id:"C",thumb:"assets/presets/thumbs/Preset_C_thumb.png",full:"assets/presets/64x64/Preset_C.png"},
+    {id:"D",thumb:"assets/presets/thumbs/Preset_D_thumb.png",full:"assets/presets/64x64/Preset_D.png"}
   ]
 };
 const visibleSet=()=>PRESETS[`${doc.res.w}x${doc.res.h}`]||[];
 
-/* ------------------ emoji db ------------------ */
+/* ------------------ emoji db (unchanged) ------------------ */
 let EMOJI_DB=null; 
 let NOTO_DB=null;  
 async function loadEmojiManifest(){
@@ -156,7 +159,25 @@ function warn(...a){ console.warn("[WARN]",...a); }
 
 
 /* =======================================================
-   TEXT EDITOR/CARET MANAGEMENT
+   HISTORY (RE-IMPLEMENTED)
+======================================================= */
+function updateUndoRedo(){ undoBtn.disabled=history.length===0; redoBtn.disabled=future.length===0; }
+function pushHistory(){ history.unshift(JSON.parse(JSON.stringify(doc))); if(history.length>UNDO_LIMIT) history.pop(); future.length=0; updateUndoRedo(); }
+function popHistory(arr1, arr2){ 
+    if(arr1.length===0) return; 
+    arr2.unshift(JSON.parse(JSON.stringify(doc))); 
+    doc=arr1.shift(); 
+    selected=null; 
+    deselectWord(true); 
+    updateUndoRedo(); 
+}
+on(undoBtn,"click",()=>popHistory(history,future));
+on(redoBtn,"click",()=>popHistory(future,history));
+on(clearAllBtn,"click",()=>{ doc.lines=[]; pushHistory(); deselectWord(); });
+
+
+/* =======================================================
+   TEXT EDITOR/CARET MANAGEMENT (UNCHANGED)
 ======================================================= */
 function updateTextEditorPosition(w, li, wi, x, y, size, width){
     if (!textEditor) return;
@@ -297,19 +318,23 @@ function getWordPositionInfo(li, wi) {
 
 
 /* =======================================================
-   BACKGROUND GRID / SOLID / UPLOAD
+   BACKGROUND GRID / SOLID / UPLOAD (UNCHANGED EXCEPT PRESETS)
 ======================================================= */
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 function buildBgGrid(){
   bgGrid.innerHTML="";
   const tiles=[
-    {kind:"solid",thumb:"assets/thumbs/Solid_thumb.png"},
-    {kind:"upload",thumb:"assets/thumbs/Upload_thumb.png"},
+    {kind:"solid",thumb:"assets/presets/thumbs/Solid_thumb.png"}, // Path updated
+    {kind:"upload",thumb:"assets/presets/thumbs/Upload_thumb.png"}, // Path updated
     ...visibleSet().map(p=>({kind:"preset",thumb:p.thumb,full:p.full})),
   ];
   tiles.forEach((t,i)=>{
     const b=document.createElement("button");
     b.type="button"; b.className="bg-tile"; b.dataset.kind=t.kind;
+    // Check if the tile has a specific ID or if it's based on an existing preset
+    const presetInfo = visibleSet().find(p => p.thumb === t.thumb);
+    if(presetInfo) b.dataset.id = presetInfo.id;
+
     const img=document.createElement("img"); img.src=t.thumb; img.alt=t.kind;
     b.appendChild(img);
     on(b,"click",async()=>{
@@ -368,8 +393,9 @@ on(addBgSwatchBtn,"click",()=>{
 });
 on(bgSolidColor,"input",()=>{ doc.bg={type:"solid",color:bgSolidColor.value,image:null,preset:null}; render(); });
 
+
 /* =======================================================
-   ZOOM / FIT / MODE
+   ZOOM / FIT / MODE (UNCHANGED)
 ======================================================= */
 function setZoom(z){ zoom=z; if(zoomSlider) zoomSlider.value=String(z); canvas.style.transform=`translate(-50%,-50%) scale(${z})`; }
 function fitZoom(){
@@ -390,8 +416,9 @@ on(modeEditBtn,"click",()=>setMode("edit"));
 on(modePreviewBtn,"click",()=>setMode("preview"));
 on(canvas,"click",()=>{ if(mode==="preview") setMode("edit"); });
 
+
 /* =======================================================
-   PILLS 
+   PILLS / SWATCHES / MEASURE (UNCHANGED)
 ======================================================= */
 function syncPillsVisibility(){
   const active = $(".pill.active");
@@ -418,9 +445,7 @@ pillTabs.forEach(p=>{
 });
 syncPillsVisibility();
 
-/* =======================================================
-   TEXT SWATCHES
-======================================================= */
+/* TEXT SWATCHES */
 const defaultTextPalette=["#FFFFFF","#FF3B30","#00E25B","#1E5BFF","#FFE45A","#FF65D5","#40F2F2","#000000"];
 let customTextPalette=[];
 function rebuildTextSwatches(){
@@ -440,9 +465,7 @@ on(fontColorInp,"input",()=>{
   forEachSelectedWord(w=>w.color=fontColorInp.value); render();
 });
 
-/* =======================================================
-   MEASURE / AUTOSIZE
-======================================================= */
+/* MEASURE / AUTOSIZE */
 const emojiCache=new Map();
 function getEmojiImage(url){
   if(emojiCache.has(url)) return emojiCache.get(url);
@@ -515,7 +538,7 @@ function autoSizeAllIfOn(){
 }
 
 /* =======================================================
-   ANIMATIONS DEFINITIONS
+   ANIMATIONS DEFINITIONS (UNCHANGED)
 ======================================================= */
 function seconds(){ return Math.max(1,Math.min(60, parseInt(secondsInp?.value||"8",10))); }
 function fps(){ return Math.max(1,Math.min(30, parseInt(fpsInp?.value||"15",10))); }
@@ -544,8 +567,78 @@ function animatedProps(base, word, t, totalDur){
   return props;
 }
 
+
 /* =======================================================
-   INTERACTION HANDLING (CLICK/TOUCH)
+   ADD / DELETE WORDS/LINES (RE-IMPLEMENTED)
+======================================================= */
+function addWord(){
+  // Determine which line to add the word to, default to last line or first line (index 0)
+  const lineIndex = selected?.line ?? (doc.lines.length > 0 ? doc.lines.length - 1 : 0);
+  
+  // Ensure the line exists
+  if (!doc.lines[lineIndex]) {
+    doc.lines.push({ words: [] });
+    selected = { line: doc.lines.length - 1, word: 0 };
+  }
+  
+  const targetLine = doc.lines[lineIndex];
+  const w = { text: "WORD", color:"#E9EDFB", font:"Orbitron", size:24, anims:[] };
+  
+  // If a word is selected, insert next to it, otherwise push to the end
+  if (selected && selected.line === lineIndex) {
+      targetLine.words.splice(selected.word + 1, 0, w);
+      selected.word = selected.word + 1;
+  } else {
+      targetLine.words.push(w);
+      selected = { line: lineIndex, word: targetLine.words.length - 1 };
+  }
+  
+  deselectWord(false); // Clear multi-select state
+  pushHistory();
+  render(); 
+}
+
+function addLine(){
+  const w = { text: "NEW LINE", color:"#E9EDFB", font:"Orbitron", size:24, anims:[] };
+  
+  let newLineIndex = doc.lines.length;
+  // If a line is selected, insert the new line after it
+  if (selected) {
+      newLineIndex = selected.line + 1;
+      doc.lines.splice(newLineIndex, 0, { words: [w] });
+  } else {
+      doc.lines.push({ words: [w] });
+  }
+
+  selected = { line: newLineIndex, word: 0 };
+
+  deselectWord(false); // Clear multi-select state
+  pushHistory(); 
+  render(); 
+}
+
+function deleteWord(){
+  if(!selected) return;
+  const { line, word } = selected;
+  if(doc.lines[line] && doc.lines[line].words.length > word){
+    doc.lines[line].words.splice(word, 1);
+    // If the line is now empty, remove the line
+    if(doc.lines[line].words.length === 0){
+      doc.lines.splice(line, 1);
+    }
+    deselectWord();
+    pushHistory();
+  }
+}
+
+// Attach listeners
+on(addWordBtn,"click",addWord);
+on(addLineBtn,"click",addLine);
+on(delWordBtn,"click",deleteWord);
+
+
+/* =======================================================
+   INTERACTION HANDLING (CLICK/TOUCH) (UNCHANGED)
 ======================================================= */
 function canvasTouch(e){
   const rect = canvas.getBoundingClientRect();
@@ -577,10 +670,8 @@ function canvasTouch(e){
   // If handle was clicked, delete the word and stop
   if (clickedHandle) {
     if (selected) {
-      doc.lines[selected.line].words.splice(selected.word, 1);
-      // Clean up empty lines
-      doc.lines = doc.lines.filter(l => l.words.length > 0);
-      deselectWord();
+      // Use the deleteWord function to handle logic and history
+      deleteWord();
     }
     return; 
   }
@@ -653,7 +744,7 @@ on(canvas, "click", canvasTouch);
 
 
 /* =======================================================
-   RENDER (+ delete handle)
+   RENDER (+ delete handle) (UNCHANGED)
 ======================================================= */
 function render(t=0,totalDur=seconds()){
   const W=canvas.width=doc.res.w, H=canvas.height=doc.res.h;
@@ -803,7 +894,7 @@ function drawSelectionBox(x,y,w,h,isMulti){
 
 
 /* =======================================================
-   LISTENERS (CRITICAL FIX ADDED HERE)
+   LISTENERS (CRITICAL FIX: MULTI-SELECT SYNC)
 ======================================================= */
 on(multiToggle, 'change', (e) => {
     // When the user manually UNCHECKS the multi-select box
@@ -838,6 +929,7 @@ function init(){
   rebuildBgSwatches();
   rebuildTextSwatches();
   
+  updateUndoRedo();
   render();
 }
 
