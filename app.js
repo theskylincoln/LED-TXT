@@ -72,6 +72,7 @@ const emojiSearch=$("#emojiSearch"), emojiClose=$("#emojiClose");
 /* ------------------ state ------------------ */
 let mode="edit", zoom=1, selected=null;
 let history=[], future=[];
+const UNDO_LIMIT=100;
 let startT=0, rafId=null;
 const uiLock = { emojiOpen: false };
 const defaults={ font:"Orbitron", size:22, color:"#FFFFFF" };
@@ -643,7 +644,7 @@ if (caret.active && caret.line===li && caret.word===wi && mode==="edit") {
 }
 
 /* draw selection + delete handle clamped inside canvas */
-const HANDLE_SIZE=9;
+const HANDLE_SIZE=14;
 function drawSelectionBox(x,y,w,h,isMulti){
   ctx.save();
   ctx.setLineDash([3,2]); ctx.lineWidth=1;
@@ -658,7 +659,7 @@ function drawSelectionBox(x,y,w,h,isMulti){
   hy = Math.min(canvas.height - HANDLE_SIZE - 2, Math.max(2, hy));
 
   // draw handle square with X
-  ctx.fillStyle="#ff6bd6";
+  ctx.fillStyle="#ff4d4d";
   ctx.strokeStyle="rgba(0,0,0,0.5)";
   ctx.lineWidth=1;
   ctx.fillRect(hx, hy, HANDLE_SIZE, HANDLE_SIZE);
@@ -716,7 +717,11 @@ function hitTestWord(px,py){
 
 /* history helpers */
 const snapshot=()=>JSON.parse(JSON.stringify(doc));
-function pushHistory(){ history.push(snapshot()); if(history.length>200) history.shift(); future.length=0; }
+function pushHistory(){
+  history.push(snapshot());
+  if(history.length>UNDO_LIMIT) history.shift();
+  future.length=0;
+}
 
 on(canvas,"click",(e)=>{
   if(mode!=="edit") return;
@@ -849,10 +854,7 @@ on(addLineBtn,"click",()=>{ pushHistory(); doc.lines.push({words:[{text:"LINE",f
 on(delWordBtn,"click",()=>{ if(!selected) return; pushHistory(); const L=doc.lines[selected.line]; L.words.splice(selected.word,1); if(!L.words.length) doc.lines.splice(selected.line,1); doc.multi.clear(); selected=null; render(); });
 
 /* font / size / color / autosize */
-on(fontSelect,"change",()=>{
-  const f = fontSelect.value;
-  batchApplyToSelection((W)=>{ W.font = f; });
-});
+on(fontSelect,"change",()=>{ pushHistory(); forEachSelectedWord(w=>w.font=fontSelect.value||defaults.font); autoSizeAllIfOn(); render(); });
 on(fontSizeInp,"input",()=>{ const v=Math.max(6,Math.min(64,parseInt(fontSizeInp.value||`${defaults.size}`,10))); pushHistory(); forEachSelectedWord(w=>{ if(!w.emoji) w.size=v; }); render(); });
 on(fontColorInp,"input",()=>{ const c=fontColorInp.value||defaults.color; pushHistory(); forEachSelectedWord(w=>{ if(!w.emoji) w.color=c; }); render(); });
 on(autoSizeWordChk,"change",()=>{ autoSizeAllIfOn(); render(); });
@@ -944,7 +946,8 @@ function buildAnimationsUI(){
       });
     });
 
-    on(chk,"change",()=>{ pushHistory(); let targetPack=doc.anims;
+    on(chk,"change",()=>{
+      let targetPack=doc.anims;
       if(selected){ const w=doc.lines[selected.line]?.words[selected.word]; w.anims ??=[]; targetPack=w.anims; }
       const has=!!targetPack.find(a=>a.id===def.id);
       if(chk.checked && !has){ targetPack.push({id:def.id, params:{...def.params}}); params.style.display="grid"; }
@@ -987,7 +990,7 @@ async function ensureGifLibs(){
 }
 function encoderBlob(enc){ const bytes=enc.stream().bin||enc.stream().getData(); return new Blob([bytes instanceof Uint8Array?bytes:new Uint8Array(bytes)],{type:"image/gif"}); }
 
-async function renderGif(){
+async function renderGif(previewOnly=false){
   const ok=await ensureGifLibs(); if(!ok) return;
   const F=fps(), S=seconds(), frames=Math.max(1,Math.floor(F*S)), delay=Math.max(1,Math.round(1000/F));
   const resume=(mode==="preview"); stopPreview();
@@ -996,19 +999,23 @@ async function renderGif(){
   const enc=new GIFEncoder(); enc.setRepeat(0); enc.setDelay(delay); enc.setQuality(10); enc.setSize(W,H); enc.start();
   for(let i=0;i<frames;i++){ const t=i/F; render(t,S); enc.addFrame(ctx); if(progressBar) progressBar.style.setProperty("--p",(t/S)%1); if(tCur) tCur.textContent=`${(t%S).toFixed(1)}s`; }
   enc.finish();
-  const blob=encoderBlob(enc); const url=URL.createObjectURL(blob);
+  const blob=encoderBlob(enc);
+  const url=URL.createObjectURL(blob);
 
   if(gifPreviewImg){ gifPreviewImg.classList.remove("hidden"); gifPreviewImg.src=url; gifPreviewImg.alt="Preview GIF"; }
 
-  const a=document.createElement("a");
-  a.href=url; a.download=`${(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"")}.gif`;
-  a.target="_blank"; a.rel="noopener"; a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),15000);
+  if (!previewOnly){
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=`${(fileNameInp?.value||"animation").replace(/\.(gif|png|jpe?g|webp)$/i,"")}.gif`;
+    a.target="_blank"; a.rel="noopener"; a.click();
+  }
 
+  setTimeout(()=>URL.revokeObjectURL(url),15000);
   if(resume) startPreview();
 }
 on(previewBtn,"click",()=>{ setMode("preview"); if(gifPreviewImg){ gifPreviewImg.src=""; gifPreviewImg.classList.add("hidden"); } /* live preview only */ render(); });
-on(gifBtn,"click",renderGif);
+on(gifBtn,"click",()=>{ if(typeof checkFpsFramesWarn)==="function") checkFpsFramesWarn(); renderGif(false); });
 [fpsInp, secondsInp].forEach(inp=> on(inp,"input",()=>{ if(mode==="preview") startPreview(); if(tEnd) tEnd.textContent=`${seconds().toFixed(1)}s`; }));
 
 /* =======================================================
@@ -1221,59 +1228,59 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-function pushHistoryDebounced(delay=400){
-  clearTimeout(typingDebounceTimer);
-  typingDebounceTimer = setTimeout(()=>{ pushHistory(); }, delay);
+function checkFpsFramesWarn(){
+  const fps = parseInt(fpsInp?.value||"15",10);
+  const secs = parseInt(secondsInp?.value||"8",10);
+  const frames = fps * secs;
+  const warn = document.getElementById("renderWarn");
+  if (!warn) return frames;
+  if (frames > 1000){
+    warn.classList.remove("hidden");
+    warn.textContent = `Heads up: ${frames} total frames (${fps} fps × ${secs}s) may be slow to render.`;
+  } else {
+    warn.classList.add("hidden");
+    warn.textContent = "";
+  }
+  return frames;
 }
 
-
-/* STEP9: Pill .active state sync */
-const pillButtons = $$(".pillbar .pill");
-pillButtons.forEach(btn=>{
-  on(btn,"click",()=>{
-    // toggle current, close others
-    pillButtons.forEach(b=>{ if (b!==btn) b.classList.remove("active"); });
-    btn.classList.toggle("active");
-  });
+/* KEYBOARD SHORTCUTS (Undo/Redo) */
+window.addEventListener("keydown",(e)=>{
+  const inForm = ["INPUT","TEXTAREA","SELECT"].includes((e.target && e.target.tagName) || "");
+  const isCmd = e.metaKey || e.ctrlKey;
+  if (!isCmd) return;
+  if (!inForm && (e.key.toLowerCase()==="y" || (e.shiftKey && e.key.toLowerCase()==="z"))){
+    e.preventDefault();
+    if(future.length){ history.push(snapshot()); const next=future.pop(); Object.assign(doc,next); render(); }
+    return;
+  }
+  if (!inForm && e.key.toLowerCase()==="z"){
+    e.preventDefault();
+    if(history.length){ future.push(snapshot()); const last=history.pop(); Object.assign(doc,last); render(); }
+  }
 });
 
+/* Custom resolution handling */
+const resCustomRow = document.getElementById("resCustomRow");
+const resCustomW = document.getElementById("resCustomW");
+const resCustomH = document.getElementById("resCustomH");
+const applyCustomRes = document.getElementById("applyCustomRes");
 
-
-/* =======================================================
-   Multi-select polish: batch apply & undo
-======================================================= */
-function getSelectionTargets(){
-  // If multi-select mode has a list, use it; otherwise use the single selected word.
-  if (Array.isArray(selectedList) && selectedList.length){
-    return selectedList.slice(); // clone
-  }
-  if (selected && typeof selected.line==="number" && typeof selected.word==="number"){
-    return [ { line:selected.line, word:selected.word } ];
-  }
-  // Fallback: last word of last line
-  const li = (doc.lines.length? doc.lines.length-1 : 0);
-  const wi = (doc.lines[li] && doc.lines[li].words.length? doc.lines[li].words.length-1 : 0);
-  return [ { line:li, word:wi } ];
+if (resSel){
+  resSel.addEventListener("change",()=>{
+    const val = resSel.value;
+    if (val==="custom"){
+      resCustomRow.style.display="grid";
+    } else {
+      resCustomRow.style.display="none";
+    }
+  });
 }
-function batchApplyToSelection(mutator){
-  // push a single undo snapshot for the whole batch
-  pushHistory();
-  const targets = getSelectionTargets();
-  for (const t of targets){
-    const L = doc.lines[t.line]; if(!L) continue;
-    const W = L.words[t.word];  if(!W) continue;
-    mutator(W, L, t);
-  }
-  render();
-}
-
-
-let multiSelectEnabled = false;
-const multiSelectBtn = $("#multiSelectBtn") || $(".chip.multi-select");
-if (multiSelectBtn){
-  on(multiSelectBtn,"click",()=>{
-    multiSelectEnabled = !multiSelectEnabled;
-    multiSelectBtn.classList.toggle("active", multiSelectEnabled);
-    if (!multiSelectEnabled) selectedList.length = 0;
+if (applyCustomRes){
+  applyCustomRes.addEventListener("click",()=>{
+    const w = Math.max(8, Math.min(256, parseInt(resCustomW.value||"96",10)));
+    const h = Math.max(8, Math.min(256, parseInt(resCustomH.value||"128",10)));
+    doc.res = { w, h };
+    buildBgGrid(); showSolidTools(doc.bg?.type==="solid"); render(); fitZoom();
   });
 }

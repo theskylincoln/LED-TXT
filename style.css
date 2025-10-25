@@ -375,12 +375,3 @@ input[type="color"]{
 
 /* ====== PATCH: Ensure pills look clickable and consistent ====== */
 .pill:hover { filter: brightness(1.08); }
-
-
-/* STEP10: Minor visual refinements */
-.panel .row{ margin-bottom:10px; }
-.panel .row:last-child{ margin-bottom:0; }
-.pillbar{ gap:8px; }
-.anim-row{ margin-bottom:10px; }
-.align .seg .seg-btn[title]{ position: relative; }
-
