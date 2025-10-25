@@ -89,11 +89,11 @@ body.theme-midnight{
 .toolbar-actions button, .icon-btn, .btn {
     cursor: pointer !important;
 }
-.canvas-wrap #led {
-    cursor: crosshair; /* Default editing cursor */
+.canvas-wrap.edit-mode #led {
+    cursor: crosshair !important; /* Forces the crosshair/plus cursor in edit mode */
 }
 .canvas-wrap.preview-mode #led {
-    cursor: pointer;
+    cursor: pointer !important;
 }
 /* ▲ END FIX ▲ */
 
@@ -180,7 +180,6 @@ body.theme-midnight{
   color: var(--text);
   padding: 8px 12px;
   border-radius: var(--radius-sm);
-  font-size: 0.9em;
   cursor: pointer;
   transition: all 0.2s;
 }
