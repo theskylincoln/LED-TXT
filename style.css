@@ -353,13 +353,19 @@ body.theme-midnight{
     border: none;
     outline: none;
     background: transparent;
-    color: var(--text); /* Match the application text color */
-    caret-color: var(--accent-strong); /* Make cursor visible */
-    white-space: nowrap;
+    color: var(--text); 
+    caret-color: var(--accent-strong);
+    /* FIX 1: Use 'pre' to preserve spaces and improve cursor position accuracy */
+    white-space: pre; 
     overflow: hidden;
-    /* Font properties will be dynamically set in app.js */
     font-family: 'Orbitron', sans-serif;
-    font-size: 24px; 
+    font-size: 24px;
+}
+
+.text-editor:focus {
+    /* FIX 2: Add a slight background when focused to ensure the input field is interactive */
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: none;
 }
 
 .text-editor:focus {
