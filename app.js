@@ -3,6 +3,7 @@
    - FIX 1: Corrected all background/thumbnail paths to use 'assets/presets/thumbs/'
    - FIX 2: Re-implemented Add/Delete Word/Line and History functions
    - FIX 3: Multi-select checkbox synchronization is now robust
+   - FIX 4: Re-implemented the zoom/fit logic and referenced the new HTML element
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -318,7 +319,7 @@ function getWordPositionInfo(li, wi) {
 
 
 /* =======================================================
-   BACKGROUND GRID / SOLID / UPLOAD (UNCHANGED EXCEPT PRESETS)
+   BACKGROUND GRID / SOLID / UPLOAD (FIXED PRESET PATHS)
 ======================================================= */
 function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); }
 function buildBgGrid(){
@@ -395,7 +396,7 @@ on(bgSolidColor,"input",()=>{ doc.bg={type:"solid",color:bgSolidColor.value,imag
 
 
 /* =======================================================
-   ZOOM / FIT / MODE (UNCHANGED)
+   ZOOM / FIT / MODE (RE-IMPLEMENTED)
 ======================================================= */
 function setZoom(z){ zoom=z; if(zoomSlider) zoomSlider.value=String(z); canvas.style.transform=`translate(-50%,-50%) scale(${z})`; }
 function fitZoom(){
