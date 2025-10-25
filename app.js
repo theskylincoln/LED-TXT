@@ -1,6 +1,7 @@
 /* =======================================================================
    LED Backpack Animator v2.0 — FINAL WORKING app.js
-   - FIX: Multi-select checkbox synchronization (Robust Check)
+   - Includes all bug fixes (centering, caret, typing, rendering, deselect)
+   - CRITICAL FIX: Added 'change' listener to #multiToggle for robust state sync
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -9,7 +10,7 @@ const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
 const on = (el, ev, fn, opt) => el && el.addEventListener(ev, fn, opt);
 const off = (el, ev, fn) => el && el.removeEventListener(ev, fn);
 
-/* ------------------ DOM refs (Moved multiToggle query here) ------------------ */
+/* ------------------ DOM refs ------------------ */
 const canvas=$("#led"), ctx=canvas.getContext("2d"), wrap=$(".canvas-wrap");
 const textEditor=$("#textEditor"); 
 
@@ -193,11 +194,9 @@ function updateTextEditorPosition(w, li, wi, x, y, size, width){
 }
 
 function deselectWord(clearEditor=true){
-    // Console log to verify this function runs
-    console.log("[Deselect] Running deselectWord. Multi-select check:", multiToggle?.checked);
-
     selected = null;
     caret.active = false;
+    
     // FIX: Clear multi-selection state when explicitly deselecting
     doc.multi.clear();
     
@@ -243,8 +242,6 @@ on(textEditor, 'keydown', (e) => {
 
 on(textEditor, 'blur', () => {
     // Only deselect if the blur wasn't caused by clicking a word on the canvas 
-    // This is a subtle point, but clicking on the canvas will fire blur THEN click.
-    // We let the canvas click handler manage the selection state.
     if (!selected) {
         deselectWord(false);
     }
@@ -806,18 +803,35 @@ function drawSelectionBox(x,y,w,h,isMulti){
 
 
 /* =======================================================
+   LISTENERS (CRITICAL FIX ADDED HERE)
+======================================================= */
+on(multiToggle, 'change', (e) => {
+    // When the user manually UNCHECKS the multi-select box
+    if (!e.target.checked) {
+        // Clear the internal list and re-render to remove selection boxes
+        doc.multi.clear();
+    }
+    // When the user CHECKS the multi-select box
+    if (e.target.checked) {
+        // If a word is already selected, add it to the multi-select set
+        if (selected) {
+             doc.multi.add(`${selected.line}:${selected.word}`);
+        }
+    }
+    render();
+});
+
+
+/* =======================================================
    INITIALIZATION
 ======================================================= */
 function init(){
   fitZoom();
   
-  // FIX: Clear multi-select and ensure checkbox reflects it
+  // Ensure we start clean: clear multi-select and set checkbox state
   doc.multi.clear();
   if (multiToggle) {
     multiToggle.checked = false;
-    console.log("[Init] MultiToggle checkbox set to unchecked.");
-  } else {
-    console.error("[Init] Could not find the #multiToggle element.");
   }
 
   buildBgGrid(); 
