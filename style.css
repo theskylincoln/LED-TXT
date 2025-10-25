@@ -386,7 +386,7 @@ input[type="number"], input[type="text"], input[type="color"], select {
     border: none;
     box-shadow: none;
     resize: none;
-    padding: 0 2px; /* Small padding to align with drawn text */
+    padding: 0; /* REMOVED PADDING - critical for pixel alignment */
     text-align: center; /* Will be overwritten by x position, but good default */
     outline: none; /* Hide the focus outline */
     caret-color: transparent; /* Hide the input's native caret */
