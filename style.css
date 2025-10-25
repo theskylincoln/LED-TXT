@@ -84,7 +84,6 @@ body.theme-midnight{
 }
 
 /* Cursor fixes for bad text cursor on buttons */
-/* ▼ FIX: CURSOR OVERRIDE ▼ */
 #modeEdit, #modePreview, #undoBtn, #redoBtn, #clearAllBtn, 
 .toolbar-actions button, .icon-btn, .btn {
     cursor: pointer !important;
@@ -95,7 +94,6 @@ body.theme-midnight{
 .canvas-wrap.preview-mode #led {
     cursor: pointer !important;
 }
-/* ▲ END FIX ▲ */
 
 /* Text Editor overlay */
 #textEditor{
@@ -121,6 +119,18 @@ body.theme-midnight{
   width: 100%;
   padding: 0 8px;
 }
+.stage-controls .check-group {
+    /* Align multi-select nicely with buttons */
+    padding: 8px 12px;
+    background: var(--glass);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+.stage-controls .check-group label {
+    color: var(--text);
+    font-size: 0.9em;
+}
+
 
 /* ===== Toolbar / UI Elements ===== */
 .topbar{
