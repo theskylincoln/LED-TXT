@@ -1,7 +1,9 @@
 /* =======================================================================
-   LED Backpack Animator v1.0 — app.js (Updated for Animated GIF Backgrounds & Word Selection)
-   - Integrated Word Selection via canvas click.
+   LED Backpack Animator v1.0 — app.js (Updated for GIF, Selection, and Inspector)
+   - Implemented Word Selection via canvas click.
    - Implemented functions to update the Inspector UI based on the selected word.
+   - ADDED: Utility function to update properties of the selected word.
+   - ADDED: Event handlers for Font, Size, and Color inputs.
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -131,6 +133,33 @@ function redo() {
   restore(nextState);
 }
 
+// ----------------------------------------------------
+// NEW: Word Property Utility Function
+// ----------------------------------------------------
+
+/**
+ * Utility function to update a property on the currently selected word.
+ * @param {string} prop - The property name ('font', 'size', 'color').
+ * @param {any} value - The new value for the property.
+ */
+function applySelectedWordProperty(prop, value) {
+  if (!selected) return;
+
+  const word = doc.lines[selected.l].words[selected.w];
+  
+  if (word[prop] === value) return; // No change
+
+  word[prop] = value;
+
+  // Special handling for number inputs (like font size)
+  if (typeof word[prop] === 'string' && !isNaN(parseFloat(value))) {
+    word[prop] = parseFloat(value);
+  }
+
+  pushState(`UPDATE_WORD_${prop.toUpperCase()}`);
+  render();
+}
+
 /* ------------------ CANVAS & RENDERING ------------------ */
 function initCanvas(){
   canvas.width=doc.res.w; canvas.height=doc.res.h;
@@ -148,12 +177,12 @@ function stopPreview(){
   mode="edit"; modeEditBtn.classList.add("active"); modePreviewBtn.classList.remove("active");
   if(rafId) cancelAnimationFrame(rafId);
   rafId=null;
-  render(); // Final static render
+  render(); 
 }
 
 function loop(){
   const t = (Date.now() - startT) / 1000;
-  render(t * 1000); // Pass time in milliseconds
+  render(t * 1000); 
   rafId = requestAnimationFrame(loop);
 }
 
@@ -198,14 +227,12 @@ function render(t=0){
     let lineContentWidth = 0;
     line.words.forEach(word => {
       ctx.font = `${word.size}px ${word.font}`;
-      // CRITICAL: Must recalculate or estimate width for hit testing!
       word.w = ctx.measureText(word.text).width; 
-      word.h = word.size; // Simple approximation
+      word.h = word.size; 
       lineContentWidth += word.w + wordGap;
     });
     lineContentWidth -= wordGap;
     
-    // Vertical alignment approximation
     if(lIdx === 0 && doc.style.valign === "middle") {
        currentY = (h / 3); 
     }
@@ -215,7 +242,6 @@ function render(t=0){
     else if (doc.style.align === 'right') currentX = w - lineContentWidth - padding;
     
     line.words.forEach((word, wIdx) => {
-      // Store final positions for hit testing (needed outside of render loop)
       word._x = currentX;
       word._y = currentY;
       
@@ -241,7 +267,8 @@ function render(t=0){
       if (mode === 'edit' && selected && lIdx === selected.l && wIdx === selected.w) {
          ctx.strokeStyle = '#a675ff';
          ctx.lineWidth = 1;
-         ctx.strokeRect(word._x - 1, word._y - 1, word.w + 2, word.h + 2);
+         // Draw box slightly larger for visibility
+         ctx.strokeRect(word._x - 2, word._y - 2, word.w + 4, word.h + 4); 
       }
       
       currentX += word.w + wordGap;
@@ -252,14 +279,9 @@ function render(t=0){
 }
 
 // ----------------------------------------------------
-// NEW: Word Selection Logic
+// Word Selection Logic
 // ----------------------------------------------------
 
-/**
- * Updates the selected word state and UI.
- * @param {number|null} lIdx - Line index, or null to clear selection.
- * @param {number|null} wIdx - Word index, or null to clear selection.
- */
 function selectWord(lIdx, wIdx) {
   if (lIdx === null) {
     selected = null;
@@ -271,14 +293,9 @@ function selectWord(lIdx, wIdx) {
   render();
 }
 
-/**
- * Handles canvas click events for selecting a word.
- * @param {MouseEvent} e 
- */
 function handleCanvasClick(e) {
   if (mode !== 'edit') return;
 
-  // 1. Get click coordinates, accounting for zoom and canvas position
   const rect = canvas.getBoundingClientRect();
   const scale = canvas.width / rect.width;
   const clientX = e.clientX - rect.left;
@@ -288,15 +305,13 @@ function handleCanvasClick(e) {
 
   let hit = false;
   
-  // 2. Iterate through all rendered words to check for a hit
   doc.lines.forEach((line, lIdx) => {
-    if (hit) return; // Stop checking once a word is found
+    if (hit) return; 
     
     line.words.forEach((word, wIdx) => {
       if (hit) return;
       
       // Check if click (x, y) is inside the word's bounds
-      // We use the temporary _x, _y, w, and h properties stored during render()
       const isHit = (
         x >= word._x && x <= word._x + word.w &&
         y >= word._y && y <= word._y + word.h
@@ -309,23 +324,21 @@ function handleCanvasClick(e) {
     });
   });
 
-  // 3. If no word was hit, clear the selection
   if (!hit) {
     selectWord(null, null);
   }
 }
 
 // ----------------------------------------------------
-// NEW: Inspector Update Logic
+// Inspector Update Logic
 // ----------------------------------------------------
 
 function updateInspector() {
   if (!selected) {
-    // Clear / Reset font inspector inputs
+    // Set to default values and disable inputs
     fontSelect.value = defaults.font;
     fontSize.value = defaults.size;
     fontColor.value = defaults.color;
-    // Disable inputs when nothing is selected
     $$('#accFont input, #accFont select').forEach(el => el.disabled = true);
     return;
   }
@@ -338,7 +351,7 @@ function updateInspector() {
   fontSize.value = word.size;
   fontColor.value = word.color;
   
-  // You would update anims, layout, and other controls here
+  // Note: We skip the Font Size Input validation/autoSize for now
 }
 
 
@@ -359,7 +372,6 @@ function updateUI(){
     bgGifPlayBtn.textContent = gifPlayer.get_playing() ? '⏸️' : '▶️';
   }
   
-  // CRITICAL: Ensure selection is cleared if doc structure changes drastically
   if (selected && (!doc.lines[selected.l] || !doc.lines[selected.l].words[selected.w])) {
     selectWord(null, null);
   }
@@ -388,7 +400,6 @@ function showGifTools(show){
     bgGifPlayBtn.textContent = gifPlayer.get_playing() ? '⏸️' : '▶️';
   }
 }
-
 
 function buildBgGrid(){
   bgGrid.innerHTML="";
@@ -520,7 +531,7 @@ function init() {
   
   on(clearAllBtn, "click", () => {
     doc.lines = [{ words: [{ text: "", color: "#FFFFFF", font: "Orbitron", size: 24, anims: [] }] }];
-    selectWord(0, 0); // Select the new, empty word
+    selectWord(0, 0); 
     pushState("CLEAR_CANVAS");
   });
 
@@ -552,9 +563,25 @@ function init() {
   
   // 6. Word Selection
   on(canvas, "click", handleCanvasClick);
+  
+  // ▼ NEW: Inspector Control Handlers
+  on(fontSelect, 'change', e => {
+    applySelectedWordProperty('font', e.target.value);
+  });
+  
+  on(fontSize, 'input', e => {
+    // Input event for live feedback as user types a number
+    applySelectedWordProperty('size', e.target.value);
+  });
+  
+  on(fontColor, 'input', e => {
+    // Input event for live feedback as user changes the color picker
+    applySelectedWordProperty('color', e.target.value);
+  });
+  // ▲ NEW
 
   // 7. Initial State Update
-  selectWord(0, 0); // Select the first word on load
+  selectWord(0, 0); 
   updateUI();
   render();
 }
