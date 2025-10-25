@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LED Backpack Animator — v2.0</title>
+  <title>LED Backpack Animator — v2.1</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="theme-midnight">
 
   <header class="topbar glass">
     <div class="title-wrap">
-      <h1 class="app-title">LED Backpack Animator <span class="ver-badge">v2.0</span></h1>
+      <h1 class="app-title">LED Backpack Animator <span class="ver-badge">v2.1</span></h1>
     </div>
     <button id="aboutBtn" class="icon-btn" title="About">ℹ️</button>
   </header>
@@ -19,7 +19,7 @@
   <div class="toolbar-row">
     <div class="brand">
       <span class="app-title">LED Backpack Animator</span>
-      <span class="ver-badge">v2.0</span>
+      <span class="ver-badge">v2.1</span>
     </div>
     <div class="toolbar-actions">
       <button class="tb-btn" id="tbProject" aria-expanded="false">Project Settings</button>
@@ -42,7 +42,7 @@
         <button id="fitBtn" class="icon-btn" title="Fit to View">🎯</button>
         <input type="range" id="zoom" min="0.1" max="5" value="1" step="0.05" title="Zoom Slider">
     </div>
-    </div>
+  </div>
 </nav>
 
 <main class="main-wrap">
@@ -129,12 +129,7 @@
             <input type="number" id="wordGap" value="6" min="0" max="100" />
           </div>
 
-          <h3 class="panel-header">Word Control</h3>
-          <div class="row">
-            <input type="checkbox" id="multiToggle">
-            <label for="multiToggle" title="Allows selecting and applying styles to multiple words at once.">Multi-Select</label>
           </div>
-        </div>
       </details>
 
       <details id="accAnim">
@@ -158,11 +153,18 @@
       <textarea id="textEditor" class="text-editor"></textarea>
       <canvas id="led" width="96" height="128"></canvas>
     </div>
+    
     <div class="stage-controls">
       <button id="addWordBtn" class="btn primary">Add Word</button>
       <button id="addLineBtn" class="btn">Add Line</button>
       <button id="deleteWordBtn" class="btn danger" title="Delete Selected Word">Delete Selected</button>
       <button id="emojiBtn" class="btn">Add Emoji</button>
+
+      <div class="check-group">
+        <input type="checkbox" id="multiToggle">
+        <label for="multiToggle" title="Allows selecting and applying styles to multiple words at once.">Multi-Select</label>
+      </div>
+
       <button id="manualDragBtn" class="btn" title="Manual drag mode toggle (not implemented)">Manual Drag</button>
     </div>
   </section>
@@ -240,7 +242,7 @@
         <button id="aboutClose" class="icon-btn">✖</button>
       </div>
       <div class="modal-body">
-        <p>Version 2.0</p>
+        <p>Version 2.1</p>
         <p>A simple, web-based tool for creating animations for LED backpacks and matrices.</p>
         <p>All source code is available on GitHub.</p>
       </div>
