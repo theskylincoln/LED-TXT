@@ -1,175 +1,3 @@
-
-const favorites = (() => {
-  const KEY = "led_animator_favs_v1";
-  let data = { emojis: [] };
-  try { data = JSON.parse(localStorage.getItem(KEY)) || data; } catch {}
-  const save = () => localStorage.setItem(KEY, JSON.stringify(data));
-  return {
-    addEmoji(id){ id = String(id||"").toUpperCase(); if(!id) return;
-      if(!data.emojis.includes(id)){ data.emojis.push(id); save(); }
-    },
-    removeEmoji(id){ id = String(id||"").toUpperCase(); const i=data.emojis.indexOf(id);
-      if(i>=0){ data.emojis.splice(i,1); save(); }
-    },
-    listEmojis(){ return [...data.emojis]; },
-    clear(){ data = { emojis: [] }; save(); },
-    has(id){ id = String(id||"").toUpperCase(); return data.emojis.includes(id); }
-  };
-})();
-
-function downloadJSON(obj, filename){
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type:"application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename || "config.json"; a.click();
-  setTimeout(()=> URL.revokeObjectURL(url), 5000);
-}
-
-function getCurrentColorSwatches(){
-  const btns = Array.from(document.querySelectorAll('#colorSwatches .swatch, [data-swatch-bar] .swatch, .swatch-row .swatch'));
-  const domColors = btns.map(b => b.getAttribute('data-color')).filter(Boolean);
-  const codeColors = (typeof defaultTextPalette !== "undefined" ? defaultTextPalette : [])
-    .concat(typeof defaultBgPalette !== "undefined" ? defaultBgPalette : []);
-  const unique = Array.from(new Set(domColors.concat(codeColors))).filter(Boolean);
-  return unique;
-}
-
-function getAllBackgrounds(){
-  const out = [];
-  try {
-    if (typeof PRESETS === "object" && PRESETS){
-      Object.keys(PRESETS).forEach(resKey=>{
-        (PRESETS[resKey]||[]).forEach(p=>{
-          out.push({
-            id: p.id || p.name || "Preset",
-            res: resKey,
-            thumb: p.thumb || p.preview || "",
-            path: p.full || p.path || ""
-          });
-        });
-      });
-    }
-  } catch(e){}
-  return out;
-}
-
-function buildConfigPayload(){
-  return {
-    favorite_emojis: favorites.listEmojis(),
-    color_swatches: getCurrentColorSwatches(),
-    backgrounds: getAllBackgrounds()
-  };
-}
-
-async function importAppConfigFromFile(file){
-  try{
-    const text = await file.text();
-    const cfg = JSON.parse(text);
-
-    if (Array.isArray(cfg.color_swatches)){
-      const bar = document.querySelector("#colorSwatches, [data-swatch-bar], .swatch-row");
-      const seen = new Set(getCurrentColorSwatches().map(c=>c.toLowerCase()));
-      cfg.color_swatches.forEach(hex => {
-        const h = String(hex||"").trim();
-        if (!h) return;
-        const lower = h.toLowerCase();
-        if (seen.has(lower)) return;
-        seen.add(lower);
-        if (bar){
-          const b=document.createElement("button"); b.className="swatch"; b.title=h; b.setAttribute("data-color", h); b.style.background=h;
-          b.onclick=()=>{
-            const inp = document.querySelector('#fontColor, input[type="color"]');
-            if (inp) inp.value = h;
-            if (typeof setWordColor === "function") setWordColor(h);
-          };
-          bar.appendChild(b);
-        }
-        if (typeof defaultTextPalette!=="undefined" && !defaultTextPalette.includes(h)) defaultTextPalette.push(h);
-      });
-    }
-
-    if (Array.isArray(cfg.backgrounds)){
-      if (typeof PRESETS === "object" && PRESETS){
-        cfg.backgrounds.forEach(bg => {
-          const key = (bg.res && bg.res!=="*") ? bg.res : `${doc?.res?.w||96}x${doc?.res?.h||128}`;
-          PRESETS[key] = PRESETS[key] || [];
-          const exists = PRESETS[key].some(p => (p.id||p.name) === (bg.id||bg.name));
-          if (!exists){
-            PRESETS[key].push({ id: bg.id||bg.name, thumb: bg.thumb||bg.preview||"", full: bg.path||bg.full||"" });
-          }
-        });
-        if (typeof buildBgGrid === "function") try{ buildBgGrid(); }catch{}
-      }
-    }
-
-    if (Array.isArray(cfg.static_emojis)){
-      window.EMOJI_DB = {
-        categories: Array.from(new Set(cfg.static_emojis.map(e=>e.category||"General"))),
-        entries: cfg.static_emojis.map(e => ({
-          id: String(e.id||e.unicode||"").toUpperCase(),
-          name: e.name||"emoji",
-          path: e.path||e.src||"",
-          category: e.category||"General"
-        }))
-      };
-      if (typeof filterEmoji === "function") try{ await filterEmoji(); }catch{}
-    }
-
-    if (cfg.animated_index && window.AnimatedEmoji){
-      window.AnimatedEmoji.NOTO_INDEX.length = 0;
-      (cfg.animated_index||[]).forEach(item=>{
-        window.AnimatedEmoji.NOTO_INDEX.push({
-          cp: String(item.cp||"").toLowerCase(),
-          ch: item.ch||"",
-          name: item.name||item.cp
-        });
-      });
-      document.dispatchEvent(new CustomEvent("animatedEmojiReady"));
-    }
-
-    if (Array.isArray(cfg.favorite_emojis)){
-      favorites.clear();
-      cfg.favorite_emojis.forEach(id => favorites.addEmoji(id));
-    }
-
-    alert("App config imported.");
-  }catch(e){
-    console.error(e);
-    alert("Failed to import app config: " + e.message);
-  }
-}
-
-(function(){
-  const slot = document.getElementById("gifConfigSlot");
-  if (!slot) return;
-  ["loadJsonBtn","importJsonBtn","openJsonBtn","saveJsonBtn"].forEach(id=>{
-    const el = document.getElementById(id);
-    if (el && el.parentNode !== slot){ slot.appendChild(el); }
-  });
-})();
-
-(function(){
-  const slot = document.getElementById("gifConfigSlot");
-  if (slot){
-    ["loadJsonBtn","importJsonBtn","openJsonBtn","saveJsonBtn"].forEach(id=>{
-      const el = document.getElementById(id);
-      if (el && el.parentNode !== slot){ slot.appendChild(el); }
-    });
-  }
-  const dl = document.getElementById("downloadAppConfigBtn");
-  if (dl){ dl.addEventListener("click", ()=> downloadJSON(buildConfigPayload(), "led_animator_config.json")); }
-  const upBtn = document.getElementById("importAppConfigBtn");
-  const upInp = document.getElementById("appConfigInput");
-  if (upBtn && upInp){
-    upBtn.addEventListener("click", ()=> upInp.click());
-    upInp.addEventListener("change", async (e)=>{
-      const f = e.target.files && e.target.files[0];
-      if (f) await importAppConfigFromFile(f);
-      upInp.value = "";
-    });
-  }
-})();
-
 /* =======================================================================
    LED Backpack Animator v1.0 — app.js (updated, drop-in)
    - Startup preset loads from JSON (lines only) without altering backgrounds
@@ -206,7 +34,7 @@ const bgUpload=$("#bgUpload");
 
 /* stage controls */
 const multiToggle=$("#multiToggle"),
-      manualDragBtn=$("") || $("#manualDragToggle");
+      manualDragBtn=$("#manualDragBtn") || $("#manualDragToggle");
 const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn"), delWordBtn=$("#deleteWordBtn");
 const emojiBtn=$("#emojiBtn");
 
@@ -244,7 +72,6 @@ const emojiSearch=$("#emojiSearch"), emojiClose=$("#emojiClose");
 /* ------------------ state ------------------ */
 let mode="edit", zoom=1, selected=null;
 let history=[], future=[];
-const UNDO_LIMIT=100;
 let startT=0, rafId=null;
 const uiLock = { emojiOpen: false };
 const defaults={ font:"Orbitron", size:22, color:"#FFFFFF" };
@@ -816,7 +643,7 @@ if (caret.active && caret.line===li && caret.word===wi && mode==="edit") {
 }
 
 /* draw selection + delete handle clamped inside canvas */
-const HANDLE_SIZE=14;
+const HANDLE_SIZE=9;
 function drawSelectionBox(x,y,w,h,isMulti){
   ctx.save();
   ctx.setLineDash([3,2]); ctx.lineWidth=1;
@@ -831,7 +658,7 @@ function drawSelectionBox(x,y,w,h,isMulti){
   hy = Math.min(canvas.height - HANDLE_SIZE - 2, Math.max(2, hy));
 
   // draw handle square with X
-  ctx.fillStyle="#ff4d4d";
+  ctx.fillStyle="#ff6bd6";
   ctx.strokeStyle="rgba(0,0,0,0.5)";
   ctx.lineWidth=1;
   ctx.fillRect(hx, hy, HANDLE_SIZE, HANDLE_SIZE);
@@ -889,11 +716,7 @@ function hitTestWord(px,py){
 
 /* history helpers */
 const snapshot=()=>JSON.parse(JSON.stringify(doc));
-function pushHistory(){
-  history.push(snapshot());
-  if(history.length>UNDO_LIMIT) history.shift();
-  future.length=0;
-}
+function pushHistory(){ history.push(snapshot()); if(history.length>200) history.shift(); future.length=0; }
 
 on(canvas,"click",(e)=>{
   if(mode!=="edit") return;
@@ -1162,7 +985,7 @@ async function ensureGifLibs(){
 }
 function encoderBlob(enc){ const bytes=enc.stream().bin||enc.stream().getData(); return new Blob([bytes instanceof Uint8Array?bytes:new Uint8Array(bytes)],{type:"image/gif"}); }
 
-async function renderGif(previewOnly=false){
+async function renderGif(){
   const ok=await ensureGifLibs(); if(!ok) return;
   const F=fps(), S=seconds(), frames=Math.max(1,Math.floor(F*S)), delay=Math.max(1,Math.round(1000/F));
   const resume=(mode==="preview"); stopPreview();
@@ -1183,7 +1006,7 @@ async function renderGif(previewOnly=false){
   if(resume) startPreview();
 }
 on(previewBtn,"click",()=>{ setMode("preview"); if(gifPreviewImg){ gifPreviewImg.src=""; gifPreviewImg.classList.add("hidden"); } /* live preview only */ render(); });
-on(gifBtn,"click",()=>renderGif(false));
+on(gifBtn,"click",renderGif);
 [fpsInp, secondsInp].forEach(inp=> on(inp,"input",()=>{ if(mode==="preview") startPreview(); if(tEnd) tEnd.textContent=`${seconds().toFixed(1)}s`; }));
 
 /* =======================================================
@@ -1228,7 +1051,7 @@ on(aboutClose,"click",()=> aboutModal?.classList.add("hidden"));
 /* =======================================================
    EMOJI PICKER (Static / Animated / Both)
 ======================================================= */
-const EMOJI_TABS = ["Both","Static","Animated","⭐ Favorites"];
+const EMOJI_TABS = ["Both","Static","Animated"];
 function buildEmojiTabs(){
   emojiTabs.innerHTML="";
   EMOJI_TABS.forEach((name,i)=>{
@@ -1239,17 +1062,12 @@ function buildEmojiTabs(){
 }
 function renderEmojiGrid(list){
   emojiGrid.innerHTML="";
-  const favSet=new Set(favoritesEmojis||[]);
   const frag=document.createDocumentFragment();
   list.forEach(e=>{
-    const key=(e.id||e.path||"").toString();
     const item=document.createElement("button"); item.className="emoji-item"; item.title=e.name;
     const img=document.createElement("img"); img.alt=e.name; img.loading="lazy";
-    img.src = e.path || (e.id ? `https://unpkg.com/openmoji@14.0.0/color/72x72/${e.id}.png` : "assets/openmoji/fallback.svg");
+    img.src = e.path || "assets/openmoji/fallback.svg";
     item.appendChild(img);
-    const fav=document.createElement("button"); fav.type="button"; fav.className="emoji-fav"+(favSet.has(key)?" active":""); fav.title=favSet.has(key)?"Remove from favorites":"Add to favorites"; fav.innerHTML="<span>★</span>";
-    fav.onclick=(ev)=>{ ev.stopPropagation(); toggleFavEmoji(key); fav.classList.toggle("active"); };
-    item.appendChild(fav);
     item.onclick=()=>{ insertEmoji(e); emojiModal.classList.add("hidden"); };
     frag.appendChild(item);
   });
@@ -1265,23 +1083,6 @@ async function filterEmoji(){
     const ok = !q || e.name.toLowerCase().includes(q) || e.id.includes(q);
     return ok;
   }).map(e=>({ ...e, type:"static" }));
-
-  const animList = noto.entries.filter(e=>{
-    const ok = !q || e.name.toLowerCase().includes(q) || e.id.includes(q) || (e.ch||"").includes(q);
-    return ok;
-  }).map(e=>({ ...e, type:"animated", codepoint:e.cp }));
-
-  let combined=[];
-  if(tab==="Both") combined=[...animList, ...staticList];
-  else if(tab==="Static") combined=staticList;
-  else if(tab==="Animated") combined=animList;
-  else if(tab==="⭐ Favorites"){
-    const favSet=new Set(favoritesEmojis||[]);
-    combined=[...animList, ...staticList].filter(e=>favSet.has((e.id||e.path||"").toString()));
-  }
-
-  renderEmojiGrid(combined.slice(0,800));
-}).map(e=>({ ...e, type:"static" }));
 
   const animList = noto.entries.filter(e=>{
     const ok = !q || e.name.toLowerCase().includes(q) || e.id.includes(q) || (e.ch||"").includes(q);
@@ -1408,91 +1209,76 @@ function init(){
 /* =======================================================
    DOM READY WRAPPER — ensures init runs only after HTML is loaded
 ======================================================= */
-window.addEventListener("DOMContentLoaded", () => {
-  try {
+window.addEventListener("DOMContentLoaded", async () => { try {
     init();
-    console.log("[LED Animator] App initialized successfully");
+    try{ await initLocalLoad(); }catch(e){ console.warn("initLocalLoad error", e); }
+      if (typeof render==="function") render();
+      console.log("[LED Animator] App initialized successfully");
   } catch (err) {
     console.error("[LED Animator] Init failed:", err);
     alert("App failed to load properly. Check console for details.");
   }
 });
-
-/* KEYBOARD SHORTCUTS (Undo/Redo) */
-window.addEventListener("keydown",(e)=>{
-  const tag=(e.target&&e.target.tagName)||"";
-  const inForm=["INPUT","TEXTAREA","SELECT"].includes(tag);
-  const isCmd=e.metaKey||e.ctrlKey;
-  if(!isCmd) return;
-  if(!inForm && (e.key.toLowerCase()==="y" || (e.shiftKey && e.key.toLowerCase()==="z"))){
-    e.preventDefault();
-    if(future.length){ history.push(snapshot()); const next=future.pop(); Object.assign(doc,next); render(); }
-    return;
-  }
-  if(!inForm && e.key.toLowerCase()==="z"){
-    e.preventDefault();
-    if(history.length){ future.push(snapshot()); const last=history.pop(); Object.assign(doc,last); render(); }
-  }
-});
-
-function checkFpsFramesWarn(){
-  const fps=parseInt((fpsInp&&fpsInp.value)||"15",10);
-  const secs=parseInt((secondsInp&&secondsInp.value)||"8",10);
-  const frames=fps*secs;
-  const warn=document.getElementById("renderWarn");
-  if(!warn) return frames;
-  if(frames>1000){ warn.classList.remove("hidden"); warn.textContent=`Heads up: ${frames} total frames (${fps} fps × ${secs}s) may be slow to render.`; }
-  else { warn.classList.add("hidden"); warn.textContent=""; }
-  return frames;
+function applyAppCfgObject(c){
+  if(!c) return;
+  try{
+    if(c.swatches){
+      if(Array.isArray(c.swatches.font)) window.customTextPalette=[...c.swatches.font];
+      if(Array.isArray(c.swatches.bg)) window.customBgPalette=[...c.swatches.bg];
+    }
+    if(c.favorites && Array.isArray(c.favorites.emojis)) window.favoritesEmojis=[...c.favorites.emojis];
+    if(c.defaults){
+      if(typeof c.defaults.fps==="number" && typeof fpsInp!=="undefined" && fpsInp) fpsInp.value=String(c.defaults.fps);
+      if(typeof c.defaults.seconds==="number" && typeof secondsInp!=="undefined" && secondsInp) secondsInp.value=String(c.defaults.seconds);
+      if(c.defaults.font && typeof fontSelect!=="undefined" && fontSelect) fontSelect.value=c.defaults.font;
+      if(typeof c.defaults.autosizeWord==="boolean" && typeof autoSizeWordChk!=="undefined" && autoSizeWordChk) autoSizeWordChk.checked=c.defaults.autosizeWord;
+      if(typeof c.defaults.autosizeLine==="boolean" && typeof autoSizeLineChk!=="undefined" && autoSizeLineChk) autoSizeLineChk.checked=c.defaults.autosizeLine;
+      const tgl=document.getElementById("localAutosaveToggle");
+      if(tgl && typeof c.defaults.localAutosaveEnabled==="boolean") tgl.checked = c.defaults.localAutosaveEnabled;
+    }
+  }catch(e){ console.warn("applyAppCfgObject error", e); }
 }
 
-/* Custom resolution handling */
-const resCustomRow=document.getElementById("resCustomRow");
-const resCustomW=document.getElementById("resCustomW");
-const resCustomH=document.getElementById("resCustomH");
-const applyCustomRes=document.getElementById("applyCustomRes");
-const resSel=document.getElementById("resSelect");
-if(resSel){ resSel.addEventListener("change",()=>{ const v=resSel.value; resCustomRow && (resCustomRow.style.display=(v==="custom"?"grid":"none")); }); }
-if(applyCustomRes){
-  applyCustomRes.addEventListener("click",()=>{
-    const w=Math.max(8,Math.min(256,parseInt(resCustomW?.value||"96",10)));
-    const h=Math.max(8,Math.min(256,parseInt(resCustomH?.value||"128",10)));
-    doc.res={w,h}; buildBgGrid&&buildBgGrid(); showSolidTools&&showSolidTools(doc.bg?.type==="solid"); render&&render(); fitZoom&&fitZoom();
-  });
+function applyProjectObject(o){
+  if(!o) return false;
+  try{
+    if(o.res) doc.res = o.res;
+    if(o.spacing) doc.spacing = o.spacing;
+    if(o.style) doc.style = o.style;
+    if(o.bg) doc.bg = o.bg;
+    if(Array.isArray(o.lines)) doc.lines = o.lines;
+    if (typeof buildBgGrid === "function") buildBgGrid();
+    if (typeof showSolidTools === "function") showSolidTools(doc.bg?.type==="solid");
+    if (typeof render === "function") render();
+    if (typeof fitZoom === "function") fitZoom();
+    return true;
+  }catch(e){ console.warn("applyProjectObject error", e); return false; }
 }
 
-// Local autosave gating
-const localToggle=document.getElementById("localAutosaveToggle");
-function isLocalOn(){ return !!(localToggle && localToggle.checked); }
-if(typeof saveProjectLS==="function"){
-  const _saveProjectLS=saveProjectLS; saveProjectLS=function(){ if(!isLocalOn()) return; _saveProjectLS(); };
-}
-if(typeof saveAppCfgLS==="function"){
-  const _saveAppCfgLS=saveAppCfgLS; saveAppCfgLS=function(){ if(!isLocalOn()) return; _saveAppCfgLS(); };
-}
-
-function getAppCfgObject(){
-  const defaults={
-    fps:parseInt(fpsInp?.value||"15",10),
-    seconds:parseInt(secondsInp?.value||"8",10),
-    font:fontSelect?.value||"Orbitron",
-    autosizeWord:!!(autoSizeWordChk&&autoSizeWordChk.checked),
-    autosizeLine:!!(autoSizeLineChk&&autoSizeLineChk.checked),
-    localAutosaveEnabled:!!(document.getElementById("localAutosaveToggle")?.checked)
-  };
-  return { favorites:{emojis:favoritesEmojis||[]}, swatches:{font:customTextPalette||[], bg:customBgPalette||[]}, defaults };
+async function loadDefaultAppCfg(){
+  try{
+    const res = await fetch("assets/defaults/default_app_settings.json", {cache:"no-cache"});
+    if(!res.ok) return false;
+    const cfg = await res.json();
+    applyAppCfgObject(cfg);
+    return true;
+  }catch(e){ console.warn("loadDefaultAppCfg error", e); return false; }
 }
 
-// Ensure App settings export uses getAppCfgObject()
-document.addEventListener("DOMContentLoaded",()=>{
-  const btn=document.getElementById("saveAppCfgBtn");
-  if(btn){
-    btn.addEventListener("click",()=>{
-      const cfg=getAppCfgObject();
-      const blob=new Blob([JSON.stringify(cfg,null,2)],{type:"application/json"});
-      const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
-      a.download="app_settings.json"; a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href),15000);
-    });
-  }
-});
+async function loadDefaultProject(){
+  try{
+    const res = await fetch("assets/defaults/default_program_file.json", {cache:"no-cache"});
+    if(!res.ok) return false;
+    const proj = await res.json();
+    return applyProjectObject(proj);
+  }catch(e){ console.warn("loadDefaultProject error", e); return false; }
+}
+
+async function initLocalLoad(){
+  await loadDefaultAppCfg();
+  await loadDefaultProject();
+  if (typeof loadAppCfgLS === "function") loadAppCfgLS();
+  const tgl=document.getElementById("localAutosaveToggle");
+  const localOn = !!(tgl && tgl.checked);
+  if (localOn && typeof loadProjectLS === "function") loadProjectLS();
+}
