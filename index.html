@@ -5,14 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LED Backpack Animator — v1.0</title>
   <link rel="stylesheet" href="style.css" />
-
-<style>
-  .config-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:8px}
-  @media (max-width:700px){.config-two-col{grid-template-columns:1fr}}
-  .config-col h4{margin:4px 0 6px 0;font-weight:600;font-size:0.95rem;opacity:0.8}
-  .config-col .btn{display:block;margin:6px 0}
-</style>
-
 </head>
 <body class="theme-midnight">
 
@@ -248,19 +240,6 @@
           <span class="button block darker">Import Config</span>
         </label>
         <button id="saveJsonBtn" class="button block primary">Download Config</button>
-<div id="configTwoCol" class="config-two-col">
-  <div class="config-col left">
-    <h4>GIF/Text</h4>
-    <div id="gifConfigSlot"></div>
-  </div>
-  <div class="config-col right">
-    <h4>App Settings</h4>
-    <button id="importAppConfigBtn" class="btn">Import App Config (.JSON)</button>
-    <input id="appConfigInput" type="file" accept=".json,application/json" style="display:none">
-    <button id="downloadAppConfigBtn" class="btn">Download App Config (.JSON)</button>
-  </div>
-</div>
-
       </div>
     </section>
 
@@ -356,8 +335,7 @@
   <script src="assets/libs/animatedEmoji.js"></script>
 
   <!-- App -->
-  <script src="assets/libs/lottie_canvas.min.js"></script>
-<script defer src="app.js"></script>
+  <script defer src="app.js"></script>
 
   <!-- local GIF libs -->
   <script defer src="assets/libs/jsgif/NeuQuant.js"></script>
