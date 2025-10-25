@@ -1,0 +1,103 @@
+{
+  "meta": {
+    "name": "LED_Animator_App_Showcase",
+    "description": "Colorful three-line demo: LED / ANIMATOR / APP with motion and color FX."
+  },
+  "res": {
+    "w": 96,
+    "h": 128
+  },
+  "bg": {
+    "type": "solid",
+    "color": "#000000",
+    "preset": null,
+    "image": null,
+    "name": "solid"
+  },
+  "spacing": {
+    "lineGap": 6,
+    "wordGap": 6,
+    "padding": 10
+  },
+  "style": {
+    "align": "center",
+    "valign": "middle"
+  },
+  "lines": [
+    {
+      "words": [
+        {
+          "text": "LED",
+          "color": "#40F2F2",
+          "font": "Orbitron",
+          "size": 26,
+          "anim": {
+            "motion": [
+              {
+                "id": "pulse",
+                "speed": 0.8,
+                "amp": 0.25
+              }
+            ],
+            "color": [
+              {
+                "id": "glow",
+                "intensity": 0.6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "words": [
+        {
+          "text": "ANIMATOR",
+          "color": "#FF6BD6",
+          "font": "Orbitron",
+          "size": 22,
+          "anim": {
+            "motion": [
+              {
+                "id": "wave",
+                "speed": 0.9,
+                "amp": 0.35
+              }
+            ],
+            "color": [
+              {
+                "id": "rainbow",
+                "speed": 0.4
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "words": [
+        {
+          "text": "APP",
+          "color": "#73B7FF",
+          "font": "Orbitron",
+          "size": 24,
+          "anim": {
+            "motion": [
+              {
+                "id": "zoom",
+                "speed": 0.7,
+                "amp": 0.18
+              }
+            ],
+            "color": [
+              {
+                "id": "colorCycle",
+                "speed": 0.5
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

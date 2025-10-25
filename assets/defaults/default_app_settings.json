@@ -1,0 +1,23 @@
+{
+  "theme": "midnight",
+  "useAssetNamesForPresets": true,
+  "fps": 15,
+  "seconds": 8,
+  "loop": "forever",
+  "dither": "fs",
+  "palette": 128,
+  "autosave": false,
+  "stickyPreviewZoom": true,
+  "animatedEmoji": {
+    "enabled": true,
+    "kinds": [
+      "pulse-heart",
+      "spark",
+      "smile-bounce"
+    ]
+  },
+  "webfont": {
+    "name": "Orbitron",
+    "href": "https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap"
+  }
+}
