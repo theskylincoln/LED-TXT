@@ -1,8 +1,6 @@
 /* =======================================================================
    LED Backpack Animator v2.0 — FINAL WORKING app.js
-   - Includes all bug fixes for vertical centering, caret, typing, and rendering
-   - Completed drawSelectionBox and textEditor positioning logic
-   - FIX: Multi-select checkbox synchronization
+   - FIX: Multi-select checkbox synchronization (Robust Check)
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -11,9 +9,12 @@ const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
 const on = (el, ev, fn, opt) => el && el.addEventListener(ev, fn, opt);
 const off = (el, ev, fn) => el && el.removeEventListener(ev, fn);
 
-/* ------------------ DOM refs ------------------ */
+/* ------------------ DOM refs (Moved multiToggle query here) ------------------ */
 const canvas=$("#led"), ctx=canvas.getContext("2d"), wrap=$(".canvas-wrap");
-const textEditor=$("#textEditor"); // CRITICAL: The invisible input
+const textEditor=$("#textEditor"); 
+
+// CRITICAL: Ensure the reference is available everywhere
+const multiToggle = $("#multiToggle"); 
 
 /* toolbar */
 const modeEditBtn=$("#modeEdit"), modePreviewBtn=$("#modePreview");
@@ -27,8 +28,7 @@ const addBgSwatchBtn=$("#addBgSwatchBtn"), bgSwatches=$("#bgSwatches");
 const bgUpload=$("#bgUpload");
 
 /* stage controls */
-const multiToggle=$("#multiToggle"), // <-- Your Multi-select toggle
-      manualDragBtn=$("#manualDragBtn") || $("#manualDragToggle");
+const manualDragBtn=$("#manualDragBtn") || $("#manualDragToggle");
 const addWordBtn=$("#addWordBtn"), addLineBtn=$("#addLineBtn"), delWordBtn=$("#deleteWordBtn");
 const emojiBtn=$("#emojiBtn");
 
@@ -170,12 +170,12 @@ function updateTextEditorPosition(w, li, wi, x, y, size, width){
     // Font size should match the canvas for correct text wrapping/metrics
     const editorFontSize = size * scale;
     const editorWidth = width * scale;
-    const editorHeight = size * scale * 1.2; // Slightly more height for better click target
+    const editorHeight = size * scale * 1.2; 
 
     // CRITICAL: Set the editor's position and size
     textEditor.style.left = `${xScreen}px`;
     textEditor.style.top = `${yScreen - (size * scale)}px`; 
-    textEditor.style.width = `${Math.max(10, editorWidth + 40)}px`; // Add padding for cursor visibility
+    textEditor.style.width = `${Math.max(10, editorWidth + 40)}px`; 
     textEditor.style.height = `${editorHeight}px`;
     textEditor.style.fontSize = `${editorFontSize}px`;
     textEditor.style.fontFamily = w.font || defaults.font;
@@ -193,12 +193,18 @@ function updateTextEditorPosition(w, li, wi, x, y, size, width){
 }
 
 function deselectWord(clearEditor=true){
+    // Console log to verify this function runs
+    console.log("[Deselect] Running deselectWord. Multi-select check:", multiToggle?.checked);
+
     selected = null;
     caret.active = false;
     // FIX: Clear multi-selection state when explicitly deselecting
     doc.multi.clear();
+    
     // FIX: Sync the multi-select checkbox UI
-    if (multiToggle) multiToggle.checked = false; 
+    if (multiToggle) {
+        multiToggle.checked = false; 
+    }
 
     if(clearEditor){
         textEditor.style.left = "-9999px";
@@ -216,7 +222,7 @@ on(textEditor, 'input', (e) => {
         // Prevent newlines in the word editor
         w.text = e.target.value.replace(/(\r\n|\n|\r)/gm, "");
         caret.index = e.target.selectionStart;
-        render(); // Re-render canvas immediately
+        render(); 
         // Update selection after render for new position/size
         updateTextEditorCaretAndPosition(); 
     }
@@ -225,18 +231,20 @@ on(textEditor, 'input', (e) => {
 on(textEditor, 'keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault(); 
-        deselectWord(); // Deselect on Enter
+        deselectWord(); 
     }
     // Update caret index on key press
     setTimeout(() => {
         caret.index = textEditor.selectionStart;
-        render(); // Re-render to update caret position
+        render(); 
         updateTextEditorCaretAndPosition();
     }, 0);
 });
 
 on(textEditor, 'blur', () => {
-    // Only deselect if the blur wasn't caused by clicking a word on the canvas (handled by touch/click event)
+    // Only deselect if the blur wasn't caused by clicking a word on the canvas 
+    // This is a subtle point, but clicking on the canvas will fire blur THEN click.
+    // We let the canvas click handler manage the selection state.
     if (!selected) {
         deselectWord(false);
     }
@@ -246,13 +254,11 @@ function updateTextEditorCaretAndPosition() {
     if (selected) {
         const w = doc.lines[selected.line]?.words[selected.word];
         if (w) {
-            // Re-measure and update position based on new text/size
             const { x, y, size, width } = getWordPositionInfo(selected.line, selected.word);
             updateTextEditorPosition(w, selected.line, selected.word, x, y - size, size, width);
         }
     }
 }
-// Helper to get needed info for text editor positioning
 function getWordPositionInfo(li, wi) {
     const lg = doc.spacing.lineGap ?? 4, wg = doc.spacing.wordGap ?? 6;
     const heights = doc.lines.map(lineHeight);
@@ -282,14 +288,11 @@ function getWordPositionInfo(li, wi) {
                 const size = w.size || defaults.size;
 
                 if (j === wi) {
-                    // x is the left edge of the current word
-                    // y is the baseline of the current word
                     return { x, y: yCursor + lh * 0.9, size, width };
                 }
                 x += width + wg;
             }
         }
-        // Advance the cursor to the top of the next line block
         yCursor += lh + lg; 
     }
     return { x: -9999, y: -9999, size: 24, width: 0 };
@@ -384,16 +387,14 @@ function setMode(m){
   mode=m;
   modeEditBtn?.classList.toggle("active", m==="edit");
   modePreviewBtn?.classList.toggle("active", m==="preview");
-  // Assuming startPreview/stopPreview functions exist for animation control
-  // if (m==="preview") startPreview(); else stopPreview(0,true);
-  render(); // Re-render to clear any preview state
+  render(); 
 }
 on(modeEditBtn,"click",()=>setMode("edit"));
 on(modePreviewBtn,"click",()=>setMode("preview"));
 on(canvas,"click",()=>{ if(mode==="preview") setMode("edit"); });
 
 /* =======================================================
-   PILLS (show only active; none => none visible)
+   PILLS 
 ======================================================= */
 function syncPillsVisibility(){
   const active = $(".pill.active");
@@ -619,13 +620,17 @@ function canvasTouch(e){
   if (clickedWord) {
     const key = `${clickedWord.line}:${clickedWord.word}`;
     
-    // FIX: Clear multi-select if the toggle is OFF
-    if (!multiToggle.checked) {
+    // CRITICAL FIX: If multiToggle is not checked, clear ALL previous selections
+    if (!multiToggle?.checked) {
         doc.multi.clear(); 
     }
+    // Also clear the multiToggle visually if it was somehow checked but shouldn't be
+    if (multiToggle && !multiToggle.checked) {
+        multiToggle.checked = false; 
+    }
 
-    // Toggle multi-selection if the button is checked
-    if (multiToggle.checked) {
+    // Toggle multi-selection if the button IS checked
+    if (multiToggle?.checked) {
         if (doc.multi.has(key)) {
             doc.multi.delete(key);
         } else {
@@ -636,10 +641,8 @@ function canvasTouch(e){
     // Update the single 'selected' word
     selected = clickedWord;
     caret.active = true;
-    // Set caret index to end of word by default on click
     caret.index = doc.lines[selected.line]?.words[selected.word]?.text?.length || 0; 
     
-    // Ensure the text editor gets focus for the new word
     updateTextEditorCaretAndPosition();
     
   } else {
@@ -678,7 +681,6 @@ function render(t=0,totalDur=seconds()){
   const heights=doc.lines.map(lineHeight);
   const contentH=totalHeight();
   
-  // yCursor tracks the running vertical position of the line block top edge
   let yCursor;
   if(doc.style.valign==="top") yCursor=4;
   else if(doc.style.valign==="bottom") yCursor=H-contentH-4;
@@ -691,7 +693,6 @@ function render(t=0,totalDur=seconds()){
     else if(doc.style.align==="right") xBase=W-wLine-4;
     else xBase=(W-wLine)/2;
 
-    // x is the left edge of the current word, y is the baseline of the current line
     let x=xBase, y=yCursor+lh*0.9;
     
     line.words.forEach((w,wi)=>{
@@ -699,9 +700,8 @@ function render(t=0,totalDur=seconds()){
       const props=animatedProps(base,w,t,totalDur);
       const fx=Number(w.fx||0), fy=Number(w.fy||0);
 
-      // Emoji (Placeholder for Lottie/GIF rendering)
+      // Emoji
       if(w.emoji){
-        // Basic rectangular bounding box for selection/layout
         const key=`${li}:${wi}`;
         const emojiSize = (w.size??24)*(w.scale??1);
         if(doc.multi.has(key) || (selected && selected.line===li && selected.word===wi && mode==="edit")){
@@ -721,14 +721,12 @@ function render(t=0,totalDur=seconds()){
       let fillStyle=props.color||(w.color||defaults.color);
       const drawX=base.x+(props.dx||0)+fx, drawY=base.y+(props.dy||0)+fy;
 
-      // (Gradient/PerChar logic omitted for space)
-
       ctx.fillStyle=fillStyle;
-      const ww=ctx.measureText(w.text||"").width; // Width of the text as drawn
+      const ww=ctx.measureText(w.text||"").width; 
       
       ctx.fillText(txt, drawX, drawY);
         
-      // Draw caret if active on this word
+      // Draw caret
       if (caret.active && caret.line===li && caret.word===wi && mode==="edit") {
         const baseSize = (w.size||defaults.size);
         ctx.save();
@@ -736,7 +734,6 @@ function render(t=0,totalDur=seconds()){
         const leftText = (w.text||"").slice(0, Math.min(caret.index, (w.text||"").length));
         const cx = drawX + ctx.measureText(leftText).width;
           
-        // Blink logic
         const now = performance.now();
         if (now - (caret.lastBlink||0) > 500) {
           caret.blinkOn = !caret.blinkOn;
@@ -744,7 +741,6 @@ function render(t=0,totalDur=seconds()){
         }
         if (caret.blinkOn) {
           ctx.fillStyle = "#E9EDFB";
-          // Draw caret slightly above baseline
           ctx.fillRect(cx, drawY - baseSize, 1, baseSize + 2); 
         }
         ctx.restore();
@@ -752,14 +748,12 @@ function render(t=0,totalDur=seconds()){
 
       // selection rectangle + delete handle
       const selKey=`${li}:${wi}`;
-      const lh_actual = lineHeight(line); // Use actual line height for selection box
+      const lh_actual = lineHeight(line); 
       if(doc.multi.has(selKey) || (selected && selected.line===li && selected.word===wi && mode==="edit")){
-        // Box is drawn relative to the top of the content box, not the baseline
         drawSelectionBox(drawX-2, drawY-lh_actual-2, ww+4, lh_actual+4, doc.multi.has(selKey));
         
-        // On selection, update textEditor position
+        // Update textEditor position
         if(selected && selected.line===li && selected.word===wi && mode==="edit"){
-            // The position sent to updateTextEditorPosition is the top-left of the selection box
             updateTextEditorPosition(w, li, wi, drawX-2, drawY-lh_actual-2, w.size||defaults.size, ww);
         }
       }
@@ -767,7 +761,6 @@ function render(t=0,totalDur=seconds()){
       x+= ww + wg;
     });
     
-    // Advance the cursor to the top of the next line block
     yCursor+= lh + lg; 
     
   });
@@ -789,28 +782,24 @@ function drawSelectionBox(x,y,w,h,isMulti){
   ctx.setLineDash([3,2]); 
   ctx.lineWidth=1; 
   ctx.strokeStyle=isMulti?"rgba(0,255,255,0.95)":"rgba(255,0,255,0.95)"; 
-  ctx.strokeRect(x,y,w,h); // Draw the main selection box
+  ctx.strokeRect(x,y,w,h); 
 
-  if(!isMulti){ // draw delete handle only for single selection
-    // Clamp handle position inside the canvas area
+  if(!isMulti){ 
     const dx=Math.min(W-HANDLE_SIZE-2, x+w-2); 
     const dy=Math.max(2, y+2);
     
-    // Draw the delete box
     ctx.fillStyle=isMulti?"rgba(0,255,255,0.95)":"rgba(255,0,255,0.95)";
     ctx.fillRect(dx,dy,HANDLE_SIZE,HANDLE_SIZE);
     
-    // Draw the 'X'
     ctx.fillStyle="#000000";
     ctx.font="bold 12px sans-serif";
     ctx.textAlign="center";
     ctx.textBaseline="middle";
     ctx.fillText("×", dx+HANDLE_SIZE/2, dy+HANDLE_SIZE/2);
     
-    // Store the bounds for click detection
     if(selected) selected.handleBounds = { x:dx, y:dy, w:HANDLE_SIZE, h:HANDLE_SIZE };
   } else {
-    if(selected) selected.handleBounds = null; // Clear bounds if multi-select
+    if(selected) selected.handleBounds = null; 
   }
   ctx.restore(); 
 }
@@ -820,18 +809,21 @@ function drawSelectionBox(x,y,w,h,isMulti){
    INITIALIZATION
 ======================================================= */
 function init(){
-  // Initialize zoom and layout
   fitZoom();
   
   // FIX: Clear multi-select and ensure checkbox reflects it
   doc.multi.clear();
-  if (multiToggle) multiToggle.checked = false; 
+  if (multiToggle) {
+    multiToggle.checked = false;
+    console.log("[Init] MultiToggle checkbox set to unchecked.");
+  } else {
+    console.error("[Init] Could not find the #multiToggle element.");
+  }
 
   buildBgGrid(); 
   rebuildBgSwatches();
   rebuildTextSwatches();
   
-  // Initial Render
   render();
 }
 
