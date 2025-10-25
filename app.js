@@ -1,8 +1,7 @@
 /* =======================================================================
-   LED Backpack Animator v1.0 — app.js (Updated for Animated GIF Backgrounds)
-   - Integrated SuperGif (libgif.js) for frame-by-frame animated GIF parsing.
-   - Added UI controls for Play/Pause and Reset of the background GIF.
-   - Ensured GIF playback starts immediately and toggles the main preview mode.
+   LED Backpack Animator v1.0 — app.js (Updated for Animated GIF Backgrounds & Word Selection)
+   - Integrated Word Selection via canvas click.
+   - Implemented functions to update the Inspector UI based on the selected word.
    ======================================================================= */
 
 /* ------------------ small helpers ------------------ */
@@ -33,11 +32,9 @@ const bgPanel=$("#bgPanel"), bgGrid=$("#bgGrid"), bgUpload=$("#bgUpload");
 const bgSolidTools=$("#bgSolidTools"), bgSolidColor=$("#bgSolidColor"), bgSwatches=$("#bgSwatches");
 const addBgSwatchBtn=$("#addBgSwatchBtn");
 
-// ▼ NEW: GIF Controls DOM refs
 const bgGifTools=$("#bgGifTools");
 const bgGifPlayBtn=$("#bgGifPlayBtn");
 const bgGifResetBtn=$("#bgGifResetBtn");
-// ▲ NEW
 
 /* render */
 const renderPanel=$("#renderPanel");
@@ -72,8 +69,8 @@ const doc={
   multi:new Set()
 };
 
-let gifPlayer = null; // Global SuperGif player instance
-let currentZoom = 100; // Assuming a percentage zoom for the canvas transform
+let gifPlayer = null; 
+let currentZoom = 100; 
 
 const PRESETS = {
   '96x128': [
@@ -85,8 +82,6 @@ const PRESETS = {
     { thumb: 'assets/thumbs/Preset_D_thumb.png', full: 'assets/presets/64x64/Preset_D.png' }
   ]
 };
-
-// ... (PALETTE, UTILS, and STATE/HISTORY functions remain the same) ...
 
 /* ------------------ UTILS ------------------ */
 function hexToRgb(hex) {
@@ -176,9 +171,7 @@ function render(t=0){
     ctx.fillRect(0, 0, w, h);
   } else if (doc.bg.image) {
     if (doc.bg.isAnimatedGif && gifPlayer) {
-      // If the GIF is explicitly playing OR we are in the main preview mode, advance the frame
       if (gifPlayer.get_playing() || mode === "preview") {
-        // SuperGif frame delay is in centiseconds (10ms units)
         const frameDur = gifPlayer.get_delay_point(gifPlayer.get_frame_index()) * 10;
         
         if (!gifPlayer.lastFrameTime) gifPlayer.lastFrameTime = t;
@@ -188,16 +181,14 @@ function render(t=0){
            gifPlayer.lastFrameTime = t;
         }
       }
-      // Draw the GIF's current frame
       ctx.drawImage(doc.bg.image, 0, 0, w, h);
 
     } else {
-      // Static Image/Preset
       ctx.drawImage(doc.bg.image, 0, 0, w, h);
     }
   }
 
-  // 2. Layout Calculation (Simplified for this file)
+  // 2. Layout Calculation (Simplified for hit testing)
   let currentY = doc.spacing.lineGap;
   const padding = 8;
   const lineGap = doc.spacing.lineGap;
@@ -207,12 +198,14 @@ function render(t=0){
     let lineContentWidth = 0;
     line.words.forEach(word => {
       ctx.font = `${word.size}px ${word.font}`;
-      word.w = ctx.measureText(word.text).width;
+      // CRITICAL: Must recalculate or estimate width for hit testing!
+      word.w = ctx.measureText(word.text).width; 
+      word.h = word.size; // Simple approximation
       lineContentWidth += word.w + wordGap;
     });
     lineContentWidth -= wordGap;
     
-    // Simple vertical centering for top-level line positioning
+    // Vertical alignment approximation
     if(lIdx === 0 && doc.style.valign === "middle") {
        currentY = (h / 3); 
     }
@@ -222,12 +215,13 @@ function render(t=0){
     else if (doc.style.align === 'right') currentX = w - lineContentWidth - padding;
     
     line.words.forEach((word, wIdx) => {
-      word.x = currentX;
-      word.y = currentY;
+      // Store final positions for hit testing (needed outside of render loop)
+      word._x = currentX;
+      word._y = currentY;
       
       let finalColor = word.color;
-      let finalX = word.x;
-      let finalY = word.y;
+      let finalX = word._x;
+      let finalY = word._y;
       
       // --- Apply Animation/Color FX ---
       if (word.anims.includes('rainbow')) {
@@ -244,18 +238,107 @@ function render(t=0){
       ctx.fillText(word.text, finalX, finalY);
 
       // 4. Draw Selection
-      if (mode === 'edit' && lIdx === selected?.l && wIdx === selected?.w) {
+      if (mode === 'edit' && selected && lIdx === selected.l && wIdx === selected.w) {
          ctx.strokeStyle = '#a675ff';
          ctx.lineWidth = 1;
-         ctx.strokeRect(word.x - 1, word.y - 1, word.w + 2, word.size + 2);
+         ctx.strokeRect(word._x - 1, word._y - 1, word.w + 2, word.h + 2);
       }
       
       currentX += word.w + wordGap;
     });
     
-    // Simple line height approximation
-    currentY += (line.words[0]?.size || 24) + lineGap;
+    currentY += (doc.lines[lIdx].words[0]?.size || 24) + lineGap;
   });
+}
+
+// ----------------------------------------------------
+// NEW: Word Selection Logic
+// ----------------------------------------------------
+
+/**
+ * Updates the selected word state and UI.
+ * @param {number|null} lIdx - Line index, or null to clear selection.
+ * @param {number|null} wIdx - Word index, or null to clear selection.
+ */
+function selectWord(lIdx, wIdx) {
+  if (lIdx === null) {
+    selected = null;
+  } else {
+    selected = { l: lIdx, w: wIdx };
+  }
+  updateUI();
+  updateInspector();
+  render();
+}
+
+/**
+ * Handles canvas click events for selecting a word.
+ * @param {MouseEvent} e 
+ */
+function handleCanvasClick(e) {
+  if (mode !== 'edit') return;
+
+  // 1. Get click coordinates, accounting for zoom and canvas position
+  const rect = canvas.getBoundingClientRect();
+  const scale = canvas.width / rect.width;
+  const clientX = e.clientX - rect.left;
+  const clientY = e.clientY - rect.top;
+  const x = clientX * scale;
+  const y = clientY * scale;
+
+  let hit = false;
+  
+  // 2. Iterate through all rendered words to check for a hit
+  doc.lines.forEach((line, lIdx) => {
+    if (hit) return; // Stop checking once a word is found
+    
+    line.words.forEach((word, wIdx) => {
+      if (hit) return;
+      
+      // Check if click (x, y) is inside the word's bounds
+      // We use the temporary _x, _y, w, and h properties stored during render()
+      const isHit = (
+        x >= word._x && x <= word._x + word.w &&
+        y >= word._y && y <= word._y + word.h
+      );
+
+      if (isHit) {
+        selectWord(lIdx, wIdx);
+        hit = true;
+      }
+    });
+  });
+
+  // 3. If no word was hit, clear the selection
+  if (!hit) {
+    selectWord(null, null);
+  }
+}
+
+// ----------------------------------------------------
+// NEW: Inspector Update Logic
+// ----------------------------------------------------
+
+function updateInspector() {
+  if (!selected) {
+    // Clear / Reset font inspector inputs
+    fontSelect.value = defaults.font;
+    fontSize.value = defaults.size;
+    fontColor.value = defaults.color;
+    // Disable inputs when nothing is selected
+    $$('#accFont input, #accFont select').forEach(el => el.disabled = true);
+    return;
+  }
+  
+  $$('#accFont input, #accFont select').forEach(el => el.disabled = false);
+
+  const word = doc.lines[selected.l].words[selected.w];
+  
+  fontSelect.value = word.font;
+  fontSize.value = word.size;
+  fontColor.value = word.color;
+  
+  // You would update anims, layout, and other controls here
 }
 
 
@@ -272,9 +355,13 @@ function updateUI(){
     x.classList.toggle("active", doc.bg.preset === x.dataset.full || doc.bg.type === x.dataset.kind);
   });
   
-  // Update GIF play/pause button icon
   if (doc.bg.isAnimatedGif && gifPlayer) {
     bgGifPlayBtn.textContent = gifPlayer.get_playing() ? '⏸️' : '▶️';
+  }
+  
+  // CRITICAL: Ensure selection is cleared if doc structure changes drastically
+  if (selected && (!doc.lines[selected.l] || !doc.lines[selected.l].words[selected.w])) {
+    selectWord(null, null);
   }
 }
 
@@ -297,7 +384,6 @@ function showSolidTools(show){ bgSolidTools?.classList.toggle("hidden", !show); 
 
 function showGifTools(show){
   bgGifTools?.classList.toggle("hidden", !show);
-  // Update play/pause button state
   if (show && gifPlayer) {
     bgGifPlayBtn.textContent = gifPlayer.get_playing() ? '⏸️' : '▶️';
   }
@@ -320,7 +406,6 @@ function buildBgGrid(){
     b.appendChild(img);
     
     on(b,"click",async()=>{
-      // 1. Clean up existing player (GIF or static) and hide controls
       if(gifPlayer){ gifPlayer.pause(); gifPlayer.remove(); gifPlayer=null; }
       showGifTools(false);
       
@@ -354,11 +439,9 @@ on(bgUpload,"change",e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const url=URL.createObjectURL(f);
 
-  // 1. Clean up existing player and hide controls
   if(gifPlayer){ gifPlayer.pause(); gifPlayer.remove(); gifPlayer=null; }
   showGifTools(false); 
 
-  // 2. Handle Animated GIF
   if (f.type === 'image/gif' && window.SuperGif) {
     const img = document.createElement('img');
     img.src = url;
@@ -369,7 +452,7 @@ on(bgUpload,"change",e=>{
 
     gifPlayer = new window.SuperGif({ 
       gif: img,
-      auto_play: false, // We control playback
+      auto_play: false, 
       max_width: doc.res.w,
       max_height: doc.res.h,
       draw_canvas: false,
@@ -386,7 +469,6 @@ on(bgUpload,"change",e=>{
         preset:null, isAnimatedGif:true
       };
       
-      // Show GIF controls, start playing, and ensure RAF loop is running
       showGifTools(true);
       gifPlayer.play();
       
@@ -399,7 +481,6 @@ on(bgUpload,"change",e=>{
     });
 
   } else {
-    // 3. Handle Static Image (PNG/JPG etc.)
     const im=new Image();
     im.onload=()=>{
       URL.revokeObjectURL(url);
@@ -415,7 +496,7 @@ on(bgUpload,"change",e=>{
 
 /* ------------------ Initialization ------------------ */
 function init() {
-  // 1. Load initial preset image if available (only for non-animated)
+  // 1. Load initial preset image
   const initialPreset = visibleSet()[0];
   if (initialPreset) {
       const im = new Image();
@@ -439,7 +520,7 @@ function init() {
   
   on(clearAllBtn, "click", () => {
     doc.lines = [{ words: [{ text: "", color: "#FFFFFF", font: "Orbitron", size: 24, anims: [] }] }];
-    selected = { l: 0, w: 0 };
+    selectWord(0, 0); // Select the new, empty word
     pushState("CLEAR_CANVAS");
   });
 
@@ -453,25 +534,27 @@ function init() {
       if (gifPlayer.get_playing()) {
         gifPlayer.pause();
       } else {
-        // Start main RAF loop if needed, then play the GIF
         if (mode === "edit") startPreview();
         gifPlayer.play();
       }
-      updateUI(); // Update play/pause icon
+      updateUI();
     }
   });
 
   on(bgGifResetBtn, "click", () => {
     if (gifPlayer) {
       gifPlayer.reset();
-      // Ensure we are in preview mode and playing after reset
       if (mode === "edit") startPreview();
       gifPlayer.play();
-      updateUI(); // Update play/pause icon
+      updateUI();
     }
   });
   
-  // 6. Initial State Update
+  // 6. Word Selection
+  on(canvas, "click", handleCanvasClick);
+
+  // 7. Initial State Update
+  selectWord(0, 0); // Select the first word on load
   updateUI();
   render();
 }
